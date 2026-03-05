@@ -1,0 +1,85 @@
+
+// PERF: Aggregation pipeline - optimized for large datasets
+// OPT: Uses indexed fields to avoid COLLSCAN
+// NOTE: Requires compound index on { phaseId: 1, isDeleted: 1 }
+// WARNING: Changing sort order may impact performance
+// REVIEW: Monitor performance after MongoDB version upgrade
+// TECHDEBT: Consider caching results for frequently accessed phases
+
+//📈⚙️ OPTIMIZATION: ->  optimization related // PERF:
+// ☑️🟣 Issue Fixed
+// ⚠️ NEED_OPTIMIZATION
+// ⚠️ DEPRECATED: 
+// 🟢    ->  new section
+// 🔵    ->  new feature ..
+// 🚧    ->  under construction .. 
+// TODO  ->  self explanatory
+// TODO : MUST ->  self explanatory
+// TODO : DONE
+// TODO: 
+// TODO : MUST : NEED_TO_TEST
+// INFO :  self explanatory
+// 🧱💪 ->  Robust System -> 
+// 🆗   ->  Ok System 
+// 📝   -> description
+// 🥇   -> base codebase
+// ⏳⌛ -> time related
+// 🎨   -> GUIDE FOR FRONTEND 
+// 📝   -> flow
+// 💎✨🔍 -> V2 Found
+// 🧩      -> piece that connects to something
+// 🔗➡️  fileName -> functionName
+// 🧠      -> Need to Think About In Future
+// 🔍      -> need to check this code
+// 🤢🤮    -> need to find better way
+// ⚔️💪🏔️ -> problem solving 
+// ⭕      -> not needed this function
+// 🎲📊📈 -> calculation
+// 🔁      -> re check for learning 
+// 🧹♻️   -> move to service 
+// FiXED FOR NOW   -> but need to work later here .. 
+// 🚩             -> rework here 
+// 🐛🩹          -> bug fix
+// 🐛             -> bug
+//🏃‍➡️ -> MOVE_TO_SERVICE
+
+/** ----------------------------------------------
+ * @role 
+ * @Section 
+ * @module |
+ * @figmaIndex 0-0
+ * @desc  
+ * 
+*----------------------------------------------*/
+
+/*-─────────────────────────────────
+|  R
+└──────────────────────────────────*/
+
+-------------------------
+
+(Module) fix : Commit Message
+(Module) feat : Commit Message
+(Module) :wrench:  Commit Message  <chore>
+(Module) :hammer:   or :recycle: Commit Message <refactor>
+
+:zap: ⚡ -> performance improvement with refactoring  <perf>
+:broom: -> clean up
+
+:memo: -> documentation only    <chore>
+
+:wrench: -> config   <chore>
+
+:fire: -> remove code    <chore>
+
+:construction: -> work in progress
+
+Ask AI :: 
+this is my coding structure .. is my coding standard ? rate my way of coding out of 10 ..
+
+git status
+git diff --stat
+git diff --shortstat
+git diff --numstat | awk '{inserted+=$1} END {print inserted}'
+
+

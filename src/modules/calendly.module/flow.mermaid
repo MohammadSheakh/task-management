@@ -1,0 +1,11 @@
+sequenceDiagram
+    Calendly->>Your Server: POST /webhooks/calendly (with signature header)
+    Your Server->>Your Server: Verify HMAC signature using CALENDLY_WEBHOOK_SIGNING_KEY
+    alt Invalid Signature
+        Your Server-->>Calendly: 401 Unauthorized
+    else Valid Signature
+        Your Server->>Your Server: Parse payload
+        Your Server->>MongoDB: Find user by calendly.userId
+        Your Server->>Your Server: Process event
+        Your Server-->>Calendly: 200 OK (ALWAYS)
+    end

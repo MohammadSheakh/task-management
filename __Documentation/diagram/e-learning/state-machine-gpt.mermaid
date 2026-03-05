@@ -1,0 +1,13 @@
+stateDiagram-v2
+    [*] --> Registered
+
+    Registered --> PendingApproval
+    PendingApproval --> Approved
+
+    Approved --> ProfileCompleted
+    ProfileCompleted --> Subscribed
+
+    Subscribed --> Live
+
+    Live --> Suspended
+    Suspended --> Live
