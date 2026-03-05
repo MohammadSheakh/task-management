@@ -1,0 +1,81 @@
+import { Model, Types } from 'mongoose';
+import { PaginateOptions, PaginateResult } from '../../../types/paginate';
+import { TTaskStatus, TTaskType, TTaskPriority } from './task.constant';
+
+/**
+ * Task Interface
+ * Represents a task entity in the task management system
+ */
+export interface ITask {
+  _id?: Types.ObjectId;
+
+  // ─── Ownership & Assignment ────────────────────────────────────────
+  /** User who created this task */
+  createdById: Types.ObjectId;
+
+  /** User who owns this task (for personal tasks) */
+  ownerUserId?: Types.ObjectId;
+
+  /** Type of task: personal, single assignment, or collaborative */
+  taskType: TTaskType;
+
+  /** Users assigned to this task (for collaborative/single assignment) */
+  assignedUserIds?: Types.ObjectId[];
+
+  /** Group ID if this is a group/collaborative task */
+  groupId?: Types.ObjectId;
+
+  // ─── Task Details ──────────────────────────────────────────────────
+  /** Title of the task (required) */
+  title: string;
+
+  /** Detailed description of what needs to be done */
+  description?: string;
+
+  /** Scheduled time for the task (e.g., "10:30 AM") */
+  scheduledTime?: string;
+
+  /** Priority level of the task */
+  priority?: TTaskPriority;
+
+  // ─── Task Progress ─────────────────────────────────────────────────
+  /** Current status of the task */
+  status: TTaskStatus;
+
+  /** Total number of subtasks */
+  totalSubtasks?: number;
+
+  /** Number of completed subtasks */
+  completedSubtasks?: number;
+
+  // ─── Timestamps ────────────────────────────────────────────────────
+  /** When the task was created */
+  createdAt?: Date;
+
+  /** When the task is scheduled to start */
+  startTime: Date;
+
+  /** When the task was actually completed */
+  completedTime?: Date;
+
+  /** When the task is due */
+  dueDate?: Date;
+
+  // ─── System Fields ─────────────────────────────────────────────────
+  /** Soft delete flag */
+  isDeleted?: boolean;
+
+  /** Last update timestamp */
+  updatedAt?: Date;
+}
+
+/**
+ * Task Model Interface
+ * Extends Mongoose Model with pagination support
+ */
+export interface ITaskModel extends Model<ITask> {
+  paginate: (
+    query: Record<string, any>,
+    options: PaginateOptions
+  ) => Promise<PaginateResult<ITask>>;
+}
