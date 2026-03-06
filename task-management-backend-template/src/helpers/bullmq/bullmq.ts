@@ -9,6 +9,7 @@ import { TRole } from "../../middlewares/roles";
 import { Conversation } from "../../modules/chatting.module/conversation/conversation.model";
 import { IConversation } from "../../modules/chatting.module/conversation/conversation.interface";
 import { ConversationParticipents } from "../../modules/chatting.module/conversationParticipents/conversationParticipents.model";
+import { GroupInvitation } from "../../modules/group.module/groupInvitation/groupInvitation.model";
 //@ts-ignore
 import mongoose from 'mongoose';
 import { buildTranslatedField } from "../../utils/buildTranslatedField";
@@ -197,6 +198,114 @@ export const startUpdateConversationsLastMessageWorker = () => {
   );
 };
 
+
+/*-─────────────────────────────────
+|  Group Invitation Queue
+└──────────────────────────────────*/
+
+export const groupInvitationQueue = new Queue(
+  'group-invitations-queue',
+  { connection: redisPubClient.options }
+);
+
+interface IGroupInvitationJobData {
+  invitationId: string;
+  email?: string;
+  groupName: string;
+  invitedBy: string;
+  token: string;
+  expiresAt: Date;
+  message?: string;
+}
+
+export const startGroupInvitationWorker = () => {
+  const worker = new Worker<IGroupInvitationJobData>(
+    'group-invitations-queue',
+    async (job) => {
+      const { invitationId, email, groupName, invitedBy, token, expiresAt, message } = job.data;
+
+      logger.info(`Processing group invitation job ${job.id} for ${email || invitationId}`);
+
+      try {
+        // TODO: Implement email sending logic here
+        // This would integrate with your existing email service
+        // Example: await sendEmail({ to: email, template: 'group-invitation', data: { ... } });
+
+        logger.info(`✅ Group invitation email sent to ${email} for group ${groupName}`);
+
+        // You can also send push notifications here if needed
+        // await sendPushNotification({ userId: invitedBy, ... });
+
+      } catch (err: any) {
+        errorLogger.error(`❌ Group invitation job ${job.id} failed:`, err);
+        throw err;
+      }
+    },
+    { connection: redisPubClient.options }
+  );
+
+  worker.on('completed', (job) =>
+    logger.info(`✅ Group invitation job ${job.id} completed`)
+  );
+
+  worker.on('failed', (job, err) =>
+    errorLogger.error(`❌ Group invitation job ${job?.id} failed`, err)
+  );
+};
+
+/*-─────────────────────────────────
+|  Task Reminders Queue
+└──────────────────────────────────*/
+
+export const taskRemindersQueue = new Queue(
+  'task-reminders-queue',
+  { connection: redisPubClient.options }
+);
+
+interface ITaskReminderJobData {
+  reminderId: string;
+  taskId: string;
+  userId: string;
+  reminderTime: Date;
+  triggerType: string;
+  channels: string[];
+  customMessage?: string;
+}
+
+export const startTaskRemindersWorker = () => {
+  const worker = new Worker<ITaskReminderJobData>(
+    'task-reminders-queue',
+    async (job) => {
+      const { reminderId, taskId, userId, reminderTime, triggerType, channels, customMessage } = job.data;
+
+      logger.info(`Processing task reminder job ${job.id} for task ${taskId} user ${userId}`);
+
+      try {
+        // Import service here to avoid circular dependency
+        const { TaskReminderService } = await import('../modules/notification.module/taskReminder/taskReminder.service');
+        const taskReminderService = new TaskReminderService();
+
+        // Process the reminder (sends notification and marks as sent)
+        await taskReminderService.processReminder(reminderId);
+
+        logger.info(`✅ Task reminder sent for task ${taskId} to user ${userId}`);
+
+      } catch (err: any) {
+        errorLogger.error(`❌ Task reminder job ${job.id} failed:`, err);
+        throw err;
+      }
+    },
+    { connection: redisPubClient.options }
+  );
+
+  worker.on('completed', (job) =>
+    logger.info(`✅ Task reminder job ${job.id} completed`)
+  );
+
+  worker.on('failed', (job, err) =>
+    errorLogger.error(`❌ Task reminder job ${job?.id} failed`, err)
+  );
+};
 
 /*-─────────────────────────────────
 |  Notify All Conversation participants Queue

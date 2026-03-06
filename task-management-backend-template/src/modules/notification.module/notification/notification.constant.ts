@@ -1,0 +1,226 @@
+/**
+ * Notification Module Constants
+ * Centralized configuration for notification-related limits and defaults
+ *
+ * @version 1.0.0
+ * @author Senior Engineering Team
+ */
+
+/**
+ * Notification Types
+ */
+export const NOTIFICATION_TYPE = {
+  TASK: 'task',
+  GROUP: 'group',
+  SYSTEM: 'system',
+  REMINDER: 'reminder',
+  MENTION: 'mention',
+  ASSIGNMENT: 'assignment',
+  DEADLINE: 'deadline',
+  CUSTOM: 'custom',
+} as const;
+
+/**
+ * Notification Priority Levels
+ */
+export const NOTIFICATION_PRIORITY = {
+  LOW: 'low',
+  NORMAL: 'normal',
+  HIGH: 'high',
+  URGENT: 'urgent',
+} as const;
+
+/**
+ * Notification Delivery Channels
+ */
+export const NOTIFICATION_CHANNEL = {
+  IN_APP: 'in_app',
+  EMAIL: 'email',
+  PUSH: 'push',
+  SMS: 'sms',
+} as const;
+
+/**
+ * Notification Status
+ */
+export const NOTIFICATION_STATUS = {
+  PENDING: 'pending',
+  SENT: 'sent',
+  DELIVERED: 'delivered',
+  READ: 'read',
+  FAILED: 'failed',
+} as const;
+
+/**
+ * Notification Limits Configuration
+ */
+export const NOTIFICATION_LIMITS = {
+  /**
+   * Maximum notifications to fetch per request
+   */
+  MAX_NOTIFICATIONS_PER_REQUEST: 100,
+
+  /**
+   * Maximum bulk notifications per request
+   */
+  MAX_BULK_NOTIFICATIONS: 1000,
+
+  /**
+   * Maximum title length
+   */
+  MAX_TITLE_LENGTH: 200,
+
+  /**
+   * Maximum subtitle length
+   */
+  MAX_SUBTITLE_LENGTH: 500,
+
+  /**
+   * Maximum notifications to keep per user (cleanup old ones)
+   */
+  MAX_NOTIFICATIONS_PER_USER: 1000,
+
+  /**
+   * Days to keep read notifications
+   */
+  READ_NOTIFICATION_RETENTION_DAYS: 30,
+
+  /**
+   * Days to keep unread notifications
+   */
+  UNREAD_NOTIFICATION_RETENTION_DAYS: 90,
+} as const;
+
+/**
+ * Cache Configuration for Redis
+ */
+export const NOTIFICATION_CACHE_CONFIG = {
+  /**
+   * Cache TTL for unread count (seconds)
+   */
+  UNREAD_COUNT_TTL: 30, // 30 seconds
+
+  /**
+   * Cache TTL for recent notifications (seconds)
+   */
+  RECENT_NOTIFICATIONS_TTL: 60, // 1 minute
+
+  /**
+   * Cache key prefix
+   */
+  PREFIX: 'notification',
+} as const;
+
+/**
+ * BullMQ Queue Configuration
+ */
+export const QUEUE_CONFIG = {
+  /**
+   * Queue name for sending notifications
+   */
+  NOTIFICATION_QUEUE_NAME: 'notifications-queue',
+
+  /**
+   * Queue name for scheduled reminders
+   */
+  REMINDER_QUEUE_NAME: 'task-reminders-queue',
+
+  /**
+   * Queue name for email notifications
+   */
+  EMAIL_QUEUE_NAME: 'notification-emails-queue',
+
+  /**
+   * Queue name for push notifications
+   */
+  PUSH_QUEUE_NAME: 'notification-push-queue',
+
+  /**
+   * Job attempts before failure
+   */
+  JOB_ATTEMPTS: 3,
+
+  /**
+   * Backoff delay in milliseconds
+   */
+  BACKOFF_DELAY: 5000,
+
+  /**
+   * Default delay for scheduled notifications (milliseconds)
+   */
+  DEFAULT_SCHEDULE_DELAY: 60000, // 1 minute
+} as const;
+
+/**
+ * Reminder Configuration
+ */
+export const REMINDER_CONFIG = {
+  /**
+   * Default reminder times before deadline (in hours)
+   */
+  DEFAULT_REMINDER_HOURS: [24, 1], // 24 hours and 1 hour before
+
+  /**
+   * Maximum reminders per task
+   */
+  MAX_REMINDERS_PER_TASK: 5,
+
+  /**
+   * Minimum time between reminders (in minutes)
+   */
+  MIN_REMINDER_INTERVAL_MINUTES: 15,
+
+  /**
+   * Cron expression for cleanup job (daily at 2 AM)
+   */
+  CLEANUP_CRON: '0 2 * * *',
+} as const;
+
+/**
+ * Email Template Configuration
+ */
+export const EMAIL_CONFIG = {
+  /**
+   * Template for task reminder email
+   */
+  TASK_REMINDER_TEMPLATE: 'task-reminder',
+
+  /**
+   * Template for assignment notification
+   */
+  ASSIGNMENT_TEMPLATE: 'task-assignment',
+
+  /**
+   * Template for deadline notification
+   */
+  DEADLINE_TEMPLATE: 'task-deadline',
+
+  /**
+   * Template for group invitation
+   */
+  GROUP_INVITATION_TEMPLATE: 'group-invitation',
+
+  /**
+   * Default sender email
+   */
+  DEFAULT_SENDER: 'noreply@taskmanagement.com',
+} as const;
+
+/**
+ * Push Notification Configuration
+ */
+export const PUSH_CONFIG = {
+  /**
+   * TTL for push notifications (seconds)
+   */
+  TTL: 86400, // 24 hours
+
+  /**
+   * Urgency levels for push
+   */
+  URGENCY: {
+    LOW: 'low',
+    NORMAL: 'normal',
+    HIGH: 'high',
+  },
+} as const;

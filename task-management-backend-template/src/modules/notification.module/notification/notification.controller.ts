@@ -1,0 +1,266 @@
+import { Request, Response } from 'express';
+import { StatusCodes } from 'http-status-codes';
+import { GenericController } from '../../../_generic-module/generic.controller';
+import { Notification } from './notification.model';
+import { INotificationDocument } from './notification.interface';
+import { NotificationService } from './notification.service';
+import { TRole } from '../../../middlewares/roles';
+import ApiError from '../../../errors/ApiError';
+import { NOTIFICATION_PRIORITY, NOTIFICATION_CHANNEL, NOTIFICATION_TYPE } from './notification.constant';
+
+/**
+ * Notification Controller
+ * Handles HTTP requests for notification operations
+ *
+ * Features:
+ * - Multi-channel notification delivery
+ * - BullMQ async processing
+ * - Redis-cached unread counts
+ * - Scheduled notifications for reminders
+ *
+ * @version 1.0.0
+ * @author Senior Engineering Team
+ */
+export class NotificationController extends GenericController<typeof Notification, INotificationDocument> {
+  notificationService: NotificationService;
+
+  constructor() {
+    super(new NotificationService(), 'Notification');
+    this.notificationService = new NotificationService();
+  }
+
+  /**
+   * Get my notifications with pagination
+   * User | Notification #01 | Get my notifications
+   *
+   * @query {number} page - Page number
+   * @query {number} limit - Items per page
+   * @query {string} status - Filter by status
+   * @query {string} type - Filter by type
+   * @query {string} priority - Filter by priority
+   */
+  getMyNotifications = async (req: Request, res: Response) => {
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      throw new ApiError(StatusCodes.UNAUTHORIZED, 'User not authenticated');
+    }
+
+    const options = {
+      page: parseInt(req.query.page as string) || 1,
+      limit: parseInt(req.query.limit as string) || 20,
+      status: req.query.status as any,
+      type: req.query.type as any,
+      priority: req.query.priority as any,
+    };
+
+    const result = await this.notificationService.getUserNotifications(userId, options);
+
+    (res as any).sendResponse({
+      code: StatusCodes.OK,
+      data: result,
+      message: 'Notifications retrieved successfully',
+      success: true,
+    });
+  };
+
+  /**
+   * Get unread notification count
+   * User | Notification #02 | Get unread count
+   */
+  getUnreadCount = async (req: Request, res: Response) => {
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      throw new ApiError(StatusCodes.UNAUTHORIZED, 'User not authenticated');
+    }
+
+    const count = await this.notificationService.getUnreadCount(userId);
+
+    (res as any).sendResponse({
+      code: StatusCodes.OK,
+      data: { count },
+      message: 'Unread count retrieved successfully',
+      success: true,
+    });
+  };
+
+  /**
+   * Mark notification as read
+   * User | Notification #03 | Mark as read
+   *
+   * @param {string} id - Notification ID
+   */
+  markAsRead = async (req: Request, res: Response) => {
+    const notificationId = req.params.id;
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      throw new ApiError(StatusCodes.UNAUTHORIZED, 'User not authenticated');
+    }
+
+    const result = await this.notificationService.markAsRead(notificationId, userId);
+
+    if (!result) {
+      throw new ApiError(StatusCodes.NOT_FOUND, 'Notification not found');
+    }
+
+    (res as any).sendResponse({
+      code: StatusCodes.OK,
+      data: result,
+      message: 'Notification marked as read',
+      success: true,
+    });
+  };
+
+  /**
+   * Mark all notifications as read
+   * User | Notification #04 | Mark all as read
+   */
+  markAllAsRead = async (req: Request, res: Response) => {
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      throw new ApiError(StatusCodes.UNAUTHORIZED, 'User not authenticated');
+    }
+
+    const count = await this.notificationService.markAllAsRead(userId);
+
+    (res as any).sendResponse({
+      code: StatusCodes.OK,
+      data: { count },
+      message: `All ${count} notifications marked as read`,
+      success: true,
+    });
+  };
+
+  /**
+   * Delete notification
+   * User | Notification #05 | Delete notification
+   *
+   * @param {string} id - Notification ID
+   */
+  deleteNotification = async (req: Request, res: Response) => {
+    const notificationId = req.params.id;
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      throw new ApiError(StatusCodes.UNAUTHORIZED, 'User not authenticated');
+    }
+
+    const result = await this.notificationService.deleteNotification(notificationId, userId);
+
+    if (!result) {
+      throw new ApiError(StatusCodes.NOT_FOUND, 'Notification not found');
+    }
+
+    (res as any).sendResponse({
+      code: StatusCodes.OK,
+      data: result,
+      message: 'Notification deleted successfully',
+      success: true,
+    });
+  };
+
+  /**
+   * Send bulk notification (Admin only)
+   * Admin | Notification #06 | Send bulk notification
+   *
+   * @body {string[]} userIds - Array of user IDs
+   * @body {string} receiverRole - Or target by role
+   * @body {string} title - Notification title
+   * @body {string} subTitle - Notification subtitle
+   * @body {string} type - Notification type
+   * @body {string} priority - Priority (low|normal|high|urgent)
+   * @body {string[]} channels - Delivery channels
+   */
+  sendBulkNotification = async (req: Request, res: Response) => {
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      throw new ApiError(StatusCodes.UNAUTHORIZED, 'User not authenticated');
+    }
+
+    const { userIds, receiverRole, title, subTitle, type, priority, channels, linkFor, linkId, data } = req.body;
+
+    if (!title) {
+      throw new ApiError(StatusCodes.BAD_REQUEST, 'Title is required');
+    }
+
+    if (!type) {
+      throw new ApiError(StatusCodes.BAD_REQUEST, 'Type is required');
+    }
+
+    if (!userIds && !receiverRole) {
+      throw new ApiError(StatusCodes.BAD_REQUEST, 'UserIds or receiverRole is required');
+    }
+
+    const result = await this.notificationService.sendBulkNotification({
+      userIds,
+      receiverRole,
+      title,
+      subTitle,
+      type,
+      priority: priority || NOTIFICATION_PRIORITY.NORMAL,
+      channels: channels || [NOTIFICATION_CHANNEL.IN_APP],
+      linkFor,
+      linkId,
+      data,
+    });
+
+    (res as any).sendResponse({
+      code: StatusCodes.CREATED,
+      data: result,
+      message: `${result.length} notifications sent successfully`,
+      success: true,
+    });
+  };
+
+  /**
+   * Schedule a reminder (for task reminders)
+   * User | Notification #07 | Schedule reminder
+   *
+   * @body {string} taskId - Task ID
+   * @body {string} reminderTime - ISO date string
+   * @body {string} reminderType - Type of reminder
+   * @body {string} message - Custom message
+   */
+  scheduleReminder = async (req: Request, res: Response) => {
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      throw new ApiError(StatusCodes.UNAUTHORIZED, 'User not authenticated');
+    }
+
+    const { taskId, reminderTime, reminderType = 'before_deadline', message } = req.body;
+
+    if (!taskId) {
+      throw new ApiError(StatusCodes.BAD_REQUEST, 'Task ID is required');
+    }
+
+    if (!reminderTime) {
+      throw new ApiError(StatusCodes.BAD_REQUEST, 'Reminder time is required');
+    }
+
+    const scheduledDate = new Date(reminderTime);
+
+    if (scheduledDate <= new Date()) {
+      throw new ApiError(StatusCodes.BAD_REQUEST, 'Reminder time must be in the future');
+    }
+
+    const result = await this.notificationService.createTaskReminder(
+      taskId,
+      userId,
+      scheduledDate,
+      reminderType,
+      message
+    );
+
+    (res as any).sendResponse({
+      code: StatusCodes.CREATED,
+      data: result,
+      message: 'Reminder scheduled successfully',
+      success: true,
+    });
+  };
+}

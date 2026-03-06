@@ -36,6 +36,11 @@ import { AssessmentRoute } from '../modules/question.module/assessment/assessmen
 import { MentorProfileRoute } from '../modules/mentor.module/mentorProfile/mentorProfile.route';
 import { TaskRoute } from '../modules/task.module/task/task.route';
 import { SubTaskRoute } from '../modules/task.module/subTask/subTask.route';
+import { GroupRoute } from '../modules/group.module/group/group.route';
+import { GroupMemberRoute } from '../modules/group.module/groupMember/groupMember.route';
+import { GroupInvitationRoute } from '../modules/group.module/groupInvitation/groupInvitation.route';
+import { NotificationRoute } from '../modules/notification.module/notification/notification.route';
+import { TaskReminderRoute } from '../modules/notification.module/taskReminder/taskReminder.route';
 
 // import { ChatRoutes } from '../modules/chat/chat.routes';
 // import { MessageRoutes } from '../modules/message/message.routes';
@@ -63,6 +68,30 @@ const apiRoutes = [
   { // 🟢
     path: '/subtasks',
     route: SubTaskRoute,
+  },
+
+  /////////////////////////////////////////  Group/Team Management
+  { // 🟢
+    path: '/groups',
+    route: GroupRoute,
+  },
+  { // 🟢
+    path: '/group-members',
+    route: GroupMemberRoute,
+  },
+  { // 🟢
+    path: '/group-invitations',
+    route: GroupInvitationRoute,
+  },
+
+  /////////////////////////////////////////  Notification & Reminders
+  { // 🟢
+    path: '/notifications',
+    route: NotificationRoute,
+  },
+  { // 🟢
+    path: '/task-reminders',
+    route: TaskReminderRoute,
   },
 
   ////////////////////// Created By Mohammad Sheakh

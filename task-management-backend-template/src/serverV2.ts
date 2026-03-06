@@ -13,7 +13,7 @@ import cluster from 'cluster';
 import { createAdapter } from '@socket.io/redis-adapter';
 //@ts-ignore
 import http from "http";
-import { startNotificationWorker } from './helpers/bullmq/bullmq'; // ⬅️ ADD THIS
+import { startNotificationWorker, startGroupInvitationWorker, startTaskRemindersWorker } from './helpers/bullmq/bullmq'; // ⬅️ ADD THIS
 import connectToDb from './config/mongoDbConfig';
 import { initializeRedis, redisClient, redisPubClient, redisSubClient } from './helpers/redis/redis';
 import { socketHelperForKafka } from './helpers/socket/socketForChatV1WithKafka';
@@ -108,6 +108,8 @@ async function main() {
 
     // 🔥 Start BullMQ Worker (listens for schedule jobs)
     startNotificationWorker();
+    startGroupInvitationWorker();
+    startTaskRemindersWorker();
 
   } catch (error) {
     errorLogger.error(colors.red('🤢 Issue from server.ts => ', error));
