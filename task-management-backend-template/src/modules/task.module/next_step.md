@@ -121,3 +121,10 @@ Instruction #9:
 dear qwen do your group module maintain all senior level data structure and algorithm ? proper
 time and space and memory efficiency complexity ? make a report in that group.modules doc folder ..
 create another folder named perf under that doc folder .. and review
+
+====================>
+Instruction #11:
+
+as you go throw flutter code and website code .. and you already know you generate task.module,
+group.module and notification.module .. what are the other module you should generate ? just tell me
+dont need to generate anything just tell .. what are the other module left to complete this backend
