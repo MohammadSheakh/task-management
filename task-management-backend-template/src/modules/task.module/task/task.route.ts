@@ -10,6 +10,7 @@ import { setQueryOptions } from '../../../middlewares/setQueryOptions';
 import { getLoggedInUserAndSetReferenceToUser } from '../../../middlewares/getLoggedInUserAndSetReferenceToUser';
 import * as validation from './task.validation';
 import { verifyTaskAccess, verifyTaskOwnership, validateTaskTypeConsistency, validateStatusTransition, checkDailyTaskLimit } from './task.middleware';
+import { SubTaskRoute } from '../subtask/subtask.route';
 
 const router = express.Router();
 
@@ -182,5 +183,18 @@ router.route('/:id/permanent').delete(
   verifyTaskAccess,
   controller.deleteById
 );
+
+/*-─────────────────────────────────
+|  SubTask Routes
+|  @module SubTask
+|  @desc Nested routes for subtask CRUD operations
+|  @routes POST /tasks/:id/subtasks - Add subtask
+|  @routes GET /tasks/:id/subtasks - Get all subtasks
+|  @routes GET /tasks/:id/subtasks/:subtaskId - Get single subtask
+|  @routes PUT /tasks/:id/subtasks/:subtaskId - Update subtask
+|  @routes POST /tasks/:id/subtasks/:subtaskId/toggle - Toggle subtask
+|  @routes DELETE /tasks/:id/subtasks/:subtaskId - Delete subtask
+└──────────────────────────────────*/
+router.use('/:id', SubTaskRoute);
 
 export const TaskRoute = router;
