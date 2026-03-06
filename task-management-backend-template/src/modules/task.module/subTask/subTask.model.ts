@@ -67,9 +67,13 @@ const subTaskSchema = new Schema<ISubTask>(
 );
 
 // ─── Indexes ─────────────────────────────────────────────────────────
-subTaskSchema.index({ taskId: 1, isCompleted: 1 });
-subTaskSchema.index({ taskId: 1, order: 1 });
-subTaskSchema.index({ assignedToUserId: 1, isCompleted: 1 });
+/**
+ * Compound indexes optimized for common query patterns
+ * Updated: Added isDeleted to all indexes for soft delete filtering
+ */
+subTaskSchema.index({ taskId: 1, isCompleted: 1, isDeleted: 1 });
+subTaskSchema.index({ taskId: 1, order: 1, isDeleted: 1 });
+subTaskSchema.index({ assignedToUserId: 1, isCompleted: 1, isDeleted: 1 });
 
 // ─── Plugins ─────────────────────────────────────────────────────────
 subTaskSchema.plugin(paginate);

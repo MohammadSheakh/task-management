@@ -140,13 +140,17 @@ const taskSchema = new Schema<ITask>(
 // ─── Indexes for Performance ─────────────────────────────────────────
 /**
  * Compound indexes for common query patterns
+ * Updated: Added isDeleted to all indexes for soft delete filtering
  */
-taskSchema.index({ createdById: 1, status: 1, startTime: -1 });
-taskSchema.index({ ownerUserId: 1, status: 1, startTime: -1 });
-taskSchema.index({ assignedUserIds: 1, status: 1 });
-taskSchema.index({ groupId: 1, status: 1 });
-taskSchema.index({ startTime: 1 });
-taskSchema.index({ dueDate: 1 });
+taskSchema.index({ createdById: 1, status: 1, isDeleted: 1, startTime: -1 });
+taskSchema.index({ ownerUserId: 1, status: 1, isDeleted: 1, startTime: -1 });
+taskSchema.index({ assignedUserIds: 1, status: 1, isDeleted: 1 });
+taskSchema.index({ groupId: 1, status: 1, isDeleted: 1 });
+taskSchema.index({ startTime: 1, isDeleted: 1 });
+taskSchema.index({ dueDate: 1, isDeleted: 1 });
+
+// Text search index for task search functionality
+taskSchema.index({ title: 'text', description: 'text', tags: 'text' });
 
 // ─── Pre-save Hook ───────────────────────────────────────────────────
 /**
