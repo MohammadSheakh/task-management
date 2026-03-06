@@ -1,0 +1,90 @@
+flowchart TD
+    Start([User Logs In]) --> Dashboard[View Dashboard]
+    Dashboard --> Decision{What to do?}
+
+    Decision -->|Create Task| CreateTask[Click Create Task]
+    CreateTask --> FillForm[Fill Task Form]
+    FillForm --> SetReminder[Set Reminder?]
+    SetReminder -->|Yes| ScheduleReminder[Schedule Reminder]
+    SetReminder -->|No| SubmitTask[Submit Task]
+    ScheduleReminder --> SubmitTask
+    SubmitTask --> TaskCreated[Task Created ✓]
+
+    Decision -->|View Tasks| ViewTasks[View Task List]
+    ViewTasks --> FilterTasks[Filter/Search]
+    FilterTasks --> SelectTask[Select Task]
+    SelectTask --> TaskDetail[View Task Details]
+
+    TaskDetail --> UpdateTask{Update Task?}
+    UpdateTask -->|Edit| EditTask[Edit Task Details]
+    EditTask --> SaveTask[Save Changes]
+    SaveTask --> TaskDetail
+
+    UpdateTask -->|Update Status| UpdateStatus[Update Status]
+    UpdateStatus --> StatusOptions[Pending/InProgress/Done]
+    StatusOptions --> TaskDetail
+
+    UpdateTask -->|Add Subtask| AddSubtask[Add Subtask]
+    AddSubtask --> SubtaskAdded[Subtask Added ✓]
+    SubtaskAdded --> TaskDetail
+
+    UpdateTask -->|Complete| CompleteTask[Mark as Complete]
+    CompleteTask --> UploadProof[Upload Proof?]
+    UploadProof -->|Yes| UploadFiles[Upload Attachments]
+    UploadFiles --> TaskComplete[Task Completed ✓]
+    UploadProof -->|No| TaskComplete
+
+    Decision -->|Delete Task| DeleteTask[Delete Task]
+    DeleteTask --> ConfirmDelete{Confirm?}
+    ConfirmDelete -->|Yes| TaskDeleted[Task Deleted ✓]
+    ConfirmDelete -->|No| Dashboard
+
+    TaskCreated --> Dashboard
+    TaskComplete --> Dashboard
+    TaskDeleted --> Dashboard
+
+    %% Subgraph Styling
+    subgraph Creation["📝 Task Creation"]
+        CreateTask
+        FillForm
+        SetReminder
+        ScheduleReminder
+        SubmitTask
+        TaskCreated
+    end
+
+    subgraph Viewing["👀 Viewing Tasks"]
+        ViewTasks
+        FilterTasks
+        SelectTask
+        TaskDetail
+    end
+
+    subgraph Updating["✏️ Updating Tasks"]
+        UpdateTask
+        EditTask
+        SaveTask
+        UpdateStatus
+        StatusOptions
+        AddSubtask
+        SubtaskAdded
+    end
+
+    subgraph Completion["✅ Completion"]
+        CompleteTask
+        UploadProof
+        UploadFiles
+        TaskComplete
+    end
+
+    subgraph Deletion["🗑️ Deletion"]
+        DeleteTask
+        ConfirmDelete
+        TaskDeleted
+    end
+
+    style Creation fill:#E3F2FD,stroke:#1976D2,stroke-width:2px
+    style Viewing fill:#BBDEFB,stroke:#42A5F5,stroke-width:2px
+    style Updating fill:#90CAF9,stroke:#64B5F6,stroke-width:2px
+    style Completion fill:#C8E6C9,stroke:#388E3C,stroke-width:2px
+    style Deletion fill:#FFCDD2,stroke:#E53935,stroke-width:2px

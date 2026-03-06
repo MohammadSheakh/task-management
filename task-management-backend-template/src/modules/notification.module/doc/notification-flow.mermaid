@@ -1,0 +1,102 @@
+sequenceDiagram
+    participant U as User
+    participant API as Notification API
+    participant DB as MongoDB
+    participant Redis as Redis Cache
+    participant BullMQ as BullMQ Queue
+    participant Worker as Notification Worker
+    participant Email as Email Service
+    participant Push as Push Service
+    participant Socket as Socket.IO
+
+    %% Get Notifications
+    U->>API: GET /notifications/my
+    API->>Redis: Check cache
+    Redis-->>API: Cache miss
+    API->>DB: Find user notifications
+    DB-->>API: Notifications
+    API->>Redis: Cache results
+    API-->>U: Notifications + pagination
+
+    %% Get Unread Count
+    U->>API: GET /notifications/unread-count
+    API->>Redis: Check cache
+    Redis-->>API: Cache miss
+    API->>DB: Count unread
+    DB-->>API: Count
+    API->>Redis: Cache count (60s TTL)
+    API-->>U: Unread count
+
+    %% Mark as Read
+    U->>API: POST /notifications/:id/read
+    API->>DB: Update status + readAt
+    DB-->>API: Updated
+    API->>Redis: Invalidate cache
+    Redis-->>API: Done
+    API-->>U: Success
+
+    %% Mark All as Read
+    U->>API: POST /notifications/read-all
+    API->>DB: UpdateMany status=read
+    DB-->>API: Count updated
+    API->>Redis: Invalidate all caches
+    API-->>U: Success
+
+    %% Create Notification (Internal)
+    Note over API,Worker: Task Assignment Event
+    API->>DB: Create notification
+    DB-->>API: Created
+    API->>BullMQ: Queue job
+    BullMQ-->>API: Job queued
+    API-->>U: Success
+
+    Note over BullMQ: Async Processing
+    BullMQ->>Worker: Process job
+    Worker->>DB: Get notification details
+    DB-->>Worker: Details
+    Worker->>Socket: Emit real-time
+    Socket-->>U: Real-time notification
+
+    alt Channel: Email
+        Worker->>Email: Send email
+        Email-->>Worker: Sent
+    end
+
+    alt Channel: Push
+        Worker->>Push: Send push
+        Push-->>Worker: Sent
+    end
+
+    Worker->>DB: Update deliveredAt
+    DB-->>Worker: Updated
+
+    %% Schedule Reminder
+    U->>API: POST /notifications/schedule-reminder
+    API->>DB: Create scheduled notification
+    DB-->>API: Created
+    API->>BullMQ: Schedule with delay
+    BullMQ-->>API: Job scheduled
+    API-->>U: Reminder scheduled
+
+    Note over BullMQ: At scheduled time
+    BullMQ->>Worker: Process reminder
+    Worker->>DB: Get task + user
+    DB-->>Worker: Data
+    Worker->>Worker: Create notification
+    Worker->>U: Send via channels
+
+    %% Bulk Notification (Admin)
+    Note over API,Worker: Admin Bulk Send
+    Admin->>API: POST /notifications/bulk
+    API->>API: Validate (max 1000)
+    loop For each userId
+        API->>DB: Create notification
+        API->>BullMQ: Queue job
+    end
+    API-->>Admin: Success
+
+    %% Cleanup (Cron)
+    Note over Worker: Daily at 2 AM
+    Worker->>DB: Delete old notifications
+    Note right of Worker: Read: 30 days<br/>Unread: 90 days
+    DB-->>Worker: Deleted count

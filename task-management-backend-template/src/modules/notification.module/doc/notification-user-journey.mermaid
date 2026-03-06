@@ -1,0 +1,70 @@
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#E3F2FD', 'primaryTextColor': '#0D47A1', 'primaryBorderColor': '#1976D2', 'lineColor': '#42A5F5', 'secondaryColor': '#BBDEFB', 'tertiaryColor': '#90CAF9' } } }%%
+flowchart LR
+    subgraph UserJourney["📱 User Journey: Notification Lifecycle"]
+        direction TB
+
+        subgraph Phase1["🔔 Discovery Phase"]
+            A1[User Logs In] --> A2[Check Dashboard]
+            A2 --> A3{Notification Badge?}
+            A3 -->|Yes| A4[See Unread Count]
+            A3 -->|No| A5[Continue Work]
+        end
+
+        subgraph Phase2["👀 Viewing Phase"]
+            A4 --> B1[Click Notifications]
+            B1 --> B2[View List]
+            B2 --> B3{Filter?}
+            B3 -->|By Type| B4[Task/Group/System]
+            B3 -->|By Priority| B5[Urgent/High/Normal]
+            B3 -->|By Status| B6[Read/Unread]
+        end
+
+        subgraph Phase3["📖 Reading Phase"]
+            B4 --> C1[Select Notification]
+            B5 --> C1
+            B6 --> C1
+            C1 --> C2[Read Content]
+            C2 --> C3{Has Link?}
+            C3 -->|Yes| C4[Navigate to Entity]
+            C3 -->|No| C5[Dismiss]
+        end
+
+        subgraph Phase4["⚙️ Action Phase"]
+            C4 --> D1[Take Action]
+            D1 --> D2{Action Type?}
+            D2 -->|Task| D3[View/Update Task]
+            D2 -->|Group| D4[View Group]
+            D2 -->|System| D5[Read Announcement]
+        end
+
+        subgraph Phase5["✅ Management Phase"]
+            D3 --> E1[Mark as Read]
+            D4 --> E1
+            D5 --> E1
+            E1 --> E2{More Notifications?}
+            E2 -->|Yes| B2
+            E2 -->|No| E3[Clear All Read]
+        end
+
+        subgraph Phase6["🔧 Settings Phase"]
+            E3 --> F1[Adjust Preferences]
+            F1 --> F2{Channel Settings?}
+            F2 -->|Email| F3[Enable/Disable]
+            F2 -->|Push| F4[Enable/Disable]
+            F2 -->|SMS| F5[Enable/Disable]
+        end
+
+        E5[End Journey]
+        F3 --> E5
+        F4 --> E5
+        F5 --> E5
+        A5 --> E5
+    end
+
+    %% Styling
+    style Phase1 fill:#E3F2FD,stroke:#1976D2,stroke-width:2px
+    style Phase2 fill:#BBDEFB,stroke:#42A5F5,stroke-width:2px
+    style Phase3 fill:#90CAF9,stroke:#64B5F6,stroke-width:2px
+    style Phase4 fill:#64B5F6,stroke:#42A5F5,stroke-width:2px
+    style Phase5 fill:#42A5F5,stroke:#1976D2,stroke-width:2px
+    style Phase6 fill:#1976D2,stroke:#0D47A1,stroke-width:2px

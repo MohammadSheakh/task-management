@@ -10,6 +10,8 @@
 
 Generate like top senior engineer ..
 
+================>
+
 Instruction #1: Initial Request
 
     > "hello .. in this folder .. i have 3 folder .. one is flutter app and one is website .. go throw all file and folder of
@@ -24,7 +26,8 @@ Instruction #1: Initial Request
 
     ---
 
-    Instruction #2: Code Generation Guidelines
+================>
+Instruction #2: Code Generation Guidelines
 
     > "yes please .. while generating .. keep in mind is if module is already existed .. just modify that .. and when you create
      any module .. if 2 or more simillar module found .. group them under a parent module like like present backend codebase
@@ -52,9 +55,10 @@ Instruction #1: Initial Request
 
     Both instructions completed successfully! 🎯
 
+================>
+Instruction #3:
 
-
-    Instruction #3:  yes you will generate group/ team module .. but before that .. as you know my coding style .. follow that .. and with that .. always create doc folder in any module .. keep that module related schema design in mermaid format . also all documenation related that module .. i think you should do in two level .. one is parent level .. and one is child level .. previously you know i have task.module and all task module related module is under that .. so create doc that sub module level also .. and while code .. you should follow SOLID principle with proper documentation .. and dont code like junior .. 100 user, 1000 task .. develop and design each system for 100K users, 10M task this level .. i tell you this number for your understanding .. use redis caching, rate limiting, and all other senior level staff with proper documentation .. so that i can understand your code
+     yes you will generate group/ team module .. but before that .. as you know my coding style .. follow that .. and with that .. always create doc folder in any module .. keep that module related schema design in mermaid format . also all documenation related that module .. i think you should do in two level .. one is parent level .. and one is child level .. previously you know i have task.module and all task module related module is under that .. so create doc that sub module level also .. and while code .. you should follow SOLID principle with proper documentation .. and dont code like junior .. 100 user, 1000 task .. develop and design each system for 100K users, 10M task this level .. i tell you this number for your understanding .. use redis caching, rate limiting, and all other senior level staff with proper documentation .. so that i can understand your code
 
 ================>
 Instruction #4:
@@ -80,3 +84,33 @@ Instruction #5:
 now generate Notification module for task reminders .. and add user journey map, user flow diagram, swimline
 diagram, for module level, parent module level and project level in doc folder for task.modules and
 group.modules also
+
+====================>
+Instruction #6:
+
+hello qwen .. you actually work for me .. in my next_step.md in task.module folder .. there you find the history
+of our conversation .. my total instruction to you .. based on my instruction so far you generate task.module and
+group.module and last time you working on notifiction.module .. may be working for notification.module is not
+complete .. and the thing is for diagram generation .. dont add all diagram in one markdown file .. please
+generate different mermaid file for differnet diagram ..
+
+✦ I need to read the next_step.md file to understand the project history and requirements before proceeding with
+the modular diagram generation.
+
+====================>
+Instruction #7:
+
+dear qwen .. what you should do .. when you start working for me .. i see .. you make a plan .. what are the
+things you should generate .. so what you need to do .. is everytime make a file like agenda.md .. where you
+write the intial plan .. that you give me in terminal before start any work .. then work
+
+====================>
+Instruction #8:
+
+dear qwen as you know you have all the previous instruction in next_step.md file of
+task.module .. and based on your plan so far you generate task.module, group.module and
+notification.module .. now i think time has come to review all backend code use case and
+make sure those are properly alligned with askfemi-flutter codes task management apps
+flow and Task-management-website's flow .. because at the end of the day we want to make
+backend for that app and website .. so please check what you generate is actually
+correct and properly aligned with flutter project flow and website project flow

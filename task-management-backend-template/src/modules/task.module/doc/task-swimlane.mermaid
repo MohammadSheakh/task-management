@@ -1,0 +1,38 @@
+flowchart TD
+    subgraph TaskCreator["👤 Task Creator"]
+        Start([Identify Need]) --> CreateTask[Create Task]
+        AssignTask[Assign to Team Member] --> Notify[Send Notification]
+        ReviewWork[Review Completed Work] --> CloseTask[Close Task]
+    end
+
+    subgraph System["⚙️ System"]
+        CreateTask --> ValidateTask[Validate Task Data]
+        ValidateTask --> SaveTask[Save to Database]
+        SaveTask --> TriggerNotification[Trigger Notification]
+        Notify --> QueueReminder[Queue Reminder Job]
+        QueueReminder --> TrackProgress[Track Progress]
+        TrackProgress --> SendReminder[Send Reminder if Due]
+        SendReminder --> CheckCompletion{Task Complete?}
+    end
+
+    subgraph Assignee["👥 Assignee"]
+        ReceiveNotification[Receive Notification] --> ViewTask[View Task Details]
+        ViewTask --> AcceptTask[Accept Task]
+        AcceptTask --> WorkOnTask[Work on Task]
+        WorkOnTask --> UpdateProgress[Update Progress]
+        UpdateProgress --> AddSubtasks[Add Subtasks]
+        AddSubtasks --> CompleteSubtasks[Complete Subtasks]
+        CompleteSubtasks --> MarkComplete[Mark as Complete]
+        MarkComplete --> UploadProof[Upload Proof/Attachments]
+        UploadProof --> SubmitForReview[Submit for Review]
+    end
+
+    CheckCompletion -->|No| SendReminder
+    CheckCompletion -->|Yes| NotifyCreator[Notify Creator]
+    NotifyCreator --> ReviewWork
+    SubmitForReview --> NotifyCreator
+
+    %% Styling
+    style TaskCreator fill:#E3F2FD,stroke:#1976D2,stroke-width:3px
+    style System fill:#FFF3E0,stroke:#F57C00,stroke-width:3px
+    style Assignee fill:#E8F5E9,stroke:#388E3C,stroke-width:3px

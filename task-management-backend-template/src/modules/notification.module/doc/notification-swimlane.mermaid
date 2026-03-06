@@ -1,0 +1,114 @@
+flowchart TD
+    subgraph User["👤 User"]
+        U1[Trigger Event<br/>Task Created/Assigned]
+        U2[View Notifications]
+        U3[Mark as Read]
+        U4[Take Action on Task]
+    end
+
+    subgraph System["⚙️ System/Backend"]
+        S1[Event Triggered<br/>Task/Group/Deadline]
+        S2[Create Notification Record]
+        S3[Determine Channels<br/>In-App/Email/Push/SMS]
+        S4[Queue Notification Job]
+        S5[Cache Invalidation<br/>Redis]
+        S6[Real-time Socket Emit]
+    end
+
+    subgraph NotificationService["📧 Notification Service"]
+        N1[Process Queue Job]
+        N2[Load Notification Data]
+        N3[Translate Content<br/>i18n Support]
+        N4[Route by Priority]
+        N5[Update Delivery Status]
+    end
+
+    subgraph Channels["📬 Delivery Channels"]
+        C1[In-App Notification]
+        C2[Email Service]
+        C3[Push Notification]
+        C4[SMS Gateway]
+    end
+
+    subgraph Tracking["📊 Tracking & Analytics"]
+        T1[Track Delivery Status]
+        T2[Track Read Status]
+        T3[Generate Analytics]
+        T4[Cleanup Old Notifications]
+    end
+
+    %% User to System Flow
+    U1 --> S1
+    S1 --> S2
+    S2 --> S3
+    S3 --> S4
+    S4 --> S5
+    S5 --> S6
+    S6 --> U2
+
+    %% Notification Processing Flow
+    S4 --> N1
+    N1 --> N2
+    N2 --> N3
+    N3 --> N4
+    N4 --> C1
+    N4 --> C2
+    N4 --> C3
+    N4 --> C4
+
+    %% Channel Delivery
+    C1 --> U2
+    C2 --> U2
+    C3 --> U2
+    C4 --> U2
+
+    %% User Action Flow
+    U2 --> U3
+    U3 --> S5
+    U2 --> U4
+
+    %% Tracking Flow
+    C1 --> T1
+    C2 --> T1
+    C3 --> T1
+    C4 --> T1
+
+    U3 --> T2
+    T1 --> T3
+    T2 --> T3
+    T3 --> T4
+
+    %% Scheduled Reminder Flow
+    subgraph ScheduledReminders["⏰ Scheduled Reminders"]
+        SR1[User Sets Reminder]
+        SR2[Schedule BullMQ Job]
+        SR3[Wait Until Due Time]
+        SR4[Trigger Notification]
+    end
+
+    SR1 --> SR2
+    SR2 --> SR3
+    SR3 --> SR4
+    SR4 --> N1
+
+    %% Bulk Notification Flow
+    subgraph BulkNotifications["📨 Bulk Notifications"]
+        BN1[Admin Creates Bulk]
+        BN2[Validate Limit<br/>Max 1000]
+        BN3[Loop Through Users]
+        BN4[Batch Queue Jobs]
+    end
+
+    BN1 --> BN2
+    BN2 --> BN3
+    BN3 --> BN4
+    BN4 --> N1
+
+    %% Styling
+    style User fill:#E3F2FD,stroke:#1976D2,stroke-width:3px
+    style System fill:#FFF3E0,stroke:#F57C00,stroke-width:3px
+    style NotificationService fill:#F3E5F5,stroke:#7B1FA2,stroke-width:3px
+    style Channels fill:#E8F5E9,stroke:#388E3C,stroke-width:3px
+    style Tracking fill:#FFEBEE,stroke:#C62828,stroke-width:3px
+    style ScheduledReminders fill:#E0F7FA,stroke:#00838F,stroke-width:3px
+    style BulkNotifications fill:#FFF8E1,stroke:#FF8F00,stroke-width:3px

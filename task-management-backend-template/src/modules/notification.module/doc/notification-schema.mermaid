@@ -1,0 +1,67 @@
+erDiagram
+    NOTIFICATION ||--o{ USER : "receiver"
+    NOTIFICATION ||--o{ USER : "sender"
+    NOTIFICATION ||--o{ TASK : "links to"
+    NOTIFICATION ||--o{ GROUP : "links to"
+
+    NOTIFICATION {
+        ObjectId _id PK
+        ObjectId senderId FK "Reference to sender"
+        ObjectId receiverId FK "Reference to receiver"
+        String receiverRole "Role-based targeting"
+        Mixed title "i18n support"
+        Mixed subTitle "i18n support"
+        String type "task|group|system|reminder|mention|assignment|deadline|custom"
+        String priority "low|normal|high|urgent"
+        String[] channels "in_app|email|push|sms"
+        String status "pending|sent|read|failed"
+        String linkFor "Navigation type"
+        ObjectId linkId FK "Linked entity ID"
+        String referenceFor "Source type"
+        ObjectId referenceId FK "Source entity ID"
+        Mixed data "Additional payload"
+        Mixed metadata "Extensibility"
+        DateTime readAt "When read"
+        DateTime deliveredAt "When delivered"
+        DateTime scheduledFor "Scheduled delivery"
+        DateTime createdAt "Creation timestamp"
+        DateTime updatedAt "Update timestamp"
+        Boolean isDeleted "Soft delete"
+    }
+
+    USER {
+        ObjectId _id PK
+        String name
+        String email
+        String role
+        String profileImage
+    }
+
+    TASK {
+        ObjectId _id PK
+        String title
+        String description
+        ObjectId assigneeId FK
+        ObjectId groupId FK
+        DateTime dueDate
+        String status
+    }
+
+    GROUP {
+        ObjectId _id PK
+        String name
+        String description
+        ObjectId ownerId FK
+        String visibility
+        Int memberCount
+    }
+
+    %% Indexes
+    %% receiverId_1_createdAt_-1_isDeleted_1
+    %% receiverId_1_status_1_isDeleted_1_createdAt_-1
+    %% scheduledFor_1_status_1_isDeleted_1
+    %% receiverId_1_type_1_createdAt_-1
+    %% priority_1_status_1_scheduledFor_1
+    %% receiverRole_1_status_1_isDeleted_1
+    %% readAt_1_isDeleted_1
+    %% createdAt_-1_isDeleted_1

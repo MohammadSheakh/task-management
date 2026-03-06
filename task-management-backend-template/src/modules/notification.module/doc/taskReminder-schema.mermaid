@@ -1,0 +1,70 @@
+erDiagram
+    TASK_REMINDER ||--o{ USER : "receiver"
+    TASK_REMINDER ||--o{ USER : "creator"
+    TASK_REMINDER ||--o{ TASK : "reminder for"
+    TASK_REMINDER ||--o{ NOTIFICATION : "triggers"
+
+    TASK_REMINDER {
+        ObjectId _id PK
+        ObjectId taskId FK "Reference to task"
+        ObjectId userId FK "Receiver user"
+        ObjectId createdByUserId FK "Creator user"
+        String triggerType "before_deadline|at_deadline|after_deadline|custom_time|recurring"
+        DateTime reminderTime "When to send"
+        String customMessage "Optional custom message"
+        String[] channels "in_app|email|push|sms"
+        String status "pending|sent|cancelled"
+        String frequency "once|daily|weekly|monthly"
+        DateTime nextReminderTime "Next occurrence"
+        String jobId "BullMQ job ID"
+        Int sentCount "Times sent"
+        Int maxOccurrences "Max sends for recurring"
+        Mixed metadata "Additional data"
+        DateTime createdAt "Creation timestamp"
+        DateTime updatedAt "Update timestamp"
+        Boolean isDeleted "Soft delete"
+    }
+
+    USER {
+        ObjectId _id PK
+        String name
+        String email
+        String role
+        String profileImage
+    }
+
+    TASK {
+        ObjectId _id PK
+        String title
+        String description
+        ObjectId assigneeId FK
+        ObjectId groupId FK
+        DateTime dueDate
+        String status "pending|in_progress|done|cancelled"
+        DateTime createdAt
+    }
+
+    NOTIFICATION {
+        ObjectId _id PK
+        ObjectId senderId FK
+        ObjectId receiverId FK
+        String title
+        String subTitle
+        String type "reminder|assignment|deadline"
+        String priority "low|normal|high|urgent"
+        String[] channels
+        String status "pending|sent|read"
+        DateTime scheduledFor
+        DateTime readAt
+    }
+
+    %% Indexes
+    %% reminderTime_1_status_1_isDeleted_1
+    %% taskId_1_status_1_isDeleted_1
+    %% userId_1_status_1_reminderTime_-1
+    %% nextReminderTime_1_frequency_1_status_1_isDeleted_1
+
+    %% Constraints
+    %% Max 5 reminders per task
+    %% Max 10 recurring occurrences
+    %% Custom message max 500 chars

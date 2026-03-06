@@ -1,0 +1,115 @@
+flowchart TD
+    Start([User Logs In]) --> Dashboard[View Dashboard]
+    Dashboard --> CheckBadge{Check Notification Badge}
+    
+    %% View Notifications Flow
+    CheckBadge -->|Has Unread| ViewNotifications[Click Notification Icon]
+    CheckBadge -->|No Unread| ContinueWork[Continue Work]
+    
+    ViewNotifications --> NotificationList[View Notification List]
+    NotificationList --> FilterDecision{Apply Filter?}
+    
+    FilterDecision -->|By Type| FilterType[Select: Task/Group/System]
+    FilterDecision -->|By Priority| FilterPriority[Select: Urgent/High/Normal]
+    FilterDecision -->|By Status| FilterStatus[Select: Read/Unread]
+    FilterDecision -->|No Filter| ViewAll[View All]
+    
+    FilterType --> SelectNotification[Select Notification]
+    FilterPriority --> SelectNotification
+    FilterStatus --> SelectNotification
+    ViewAll --> SelectNotification
+    
+    SelectNotification --> HasLink{Has Link?}
+    HasLink -->|Yes| Navigate[Navigate to Entity]
+    HasLink -->|No| ReadContent[Read Content]
+    
+    Navigate --> ActionType{Take Action?}
+    ReadContent --> ActionType
+    
+    ActionType -->|Task| TaskAction[View/Update Task]
+    ActionType -->|Group| GroupAction[View Group Details]
+    ActionType -->|System| SystemAction[Read Announcement]
+    ActionType -->|None| MarkRead[Mark as Read]
+    
+    TaskAction --> MarkRead
+    GroupAction --> MarkRead
+    SystemAction --> MarkRead
+    
+    MarkRead --> MoreNotifications{More to Read?}
+    MoreNotifications -->|Yes| NotificationList
+    MoreNotifications -->|No| ManageDecision{Manage Notifications?}
+    
+    ManageDecision -->|Mark All Read| MarkAllRead[Mark All as Read]
+    ManageDecision -->|Delete Old| DeleteOld[Delete Old Notifications]
+    ManageDecision -->|Settings| NotificationSettings[Notification Settings]
+    ManageDecision -->|Done| ContinueWork
+    
+    MarkAllRead --> Done[Done ✓]
+    DeleteOld --> Done
+    NotificationSettings --> ChannelPrefs[Channel Preferences]
+    
+    ChannelPrefs --> EmailToggle{Email?}
+    EmailToggle -->|Enable| EnableEmail[Enable Email Notifications]
+    EmailToggle -->|Disable| DisableEmail[Disable Email Notifications]
+    
+    EnableEmail --> PushToggle{Push?}
+    DisableEmail --> PushToggle
+    
+    PushToggle -->|Enable| EnablePush[Enable Push Notifications]
+    PushToggle -->|Disable| DisablePush[Disable Push Notifications]
+    
+    EnablePush --> SMSToggle{SMS?}
+    DisablePush --> SMSToggle
+    
+    SMSToggle -->|Enable| EnableSMS[Enable SMS Notifications]
+    SMSToggle -->|Disable| DisableSMS[Disable SMS Notifications]
+    
+    EnableSMS --> SaveSettings[Save Preferences]
+    DisableSMS --> SaveSettings
+    
+    SaveSettings --> Done
+    
+    ContinueWork --> End([End])
+    Done --> End
+    
+    %% Subgraph Styling
+    subgraph Viewing["👀 Viewing Notifications"]
+        ViewNotifications
+        NotificationList
+        FilterDecision
+        FilterType
+        FilterPriority
+        FilterStatus
+        ViewAll
+    end
+    
+    subgraph Reading["📖 Reading & Acting"]
+        SelectNotification
+        HasLink
+        Navigate
+        ReadContent
+        ActionType
+        TaskAction
+        GroupAction
+        SystemAction
+    end
+    
+    subgraph Managing["⚙️ Managing Notifications"]
+        MarkRead
+        MarkAllRead
+        DeleteOld
+        NotificationSettings
+    end
+    
+    subgraph Preferences["🔧 Preference Settings"]
+        ChannelPrefs
+        EmailToggle
+        PushToggle
+        SMSToggle
+        SaveSettings
+    end
+    
+    style Viewing fill:#E3F2FD,stroke:#1976D2,stroke-width:2px
+    style Reading fill:#BBDEFB,stroke:#42A5F5,stroke-width:2px
+    style Managing fill:#90CAF9,stroke:#64B5F6,stroke-width:2px
+    style Preferences fill:#64B5F6,stroke:#42A5F5,stroke-width:2px

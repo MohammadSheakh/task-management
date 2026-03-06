@@ -1,0 +1,29 @@
+stateDiagram-v2
+    [*] --> Draft: Task created
+    Draft --> Pending: Submitted
+    Pending --> InProgress: Assigned/Started
+    InProgress --> Pending: Returned for changes
+    InProgress --> UnderReview: Submitted for review
+    UnderReview --> InProgress: Changes requested
+    UnderReview --> Completed: Approved
+    Completed --> [*]
+
+    Pending --> Cancelled: Cancelled
+    InProgress --> Cancelled: Cancelled
+    UnderReview --> Cancelled: Cancelled
+    Cancelled --> [*]
+
+    note right of Draft
+        Initial state
+        Can be edited freely
+    end note
+
+    note right of InProgress
+        Active work
+        Progress tracked
+    end note
+
+    note right of Completed
+        Final state
+        Read-only
+    end note

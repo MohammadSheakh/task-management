@@ -1,0 +1,53 @@
+graph TB
+    subgraph cloud["☁️ Cloud Infrastructure"]
+        subgraph k8s["Kubernetes Cluster"]
+            subgraph pod1["Pod 1"]
+                App1[Node.js App]
+                Worker1[BullMQ Worker]
+            end
+            subgraph pod2["Pod 2"]
+                App2[Node.js App]
+                Worker2[BullMQ Worker]
+            end
+            subgraph pod3["Pod 3"]
+                App3[Node.js App]
+                Worker3[BullMQ Worker]
+            end
+        end
+
+        subgraph managed["Managed Services"]
+            MongoDB[(MongoDB Atlas)]
+            Redis[(Redis Cloud)]
+            Storage[Cloud Storage]
+        end
+    end
+
+    subgraph external["External Services"]
+        EmailProvider[Email Service]
+        PushProvider[Push Service]
+        SMSService[SMS Gateway]
+    end
+
+    LB[Load Balancer] --> App1
+    LB --> App2
+    LB --> App3
+
+    App1 --> MongoDB
+    App2 --> MongoDB
+    App3 --> MongoDB
+
+    App1 --> Redis
+    App2 --> Redis
+    App3 --> Redis
+
+    Worker1 --> MongoDB
+    Worker2 --> MongoDB
+    Worker3 --> MongoDB
+
+    Worker1 --> EmailProvider
+    Worker2 --> EmailProvider
+    Worker3 --> EmailProvider
+
+    Worker1 --> PushProvider
+    Worker2 --> PushProvider
+    Worker3 --> PushProvider
