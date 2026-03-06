@@ -114,3 +114,10 @@ make sure those are properly alligned with askfemi-flutter codes task management
 flow and Task-management-website's flow .. because at the end of the day we want to make
 backend for that app and website .. so please check what you generate is actually
 correct and properly aligned with flutter project flow and website project flow
+
+====================>
+Instruction #9:
+
+dear qwen do your group module maintain all senior level data structure and algorithm ? proper
+time and space and memory efficiency complexity ? make a report in that group.modules doc folder ..
+create another folder named perf under that doc folder .. and review
