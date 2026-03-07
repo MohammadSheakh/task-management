@@ -1,0 +1,508 @@
+{
+  "info": {
+    "_postman_id": "task-management-secondary-user-v1",
+    "name": "03 - Secondary User Role (Student/Child)",
+    "description": "Team Member - View & Complete Tasks\n\n## Responsibilities\n- View assigned tasks\n- Complete tasks and update status\n- Track daily progress\n- Create personal tasks\n- Create group tasks (if permission granted)\n- Choose support mode (Calm/Encouraging/Logical)\n- Set notification style (Gentle/Firm/XYZ)\n\n## Figma Reference\n- App User (Mobile)\n- Individual User / Group User\n- Home Screen with Tasks\n- Task Status/History\n- Profile with Support Mode\n- Notification Settings\n\n## Variables\n- BASE_URL: http://localhost:5000/api/v1\n- SECONDARY_USER_TOKEN: Your JWT token\n- TASK_ID: Test task ID",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "variable": [
+    {"key": "BASE_URL", "value": "http://localhost:5000/api/v1", "type": "string"},
+    {"key": "SECONDARY_USER_TOKEN", "value": "", "type": "string"},
+    {"key": "TASK_ID", "value": "", "type": "string"},
+    {"key": "SUBTASK_ID", "value": "", "type": "string"}
+  ],
+  "item": [
+    {
+      "name": "00 - Authentication",
+      "item": [
+        {
+          "name": "Register Secondary User",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Alex Student\",\n  \"email\": \"alex@example.com\",\n  \"password\": \"StudentPass123!\",\n  \"role\": \"user\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/auth/signup",
+              "host": ["{{BASE_URL}}"],
+              "path": ["auth", "signup"]
+            },
+            "description": "Register as a secondary user (student/child)"
+          }
+        },
+        {
+          "name": "Login as Secondary User",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"alex@example.com\",\n  \"password\": \"StudentPass123!\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/auth/login",
+              "host": ["{{BASE_URL}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Login and save token to SECONDARY_USER_TOKEN variable"
+          }
+        }
+      ]
+    },
+    {
+      "name": "01 - Home & Tasks",
+      "item": [
+        {
+          "name": "Get My Tasks (Home Screen)",
+          "request": {
+            "method": "GET",
+            "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{SECONDARY_USER_TOKEN}}"}]},
+            "url": {
+              "raw": "{{BASE_URL}}/tasks?page=1&limit=10",
+              "host": ["{{BASE_URL}}"],
+              "path": ["tasks"],
+              "query": [
+                {"key": "page", "value": "1"},
+                {"key": "limit", "value": "10"}
+              ]
+            },
+            "description": "Get all tasks assigned to me (Home screen)"
+          }
+        },
+        {
+          "name": "Get Daily Progress",
+          "request": {
+            "method": "GET",
+            "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{SECONDARY_USER_TOKEN}}"}]},
+            "url": {
+              "raw": "{{BASE_URL}}/tasks/daily-progress?date=2026-03-07",
+              "host": ["{{BASE_URL}}"],
+              "path": ["tasks", "daily-progress"],
+              "query": [{"key": "date", "value": "2026-03-07"}]
+            },
+            "description": "Get daily progress (X/Y tasks completed today)"
+          }
+        },
+        {
+          "name": "Get Task Details",
+          "request": {
+            "method": "GET",
+            "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{SECONDARY_USER_TOKEN}}"}]},
+            "url": {
+              "raw": "{{BASE_URL}}/tasks/{{TASK_ID}}",
+              "host": ["{{BASE_URL}}"],
+              "path": ["tasks", "{{TASK_ID}}"]
+            },
+            "description": "Get detailed information about a specific task"
+          }
+        },
+        {
+          "name": "Start Task (Update to In Progress)",
+          "request": {
+            "method": "PUT",
+            "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{SECONDARY_USER_TOKEN}}"}]},
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"inProgress\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/tasks/{{TASK_ID}}/status",
+              "host": ["{{BASE_URL}}"],
+              "path": ["tasks", "{{TASK_ID}}", "status"]
+            },
+            "description": "Start a task (change status from Pending to In Progress)"
+          }
+        },
+        {
+          "name": "Complete Task",
+          "request": {
+            "method": "PUT",
+            "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{SECONDARY_USER_TOKEN}}"}]},
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"completed\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/tasks/{{TASK_ID}}/status",
+              "host": ["{{BASE_URL}}"],
+              "path": ["tasks", "{{TASK_ID}}", "status"]
+            },
+            "description": "Mark task as complete (triggers celebration popup)"
+          }
+        },
+        {
+          "name": "Update Subtask Progress",
+          "request": {
+            "method": "PUT",
+            "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{SECONDARY_USER_TOKEN}}"}]},
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"subtasks\": [\n    {\n      \"title\": \"Exercise 1-5\",\n      \"isCompleted\": true,\n      \"duration\": \"30 min\"\n    },\n    {\n      \"title\": \"Exercise 6-10\",\n      \"isCompleted\": false,\n      \"duration\": \"30 min\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/tasks/{{TASK_ID}}/subtasks/progress",
+              "host": ["{{BASE_URL}}"],
+              "path": ["tasks", "{{TASK_ID}}", "subtasks", "progress"]
+            },
+            "description": "Update subtask completion status"
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 - Create Task (If Permission Granted)",
+      "item": [
+        {
+          "name": "Create Personal Task",
+          "request": {
+            "method": "POST",
+            "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{SECONDARY_USER_TOKEN}}"}]},
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"taskType\": \"personal\",\n  \"title\": \"Read Book\",\n  \"description\": \"Read chapter 3 of science book\",\n  \"startTime\": \"2026-03-08T16:00:00.000Z\",\n  \"scheduledTime\": \"4:00 PM\",\n  \"priority\": \"medium\",\n  \"subtasks\": [\n    {\n      \"title\": \"Read pages 1-10\",\n      \"duration\": \"30 min\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/tasks",
+              "host": ["{{BASE_URL}}"],
+              "path": ["tasks"]
+            },
+            "description": "Create personal task for yourself (always allowed)"
+          }
+        },
+        {
+          "name": "Create Group Task (Requires Permission)",
+          "request": {
+            "method": "POST",
+            "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{SECONDARY_USER_TOKEN}}"}]},
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"taskType\": \"singleAssignment\",\n  \"title\": \"Group Cleanup\",\n  \"description\": \"Clean the classroom\",\n  \"groupId\": \"<group-id>\",\n  \"assignedUserIds\": [\"<user-id>\"],\n  \"startTime\": \"2026-03-08T10:00:00.000Z\",\n  \"scheduledTime\": \"10:00 AM\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/tasks",
+              "host": ["{{BASE_URL}}"],
+              "path": ["tasks"]
+            },
+            "description": "Create task for group (only works if Primary user granted permission)"
+          }
+        },
+        {
+          "name": "TEST: Create Group Task WITHOUT Permission (403)",
+          "request": {
+            "method": "POST",
+            "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{SECONDARY_USER_TOKEN}}"}]},
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"taskType\": \"collaborative\",\n  \"title\": \"Unauthorized Task\",\n  \"groupId\": \"<group-id>\",\n  \"startTime\": \"2026-03-08T10:00:00.000Z\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/tasks",
+              "host": ["{{BASE_URL}}"],
+              "path": ["tasks"]
+            },
+            "description": "Test permission system - should return 403 Forbidden if no permission granted"
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 - Task Status & History",
+      "item": [
+        {
+          "name": "Get Pending Tasks",
+          "request": {
+            "method": "GET",
+            "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{SECONDARY_USER_TOKEN}}"}]},
+            "url": {
+              "raw": "{{BASE_URL}}/tasks?status=pending",
+              "host": ["{{BASE_URL}}"],
+              "path": ["tasks"],
+              "query": [{"key": "status", "value": "pending"}]
+            },
+            "description": "Get all pending tasks (Status tab)"
+          }
+        },
+        {
+          "name": "Get In Progress Tasks",
+          "request": {
+            "method": "GET",
+            "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{SECONDARY_USER_TOKEN}}"}]},
+            "url": {
+              "raw": "{{BASE_URL}}/tasks?status=inProgress",
+              "host": ["{{BASE_URL}}"],
+              "path": ["tasks"],
+              "query": [{"key": "status", "value": "inProgress"}]
+            },
+            "description": "Get all in-progress tasks (Status tab)"
+          }
+        },
+        {
+          "name": "Get Completed Tasks (History)",
+          "request": {
+            "method": "GET",
+            "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{SECONDARY_USER_TOKEN}}"}]},
+            "url": {
+              "raw": "{{BASE_URL}}/tasks?status=completed&from=2026-01-01&to=2026-12-31",
+              "host": ["{{BASE_URL}}"],
+              "path": ["tasks"],
+              "query": [
+                {"key": "status", "value": "completed"},
+                {"key": "from", "value": "2026-01-01"},
+                {"key": "to", "value": "2026-12-31"}
+              ]
+            },
+            "description": "Get completed tasks with date range (History screen)"
+          }
+        },
+        {
+          "name": "Get Task Statistics",
+          "request": {
+            "method": "GET",
+            "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{SECONDARY_USER_TOKEN}}"}]},
+            "url": {
+              "raw": "{{BASE_URL}}/tasks/statistics",
+              "host": ["{{BASE_URL}}"],
+              "path": ["tasks", "statistics"]
+            },
+            "description": "Get task statistics (total, pending, completed counts)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 - Profile & Settings (Figma)",
+      "item": [
+        {
+          "name": "Get Profile",
+          "request": {
+            "method": "GET",
+            "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{SECONDARY_USER_TOKEN}}"}]},
+            "url": {
+              "raw": "{{BASE_URL}}/users/profile",
+              "host": ["{{BASE_URL}}"],
+              "path": ["users", "profile"]
+            },
+            "description": "Get profile screen data"
+          }
+        },
+        {
+          "name": "Get Personal Information",
+          "request": {
+            "method": "GET",
+            "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{SECONDARY_USER_TOKEN}}"}]},
+            "url": {
+              "raw": "{{BASE_URL}}/users/profile-info",
+              "host": ["{{BASE_URL}}"],
+              "path": ["users", "profile-info"]
+            },
+            "description": "Get personal information page"
+          }
+        },
+        {
+          "name": "Update Personal Information",
+          "request": {
+            "method": "PUT",
+            "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{SECONDARY_USER_TOKEN}}"}]},
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Alex Student\",\n  \"phoneNumber\": \"+1234567890\",\n  \"location\": \"New York\",\n  \"dob\": \"2010-05-15\",\n  \"gender\": \"Male\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/users/profile-info",
+              "host": ["{{BASE_URL}}"],
+              "path": ["users", "profile-info"]
+            },
+            "description": "Update personal information"
+          }
+        },
+        {
+          "name": "Get Support Mode",
+          "request": {
+            "method": "GET",
+            "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{SECONDARY_USER_TOKEN}}"}]},
+            "url": {
+              "raw": "{{BASE_URL}}/users/support-mode",
+              "host": ["{{BASE_URL}}"],
+              "path": ["users", "support-mode"]
+            },
+            "description": "Get current support mode (Calm/Encouraging/Logical)"
+          }
+        },
+        {
+          "name": "Update Support Mode",
+          "request": {
+            "method": "PUT",
+            "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{SECONDARY_USER_TOKEN}}"}]},
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"supportMode\": \"encouraging\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/users/support-mode",
+              "host": ["{{BASE_URL}}"],
+              "path": ["users", "support-mode"]
+            },
+            "description": "Update support mode (Choose Your Support Style screen)"
+          }
+        },
+        {
+          "name": "Update Notification Style",
+          "request": {
+            "method": "PUT",
+            "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{SECONDARY_USER_TOKEN}}"}]},
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"notificationStyle\": \"gentle\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/users/notification-style",
+              "host": ["{{BASE_URL}}"],
+              "path": ["users", "notification-style"]
+            },
+            "description": "Update notification style (Gentle/Firm/XYZ)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 - Notifications",
+      "item": [
+        {
+          "name": "Get My Notifications",
+          "request": {
+            "method": "GET",
+            "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{SECONDARY_USER_TOKEN}}"}]},
+            "url": {
+              "raw": "{{BASE_URL}}/notifications/my?page=1&limit=10",
+              "host": ["{{BASE_URL}}"],
+              "path": ["notifications", "my"],
+              "query": [
+                {"key": "page", "value": "1"},
+                {"key": "limit", "value": "10"}
+              ]
+            },
+            "description": "Get notification list"
+          }
+        },
+        {
+          "name": "Get Unread Count",
+          "request": {
+            "method": "GET",
+            "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{SECONDARY_USER_TOKEN}}"}]},
+            "url": {
+              "raw": "{{BASE_URL}}/notifications/unread-count",
+              "host": ["{{BASE_URL}}"],
+              "path": ["notifications", "unread-count"]
+            },
+            "description": "Get unread notification count (for badge)"
+          }
+        },
+        {
+          "name": "Mark Notification as Read",
+          "request": {
+            "method": "POST",
+            "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{SECONDARY_USER_TOKEN}}"}]},
+            "url": {
+              "raw": "{{BASE_URL}}/notifications/{{NOTIFICATION_ID}}/read",
+              "host": ["{{BASE_URL}}"],
+              "path": ["notifications", "{{NOTIFICATION_ID}}", "read"]
+            },
+            "description": "Mark single notification as read"
+          }
+        },
+        {
+          "name": "Mark All as Read",
+          "request": {
+            "method": "POST",
+            "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{SECONDARY_USER_TOKEN}}"}]},
+            "url": {
+              "raw": "{{BASE_URL}}/notifications/read-all",
+              "host": ["{{BASE_URL}}"],
+              "path": ["notifications", "read-all"]
+            },
+            "description": "Mark all notifications as read"
+          }
+        }
+      ]
+    },
+    {
+      "name": "06 - SubTasks",
+      "item": [
+        {
+          "name": "Get Subtasks for Task",
+          "request": {
+            "method": "GET",
+            "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{SECONDARY_USER_TOKEN}}"}]},
+            "url": {
+              "raw": "{{BASE_URL}}/subtasks/task/{{TASK_ID}}",
+              "host": ["{{BASE_URL}}"],
+              "path": ["subtasks", "task", "{{TASK_ID}}"]
+            },
+            "description": "Get all subtasks for a task"
+          }
+        },
+        {
+          "name": "Create Subtask",
+          "request": {
+            "method": "POST",
+            "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{SECONDARY_USER_TOKEN}}"}]},
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"taskId\": \"{{TASK_ID}}\",\n  \"title\": \"Additional subtask\",\n  \"description\": \"Extra work to complete\",\n  \"duration\": \"20 min\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/subtasks",
+              "host": ["{{BASE_URL}}"],
+              "path": ["subtasks"]
+            },
+            "description": "Add new subtask to existing task"
+          }
+        },
+        {
+          "name": "Toggle Subtask Status",
+          "request": {
+            "method": "PUT",
+            "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{SECONDARY_USER_TOKEN}}"}]},
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isCompleted\": true\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/subtasks/{{SUBTASK_ID}}/toggle-status",
+              "host": ["{{BASE_URL}}"],
+              "path": ["subtasks", "{{SUBTASK_ID}}", "toggle-status"]
+            },
+            "description": "Toggle subtask completion (check/uncheck)"
+          }
+        },
+        {
+          "name": "Delete Subtask",
+          "request": {
+            "method": "DELETE",
+            "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{SECONDARY_USER_TOKEN}}"}]},
+            "url": {
+              "raw": "{{BASE_URL}}/subtasks/{{SUBTASK_ID}}",
+              "host": ["{{BASE_URL}}"],
+              "path": ["subtasks", "{{SUBTASK_ID}}"]
+            },
+            "description": "Delete a subtask"
+          }
+        }
+      ]
+    }
+  ]
+}
