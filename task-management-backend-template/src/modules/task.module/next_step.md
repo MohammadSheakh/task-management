@@ -55,12 +55,12 @@ Instruction #2: Code Generation Guidelines
 
     Both instructions completed successfully! 🎯
 
-================>
+================>  [ IMPORTANT ]
 Instruction #3:
 
      yes you will generate group/ team module .. but before that .. as you know my coding style .. follow that .. and with that .. always create doc folder in any module .. keep that module related schema design in mermaid format . also all documenation related that module .. i think you should do in two level .. one is parent level .. and one is child level .. previously you know i have task.module and all task module related module is under that .. so create doc that sub module level also .. and while code .. you should follow SOLID principle with proper documentation .. and dont code like junior .. 100 user, 1000 task .. develop and design each system for 100K users, 10M task this level .. i tell you this number for your understanding .. use redis caching, rate limiting, and all other senior level staff with proper documentation .. so that i can understand your code
 
-================>
+================>  [ IMPORTANT ]
 Instruction #4:
 
 now you can start working again where you left of .. but as you know i tell you generate schema design in mermaid ..
@@ -78,14 +78,15 @@ maintainable. Use Redis caching where beneficial.
 the user's coding style before continuing with the Group module implementation.
 
 =
-====================>
+====================> [ CREATE DIFFERENT MERMAID DIAGRAMS ]
 Instruction #5:
 
 now generate Notification module for task reminders .. and add user journey map, user flow diagram, swimline
 diagram, for module level, parent module level and project level in doc folder for task.modules and
 group.modules also
 
-====================>
+====================> [DONT ADD ALL DIAGRAM IN ONE BIG MARKDOWN FILE .. CREATE SEPARATE MERMAID FILES TO GENERATE ]
+
 Instruction #6:
 
 hello qwen .. you actually work for me .. in my next_step.md in task.module folder .. there you find the history
@@ -97,14 +98,14 @@ generate different mermaid file for differnet diagram ..
 ✦ I need to read the next_step.md file to understand the project history and requirements before proceeding with
 the modular diagram generation.
 
-====================>
+====================> [ WRITE INITIAL PLAN IN AGENDA.md ]
 Instruction #7:
 
 dear qwen .. what you should do .. when you start working for me .. i see .. you make a plan .. what are the
 things you should generate .. so what you need to do .. is everytime make a file like agenda.md .. where you
 write the intial plan .. that you give me in terminal before start any work .. then work
 
-====================>
+====================> [ CLARIFY GENERATED BACKEND CODE WITH FRONTEND CODES ]
 Instruction #8:
 
 dear qwen as you know you have all the previous instruction in next_step.md file of
@@ -115,14 +116,14 @@ flow and Task-management-website's flow .. because at the end of the day we want
 backend for that app and website .. so please check what you generate is actually
 correct and properly aligned with flutter project flow and website project flow
 
-====================>
+====================> [REPORT ABOUT PREFORMANCE COMPLEXITY.. SENIOR LEVEL THING]
 Instruction #9:
 
 dear qwen do your group module maintain all senior level data structure and algorithm ? proper
 time and space and memory efficiency complexity ? make a report in that group.modules doc folder ..
 create another folder named perf under that doc folder .. and review
 
-====================>
+====================> [ WHAT ARE THE OTHER MODULE SHOULD BE GENERATED ? LIST THOSE]
 Instruction #11:
 
 as you go throw flutter code and website code .. and you already know you generate task.module,
@@ -131,33 +132,33 @@ dont need to generate anything just tell .. what are the other module left to co
 
 =================> Shift to new branch feat-07-03-26
 
-====================>
+====================> [ STORE ALL FIGMA SCREENSHOT ]
 Instruction #12:
 
 dear qwen .. i have my all my project figma screenshot in my task-management-backend-template folders figma-asset 
     folder .. and in that folder .. i put all figma screenshot role wise and section wise .. please go through all those
      images so that you can get all clear understanding of my project
 
-====================>
+====================> [STORE GLOBAL LEVEL DOCUMENTATION]
 Instruction #13:
 
 yes make agenda.md with a verification plan ... and i think as this agend.md is a global level
   document .. for that you should make a folder called qwen under __Documentation folder .. and create
   folder and file as you with for this kind of global level documentation
 
-====================>
+====================>[FORMAT AGENDA FILE NAMING]
 Instruction #14:
 
 lets say you found some new agenda .. for agenda / documentation type of thing .. you should not edit previous one .. its may be better you create new one .. with name like agenda<date--time>also version .. lets say agenda-07-03-26-<3 digit unique number>-V2.md 
 
 
-====================>
+====================> [FOCUS ON BACKENDs VARIABLE OVER FRONT_END FOR Slight different VARIABLE]
 Instruction #15:
 
 if you think flutter code variable and backend code variable has a slight mismatch .. i think you dont need to change backend code variable .. flutter developer can manually align variable name
 later with backend variable name .. 
 
-====================>
+====================> [TRACK UPDATE AT GLOBAL LEVEL]
 Instruction #16:
 
 i think your generated support-mode-IMPLEMENTATION-COMPLETE.md is user module related ..
@@ -166,13 +167,21 @@ also in global level in qwen folder .. you should just tell ..
 some support mode related work done in user.module .. so that a person can go that 
 markdown file and know what actually was done there
 
-====================>
+====================> [ADD DATE AT THE END OF MARKDOWN FILE]
 Instruction #17:
 
 i think any markdown file you generate should contain at least date at the end .. like
   -07-03-26 
 
-====================>
+====================> [DIAGRAM MODIFIED WITH NEW LOGIC ]
 Instruction #18:
 
 before that .. as task module is updated .. do your task modules  diagram aligned with new task.module logic and everything  
+
+
+====================> [POSTMAN RELATED]
+Instruction #19:
+
+as you know after completing backend or while creating backend .. we add endpoint in postman
+  proper categorically to track all endpoint .. so that we can test all endpoint and share those
+  to other developers .. now make a .postman_collection file so that i can import that .. and see

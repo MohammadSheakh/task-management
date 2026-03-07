@@ -87,13 +87,54 @@ const groupMemberSchema = new Schema<IGroupMemberDocument>(
       default: '',
     },
 
+    // ─── Permissions ───────────────────────────────────────────────────
     /**
-     * Custom metadata for extensibility
-     * Store member-specific settings here
+     * Member permissions
+     * Controls what actions member can perform
+     * @see Figma: permission-flow.png
      */
-    metadata: {
-      type: Schema.Types.Mixed,
-      default: {},
+    permissions: {
+      /**
+       * Can create tasks for the group
+       * Default: false (Secondary users cannot create tasks by default)
+       */
+      canCreateTasks: {
+        type: Boolean,
+        default: false,
+      },
+
+      /**
+       * Can invite new members
+       * Default: false
+       */
+      canInviteMembers: {
+        type: Boolean,
+        default: false,
+      },
+
+      /**
+       * Can remove other members
+       * Default: false
+       */
+      canRemoveMembers: {
+        type: Boolean,
+        default: false,
+      },
+
+      /**
+       * User who granted these permissions
+       */
+      grantedBy: {
+        type: Schema.Types.ObjectId,
+        ref: 'User',
+      },
+
+      /**
+       * When permissions were granted
+       */
+      grantedAt: {
+        type: Date,
+      },
     },
 
     // ─── System Fields ─────────────────────────────────────────────────
@@ -137,6 +178,12 @@ groupMemberSchema.index({ groupId: 1, role: 1, isDeleted: 1 });
 
 // Analytics: Track member growth over time
 groupMemberSchema.index({ joinedAt: -1, groupId: 1 });
+
+// Permissions: Find members with task creation permission
+groupMemberSchema.index({ groupId: 1, 'permissions.canCreateTasks': 1, status: 1, isDeleted: 1 });
+
+// Permissions: Find members with invite permission
+groupMemberSchema.index({ groupId: 1, 'permissions.canInviteMembers': 1, status: 1, isDeleted: 1 });
 
 // ─── Virtuals ────────────────────────────────────────────────────────
 /**

@@ -260,4 +260,106 @@ export class GroupMemberController extends GenericController<typeof GroupMember,
       success: true,
     });
   };
+
+  // ────────────────────────────────────────────────────────────────────────
+  // Group Permissions
+  // ────────────────────────────────────────────────────────────────────────
+
+  /** ----------------------------------------------
+   * @role Primary (Group Owner)
+   * @Section Settings
+   * @module GroupMember
+   * @figmaIndex 08-01
+   * @desc Get group permissions (which members have task creation permission)
+   *----------------------------------------------*/
+  getGroupPermissions = async (req: Request, res: Response) => {
+    const groupId = req.params.id;
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      throw new ApiError(StatusCodes.UNAUTHORIZED, 'User not authenticated');
+    }
+
+    const permissions = await this.groupMemberService.getGroupPermissions(groupId);
+
+    (res as any).sendResponse({
+      code: StatusCodes.OK,
+      data: permissions,
+      message: 'Group permissions retrieved successfully',
+      success: true,
+    });
+  };
+
+  /** ----------------------------------------------
+   * @role Primary (Group Owner)
+   * @Section Settings
+   * @module GroupMember
+   * @figmaIndex 08-01
+   * @desc Update group permissions (grant/revoke task creation for members)
+   *----------------------------------------------*/
+  updateGroupPermissions = async (req: Request, res: Response) => {
+    const groupId = req.params.id;
+    const userId = req.user?.userId;
+    const { memberPermissions } = req.body;
+
+    if (!userId) {
+      throw new ApiError(StatusCodes.UNAUTHORIZED, 'User not authenticated');
+    }
+
+    if (!memberPermissions || !Array.isArray(memberPermissions)) {
+      throw new ApiError(StatusCodes.BAD_REQUEST, 'memberPermissions array is required');
+    }
+
+    const permissions = await this.groupMemberService.updateGroupPermissions(
+      groupId,
+      memberPermissions,
+      userId
+    );
+
+    (res as any).sendResponse({
+      code: StatusCodes.OK,
+      data: permissions,
+      message: 'Group permissions updated successfully',
+      success: true,
+    });
+  };
+
+  /** ----------------------------------------------
+   * @role Primary (Group Owner)
+   * @Section Settings
+   * @module GroupMember
+   * @figmaIndex 08-01
+   * @desc Toggle task creation permission for a single member
+   *----------------------------------------------*/
+  toggleTaskCreationPermission = async (req: Request, res: Response) => {
+    const groupId = req.params.id;
+    const userId = req.user?.userId;
+    const { memberId, canCreateTasks } = req.body;
+
+    if (!userId) {
+      throw new ApiError(StatusCodes.UNAUTHORIZED, 'User not authenticated');
+    }
+
+    if (!memberId) {
+      throw new ApiError(StatusCodes.BAD_REQUEST, 'memberId is required');
+    }
+
+    if (typeof canCreateTasks !== 'boolean') {
+      throw new ApiError(StatusCodes.BAD_REQUEST, 'canCreateTasks boolean is required');
+    }
+
+    const member = await this.groupMemberService.toggleTaskCreationPermission(
+      groupId,
+      memberId,
+      canCreateTasks,
+      userId
+    );
+
+    (res as any).sendResponse({
+      code: StatusCodes.OK,
+      data: member,
+      message: `Task creation permission ${canCreateTasks ? 'granted' : 'revoked'} successfully`,
+      success: true,
+    });
+  };
 }

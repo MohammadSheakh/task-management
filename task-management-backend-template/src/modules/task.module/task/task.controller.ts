@@ -7,6 +7,7 @@ import { TaskService } from './task.service';
 import { SubTaskService } from '../subtask/subtask.service';
 import { TRole } from '../../../middlewares/roles';
 import ApiError from '../../../errors/ApiError';
+import { GroupMember } from '../../group.module/groupMember/groupMember.model';
 
 /**
  * Task Controller
@@ -26,6 +27,7 @@ export class TaskController extends GenericController<typeof Task, ITask> {
   /**
    * Create a new task
    * Overrides generic create to add user context
+   * Includes permission check for group/collaborative tasks
    */
   create = async (req: Request, res: Response) => {
     const userId = req.user?.userId;
@@ -35,6 +37,28 @@ export class TaskController extends GenericController<typeof Task, ITask> {
     }
 
     const taskData = req.body;
+
+    // ────────────────────────────────────────────────────────────────────────
+    // Permission Check for Group/Collaborative Tasks
+    // ────────────────────────────────────────────────────────────────────────
+    // If task is for a group or is collaborative, check if user has permission
+    if (taskData.groupId || taskData.taskType === 'collaborative') {
+      const groupId = taskData.groupId;
+
+      if (groupId) {
+        // Check if user has permission to create tasks in this group
+        const canCreate = await GroupMember.canCreateTasks(groupId, userId);
+
+        if (!canCreate) {
+          throw new ApiError(
+            StatusCodes.FORBIDDEN,
+            'You do not have permission to create tasks for this group. Please contact the group owner to request access.'
+          );
+        }
+      }
+    }
+    // ────────────────────────────────────────────────────────────────────────
+
     const result = await this.taskService.createTask(taskData, userId);
 
     (res as any).sendResponse({

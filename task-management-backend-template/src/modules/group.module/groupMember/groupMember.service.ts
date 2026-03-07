@@ -369,4 +369,218 @@ export class GroupMemberService extends GenericService<typeof GroupMember, IGrou
 
     return memberships.map(m => m.groupId);
   }
+
+  // ────────────────────────────────────────────────────────────────────────
+  // Group Permissions Methods
+  // ────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Get group permissions
+   * Returns all members with their permission settings
+   *
+   * @param groupId - Group ID
+   * @returns Object with allowSecondaryTasks and membersWithPermission
+   */
+  async getGroupPermissions(groupId: string) {
+    const members = await this.model.find({
+      groupId: new Types.ObjectId(groupId),
+      status: GROUP_MEMBER_STATUS.ACTIVE,
+      isDeleted: false,
+    })
+      .populate('userId', 'name email profileImage')
+      .populate('grantedBy', 'name')
+      .select('userId permissions grantedAt')
+      .lean();
+
+    // Check if any secondary user has task creation permission
+    const allowSecondaryTasks = members.some(
+      m => m.userId && m.permissions?.canCreateTasks === true
+    );
+
+    // Filter members with permissions
+    const membersWithPermission = members
+      .filter(m => m.permissions && (m.permissions.canCreateTasks || m.permissions.canInviteMembers || m.permissions.canRemoveMembers))
+      .map(m => ({
+        _groupMemberId: m._id,
+        userId: m.userId._id,
+        name: m.userId.name,
+        email: m.userId.email,
+        profileImage: m.userId.profileImage,
+        permissions: m.permissions,
+        grantedAt: m.grantedAt,
+      }));
+
+    return {
+      groupId,
+      allowSecondaryTasks,
+      membersWithPermission,
+    };
+  }
+
+  /**
+   * Update group permissions
+   * Bulk update permissions for multiple members
+   *
+   * @param groupId - Group ID
+   * @param updates - Array of permission updates
+   * @param userId - User making the update (for grantedBy)
+   * @returns Updated permissions info
+   */
+  async updateGroupPermissions(
+    groupId: string,
+    updates: Array<{ userId: string; canCreateTasks?: boolean; canInviteMembers?: boolean; canRemoveMembers?: boolean }>,
+    userId: string
+  ) {
+    const updateOperations = updates.map(update => ({
+      updateOne: {
+        filter: {
+          groupId: new Types.ObjectId(groupId),
+          userId: new Types.ObjectId(update.userId),
+          isDeleted: false,
+        },
+        update: {
+          $set: {
+            'permissions.canCreateTasks': update.canCreateTasks ?? false,
+            'permissions.canInviteMembers': update.canInviteMembers ?? false,
+            'permissions.canRemoveMembers': update.canRemoveMembers ?? false,
+            'permissions.grantedBy': new Types.ObjectId(userId),
+            'permissions.grantedAt': new Date(),
+          },
+        },
+      },
+    }));
+
+    const result = await this.model.bulkWrite(updateOperations);
+
+    // Invalidate cache
+    await this.invalidateCache(groupId);
+
+    // Get updated permissions
+    return await this.getGroupPermissions(groupId);
+  }
+
+  /**
+   * Toggle task creation permission for a member
+   *
+   * @param groupId - Group ID
+   * @param userId - Member User ID
+   * @param canCreateTasks - Permission value
+   * @param grantedBy - User granting permission
+   * @returns Updated member
+   */
+  async toggleTaskCreationPermission(
+    groupId: string,
+    userId: string,
+    canCreateTasks: boolean,
+    grantedBy: string
+  ) {
+    const member = await this.model.findOneAndUpdate(
+      {
+        groupId: new Types.ObjectId(groupId),
+        userId: new Types.ObjectId(userId),
+        isDeleted: false,
+      },
+      {
+        $set: {
+          'permissions.canCreateTasks': canCreateTasks,
+          'permissions.grantedBy': new Types.ObjectId(grantedBy),
+          'permissions.grantedAt': new Date(),
+        },
+      },
+      { new: true }
+    ).populate('userId', 'name email profileImage');
+
+    if (!member) {
+      throw new ApiError(StatusCodes.NOT_FOUND, 'Member not found');
+    }
+
+    // Invalidate cache
+    await this.invalidateCache(groupId);
+
+    return member;
+  }
+
+  /**
+   * Check if user has permission to create tasks in group
+   *
+   * @param groupId - Group ID
+   * @param userId - User ID
+   * @returns True if user can create tasks
+   */
+  async canCreateTasks(groupId: string, userId: string): Promise<boolean> {
+    const member = await this.model.findOne({
+      groupId: new Types.ObjectId(groupId),
+      userId: new Types.ObjectId(userId),
+      status: GROUP_MEMBER_STATUS.ACTIVE,
+      isDeleted: false,
+    }).select('permissions role');
+
+    if (!member) {
+      return false;
+    }
+
+    // Owner and admin can always create tasks
+    if (member.role === GROUP_MEMBER_ROLES.OWNER || member.role === GROUP_MEMBER_ROLES.ADMIN) {
+      return true;
+    }
+
+    // Check explicit permission
+    return member.permissions?.canCreateTasks === true;
+  }
+
+  /**
+   * Check if user has permission to invite members
+   *
+   * @param groupId - Group ID
+   * @param userId - User ID
+   * @returns True if user can invite members
+   */
+  async canInviteMembers(groupId: string, userId: string): Promise<boolean> {
+    const member = await this.model.findOne({
+      groupId: new Types.ObjectId(groupId),
+      userId: new Types.ObjectId(userId),
+      status: GROUP_MEMBER_STATUS.ACTIVE,
+      isDeleted: false,
+    }).select('permissions role');
+
+    if (!member) {
+      return false;
+    }
+
+    // Owner and admin can always invite
+    if (member.role === GROUP_MEMBER_ROLES.OWNER || member.role === GROUP_MEMBER_ROLES.ADMIN) {
+      return true;
+    }
+
+    // Check explicit permission
+    return member.permissions?.canInviteMembers === true;
+  }
+
+  /**
+   * Check if user has permission to remove members
+   *
+   * @param groupId - Group ID
+   * @param userId - User ID
+   * @returns True if user can remove members
+   */
+  async canRemoveMembers(groupId: string, userId: string): Promise<boolean> {
+    const member = await this.model.findOne({
+      groupId: new Types.ObjectId(groupId),
+      userId: new Types.ObjectId(userId),
+      status: GROUP_MEMBER_STATUS.ACTIVE,
+      isDeleted: false,
+    }).select('permissions role');
+
+    if (!member) {
+      return false;
+    }
+
+    // Owner and admin can always remove
+    if (member.role === GROUP_MEMBER_ROLES.OWNER || member.role === GROUP_MEMBER_ROLES.ADMIN) {
+      return true;
+    }
+
+    // Check explicit permission
+    return member.permissions?.canRemoveMembers === true;
+  }
 }
