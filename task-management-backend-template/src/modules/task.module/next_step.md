@@ -185,3 +185,8 @@ Instruction #19:
 as you know after completing backend or while creating backend .. we add endpoint in postman
   proper categorically to track all endpoint .. so that we can test all endpoint and share those
   to other developers .. now make a .postman_collection file so that i can import that .. and see
+
+====================> [POSTMAN ROLE BASED CATEGORY]
+Instruction #20:
+
+dear qwen that you for generating postman collection .. but my postman collection is well categorized by role .. but your collection is not .. your collection is categorized by feature category .. as you have my all figma screen shot .. so you can know about the roles and what role have what pages .. features  .. so make category like that and inside role based category then feature wise category .. then endpoint  
