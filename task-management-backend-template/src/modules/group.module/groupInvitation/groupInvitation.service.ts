@@ -2,7 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import { Types } from 'mongoose';
 import { GroupInvitation } from './groupInvitation.model';
 import { IGroupInvitation, IGroupInvitationDocument, IBulkInvitationPayload } from './groupInvitation.interface';
-import { GenericService } from '../../../_generic-module/generic.services';
+import { GenericService } from '../../_generic-module/generic.services';
 import ApiError from '../../../errors/ApiError';
 import { redisClient } from '../../../helpers/redis/redis';
 import {

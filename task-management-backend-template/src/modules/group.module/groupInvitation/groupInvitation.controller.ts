@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
-import { GenericController } from '../../../_generic-module/generic.controller';
+import { GenericController } from '../../_generic-module/generic.controller';
 import { GroupInvitation } from './groupInvitation.model';
 import { IGroupInvitationDocument } from './groupInvitation.interface';
 import { GroupInvitationService } from './groupInvitation.service';

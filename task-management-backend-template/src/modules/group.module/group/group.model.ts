@@ -2,7 +2,7 @@
 import { model, Schema, Types, Document } from 'mongoose';
 import { IGroup, IGroupDocument, IGroupModel } from './group.interface';
 import { GROUP_LIMITS, GROUP_VISIBILITY, GROUP_STATUS } from './group.constant';
-import paginate from '../../common/plugins/paginate';
+import paginate from '../../../common/plugins/paginate';
 
 /**
  * Group Schema

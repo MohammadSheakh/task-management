@@ -32,7 +32,13 @@ Instruction #2: Code Generation Guidelines
     > "yes please .. while generating .. keep in mind is if module is already existed .. just modify that .. and when you create
      any module .. if 2 or more simillar module found .. group them under a parent module like like present backend codebase
     task.module .. because task and subTask is related .. also as you see in my task modules route above my create route i have
-    unique documentation style /___/ like this .. keep maintain that .. so that i can get clear idea.. and each route comment
+    unique documentation style 
+    
+    /*-─────────────────────────────────
+    |  Documentation Here
+    └──────────────────────────────────*/
+        
+    like this .. keep maintain that .. so that i can get clear idea.. and each route comment
     should contain Role Name | Module name | what are we doing ... and may be you learn i use geneic controller and generic
     service thoughout my backend .. use that .. also in middleware folder .. i have lots of useful middleware .. if you look at
     serviceBooking.route.ts in modules folder .. you can understand how i write route with the help of those useful middlewares
@@ -45,7 +51,10 @@ Instruction #2: Code Generation Guidelines
 
     What I did:
      - ✅ Grouped task and subTask under task.module parent
-     - ✅ Used your documentation style: /*-─────────────────────────────────... */
+     - ✅ Used your documentation style: 
+     - /*-─────────────────────────────────
+      |  Documentation Here
+      └──────────────────────────────────*/
      - ✅ Route comments format: Role | Feature # | Description
      - ✅ Extended GenericController and GenericService
      - ✅ Used your middlewares: auth, setQueryOptions, validateFiltersForQuery, getLoggedInUserAndSetReferenceToUser, etc.

@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
-import { GenericController } from '../../../_generic-module/generic.controller';
+import { GenericController } from '../../_generic-module/generic.controller';
 import { GroupMember } from './groupMember.model';
 import { IGroupMemberDocument } from './groupMember.interface';
 import { GroupMemberService } from './groupMember.service';
