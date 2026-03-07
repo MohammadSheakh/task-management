@@ -1,0 +1,143 @@
+---
+title: Group Module - Swimlane Diagram
+description: Cross-functional flow showing interactions between different actors and systems
+date: 07-03-26
+---
+
+sequenceDiagram
+    participant U as User (Owner/Admin)
+    participant F as Frontend (Web/Mobile)
+    participant API as API Layer
+    participant GC as Group Controller
+    participant GS as Group Service
+    participant GM as Group Member Service
+    participant GI as Group Invitation Service
+    participant DB as MongoDB
+    participant Redis as Redis Cache
+    participant Queue as BullMQ
+    participant ES as Email Service
+    participant N as Notification Service
+    
+    %% Create Group Flow
+    U->>F: Create Group Request
+    F->>API: POST /groups
+    API->>GC: create()
+    GC->>GS: validateGroupData()
+    GS->>DB: Check Name Uniqueness
+    DB-->>GS: Name Available
+    GS->>DB: Insert Group Document
+    DB-->>GS: Group Created {_id}
+    GS->>GM: Create Owner Membership
+    GM->>DB: Insert groupmember (Owner)
+    DB-->>GM: Membership Created
+    GS->>Redis: Cache Group Data
+    GS-->>GC: Group Object
+    GC-->>F: 201 Created + Group Data
+    F-->>U: Group Created Successfully
+    
+    %% Invite Members Flow
+    U->>F: Invite Members
+    F->>API: POST /groups/:id/invitations
+    API->>GI: createInvitation()
+    GI->>DB: Check Group Exists
+    DB-->>GI: Group Found
+    GI->>DB: Check Member Limit
+    DB-->>GI: Within Limit
+    GI->>DB: Create Invitation
+    DB-->>GI: Invitation Created
+    GI->>Queue: Queue Email Job
+    Queue->>ES: Send Invitation Email
+    ES-->>GI: Email Sent
+    GI->>N: Send In-App Notification
+    N-->>GI: Notification Sent
+    GI-->>F: 201 Created + Invitation
+    F-->>U: Invitations Sent
+    
+    %% Member Accepts Invitation
+    Note over U,ES: Member receives email
+    Member->>F: Click Accept Link
+    F->>API: POST /invitations/:id/accept
+    API->>GI: acceptInvitation()
+    GI->>DB: Validate Invitation
+    DB-->>GI: Valid & Not Expired
+    GI->>GM: Add Member to Group
+    GM->>DB: Insert groupmember
+    DB-->>GM: Member Added
+    GI->>DB: Update Invitation Status
+    GI->>Redis: Invalidate Cache
+    GI->>N: Notify Owner
+    N-->>U: New Member Joined
+    GI-->>F: 200 OK + Member Data
+    
+    %% View Group Members
+    U->>F: View Members
+    F->>API: GET /groups/:id/members
+    API->>GM: getGroupMembers()
+    GM->>Redis: Check Cache
+    Redis-->>GM: Cache Miss
+    GM->>DB: Query Members with Populates
+    DB-->>GM: Member List
+    GM->>Redis: Cache Results (5min)
+    GM-->>API: Member List
+    API-->>F: 200 OK + Members
+    F-->>U: Display Members
+    
+    %% Update Member Role
+    U->>F: Promote Member to Admin
+    F->>API: PUT /groups/:id/members/:userId/role
+    API->>GM: updateMemberRole()
+    GM->>DB: Check Owner Permission
+    DB-->>GM: Is Owner ✅
+    GM->>DB: Update Member Role
+    DB-->>GM: Role Updated
+    GM->>Redis: Invalidate Cache
+    GM->>N: Notify Member
+    N-->>Member: You're Now Admin
+    GM-->>API: 200 OK + Updated Member
+    F-->>U: Role Updated Successfully
+    
+    %% Remove Member
+    U->>F: Remove Member
+    F->>API: DELETE /groups/:id/members/:userId
+    API->>GM: removeMember()
+    GM->>DB: Check Permission
+    DB-->>GM: Is Owner/Admin ✅
+    GM->>DB: Soft Delete Membership
+    DB-->>GM: Member Removed
+    GM->>DB: Update Group Member Count
+    GM->>Redis: Invalidate Cache
+    GM->>N: Notify Removed Member
+    GM-->>API: 200 OK
+    F-->>U: Member Removed
+    
+    %% Leave Group
+    Member->>F: Leave Group
+    F->>API: POST /groups/:id/leave
+    API->>GM: leaveGroup()
+    GM->>DB: Check Is Not Owner
+    DB-->>GM: Not Owner ✅
+    GM->>DB: Soft Delete Membership
+    DB-->>GM: Left Group
+    GM->>DB: Decrement Member Count
+    GM->>Redis: Invalidate Cache
+    GM-->>API: 200 OK
+    F-->>Member: Left Group Successfully
+    
+    %% Delete Group
+    U->>F: Delete Group
+    F->>API: DELETE /groups/:id
+    API->>GC: deleteById()
+    GC->>GS: Check Owner Permission
+    GS->>DB: Verify Owner
+    DB-->>GS: Is Owner ✅
+    GS->>DB: Soft Delete Group
+    GS->>GM: Archive All Memberships
+    GM->>DB: Soft Delete Memberships
+    GS->>GI: Cancel Pending Invitations
+    GI->>DB: Mark Invitations Expired
+    GS->>Redis: Clear Cache
+    GS-->>GC: Group Deleted
+    GC-->>F: 200 OK
+    F-->>U: Group Deleted Successfully
+    
+    Note over U,N: All actions trigger notifications

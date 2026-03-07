@@ -1284,6 +1284,85 @@ export class UserService extends GenericService<typeof User, IUser> {
     }
   }
 
+  // ────────────────────────────────────────────────────────────────────────
+  // Support Mode & Notification Preferences
+  // ────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Get user's support mode
+   * @param userId - User ID
+   * @returns Support mode and notification preferences
+   */
+  async getSupportMode(userId: string) {
+    const userProfile = await UserProfile.findOne({ userId }).select(
+      'supportMode notificationStyle updatedAt'
+    );
+
+    if (!userProfile) {
+      // Create default profile if not exists
+      const newProfile = await UserProfile.create({
+        userId,
+        supportMode: 'calm',
+        notificationStyle: 'gentle',
+      });
+
+      return {
+        userId,
+        supportMode: newProfile.supportMode,
+        notificationStyle: newProfile.notificationStyle,
+        updatedAt: newProfile.updatedAt,
+      };
+    }
+
+    return {
+      userId,
+      supportMode: userProfile.supportMode || 'calm',
+      notificationStyle: userProfile.notificationStyle || 'gentle',
+      updatedAt: userProfile.updatedAt,
+    };
+  }
+
+  /**
+   * Update user's support mode
+   * @param userId - User ID
+   * @param supportMode - New support mode
+   * @returns Updated support mode info
+   */
+  async updateSupportMode(userId: string, supportMode: string) {
+    const userProfile = await UserProfile.findOneAndUpdate(
+      { userId },
+      { supportMode },
+      { new: true, upsert: true }
+    ).select('supportMode notificationStyle updatedAt');
+
+    return {
+      userId,
+      supportMode: userProfile.supportMode,
+      notificationStyle: userProfile.notificationStyle,
+      updatedAt: userProfile.updatedAt,
+    };
+  }
+
+  /**
+   * Update user's notification style
+   * @param userId - User ID
+   * @param notificationStyle - New notification style
+   * @returns Updated notification preferences
+   */
+  async updateNotificationStyle(userId: string, notificationStyle: string) {
+    const userProfile = await UserProfile.findOneAndUpdate(
+      { userId },
+      { notificationStyle },
+      { new: true, upsert: true }
+    ).select('supportMode notificationStyle updatedAt');
+
+    return {
+      userId,
+      supportMode: userProfile.supportMode,
+      notificationStyle: userProfile.notificationStyle,
+      updatedAt: userProfile.updatedAt,
+    };
+  }
 
 }
 

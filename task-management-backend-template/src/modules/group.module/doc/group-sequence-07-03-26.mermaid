@@ -1,0 +1,188 @@
+---
+title: Group Module - Sequence Diagram
+description: Detailed sequence of operations for key group management scenarios
+date: 07-03-26
+---
+
+sequenceDiagram
+    autonumber
+    participant U as User
+    participant FE as Frontend
+    participant API as API Gateway
+    participant Ctrl as Controller
+    participant Svc as Service
+    participant DB as MongoDB
+    participant Cache as Redis
+    participant Queue as BullMQ
+    
+    %% Scenario 1: Create Group
+    rect rgb(232, 245, 233)
+    note right of U: Create Group
+    U->>FE: Enter group details & submit
+    FE->>API: POST /groups {name, description, maxMembers}
+    API->>Ctrl: create()
+    Ctrl->>Svc: validateGroupData(data)
+    Svc->>DB: findOne({name, ownerUserId})
+    DB-->>Svc: null (unique)
+    Svc->>DB: insertOne(groupData)
+    DB-->>Svc: {_id, ...groupData}
+    Svc->>DB: insertOne(groupMember: Owner)
+    DB-->>Svc: membership created
+    Svc->>Cache: setex(groupId, 300, groupData)
+    Svc-->>Ctrl: group object
+    Ctrl-->>API: 201 Created
+    API-->>FE: group data
+    FE-->>U: Success! Group created
+    end
+    
+    %% Scenario 2: Invite Members
+    rect rgb(255, 243, 224)
+    note right of U: Invite Members
+    U->>FE: Select members to invite
+    FE->>API: POST /group-invitations {groupId, emails}
+    API->>Ctrl: createInvitation()
+    Ctrl->>Svc: validateInvitationData()
+    Svc->>DB: countMembers(groupId)
+    DB-->>Svc: currentCount
+    Svc->>DB: find({groupId, email, status: pending})
+    DB-->>Svc: existing invites
+    loop For each email
+        Svc->>DB: insertOne(invitation)
+        DB-->>Svc: invitation created
+        Svc->>Queue: add('send-invitation-email')
+        Queue-->>Queue: Process job
+        Queue->>Queue: sendEmail(invitation)
+    end
+    Svc-->>Ctrl: invitations[]
+    Ctrl-->>API: 201 Created
+    API-->>FE: invitations sent
+    FE-->>U: Invitations sent successfully
+    end
+    
+    %% Scenario 3: Accept Invitation
+    rect rgb(227, 242, 253)
+    note right of U: Accept Invitation
+    U->>FE: Click accept link from email
+    FE->>API: POST /group-invitations/:id/accept
+    API->>Ctrl: acceptInvitation(id)
+    Ctrl->>Svc: validateInvitation(id)
+    Svc->>DB: findOne({_id, status: pending})
+    DB-->>Svc: invitation object
+    alt Invitation Expired
+        Svc-->>Ctrl: 400 Expired
+        Ctrl-->>API: 400 Bad Request
+        API-->>FE: error
+        FE-->>U: Invitation expired
+    else Invitation Valid
+        Svc->>DB: insertOne(groupMember)
+        DB-->>Svc: membership created
+        Svc->>DB: updateOne(invitation, {status: accepted})
+        Svc->>DB: incrementMemberCount(groupId)
+        Svc->>Cache: del(groupId)
+        Svc-->>Ctrl: member object
+        Ctrl-->>API: 200 OK
+        API-->>FE: success
+        FE-->>U: Joined group successfully
+    end
+    end
+    
+    %% Scenario 4: Get Group with Members
+    rect rgb(243, 229, 245)
+    note right of U: View Group Details
+    U->>FE: Navigate to group
+    FE->>API: GET /groups/:id?populate=members
+    API->>Ctrl: getGroupById(id)
+    Ctrl->>Cache: get(groupId)
+    alt Cache Hit
+        Cache-->>Ctrl: cached group
+        Ctrl-->>API: cached data
+    else Cache Miss
+        Ctrl->>Svc: getGroupById(id, populate)
+        Svc->>DB: findById(id)
+        DB-->>Svc: group object
+        Svc->>DB: find({groupId}).populate('userId')
+        DB-->>Svc: members[]
+        Svc->>Cache: setex(groupId, 300, group+members)
+        Svc-->>Ctrl: group with members
+    end
+    Ctrl-->>API: 200 OK
+    API-->>FE: group data
+    FE-->>U: Display group info
+    end
+    
+    %% Scenario 5: Update Member Role
+    rect rgb(255, 235, 238)
+    note right of U: Promote Member to Admin
+    U->>FE: Select member & change role
+    FE->>API: PUT /group-members/:id/role {role: 'admin'}
+    API->>Ctrl: updateMemberRole(id, role)
+    Ctrl->>Svc: validateRoleUpdate(id, role)
+    Svc->>DB: findMember(id)
+    DB-->>Svc: member object
+    alt Is Owner
+        Svc->>DB: updateOne({role})
+        DB-->>Svc: updated
+        Svc->>Cache: del(groupId)
+        Svc-->>Ctrl: updated member
+        Ctrl-->>API: 200 OK
+        API-->>FE: success
+        FE-->>U: Role updated
+    else Not Owner
+        Svc-->>Ctrl: 403 Forbidden
+        Ctrl-->>API: 403
+        API-->>FE: error
+        FE-->>U: Permission denied
+    end
+    end
+    
+    %% Scenario 6: Remove Member
+    rect rgb(224, 247, 250)
+    note right of U: Remove Member
+    U->>FE: Click remove member
+    FE->>API: DELETE /group-members/:groupId/members/:userId
+    API->>Ctrl: removeMember(groupId, userId)
+    Ctrl->>Svc: validateRemovePermission(groupId, userId)
+    Svc->>DB: findMember(groupId, userId)
+    DB-->>Svc: member object
+    alt Can Remove
+        Svc->>DB: updateOne({isDeleted: true})
+        Svc->>DB: decrementMemberCount(groupId)
+        Svc->>Cache: del(groupId)
+        Svc-->>Ctrl: 200 OK
+        Ctrl-->>API: success
+        API-->>FE: removed
+        FE-->>U: Member removed
+    else Cannot Remove
+        Svc-->>Ctrl: 403 Forbidden
+        Ctrl-->>API: 403
+        API-->>FE: error
+        FE-->>U: Cannot remove this member
+    end
+    end
+    
+    %% Scenario 7: Leave Group
+    rect rgb(255, 248, 225)
+    note right of U: Leave Group
+    U->>FE: Click leave group
+    FE->>API: POST /groups/:id/leave
+    API->>Ctrl: leaveGroup(id)
+    Ctrl->>Svc: validateLeave(id, userId)
+    Svc->>DB: findMember(id, userId)
+    DB-->>Svc: member object
+    alt Is Owner
+        Svc-->>Ctrl: 400 Cannot leave as owner
+        Ctrl-->>API: 400
+        API-->>FE: error
+        FE-->>U: Transfer ownership first
+    else Is Member
+        Svc->>DB: updateOne({isDeleted: true})
+        Svc->>DB: decrementMemberCount(groupId)
+        Svc->>Cache: del(groupId)
+        Svc-->>Ctrl: 200 OK
+        Ctrl-->>API: success
+        API-->>FE: left
+        FE-->>U: Left group successfully
+    end
+    end
+    
+    Note over U,Queue: All operations trigger notifications via BullMQ

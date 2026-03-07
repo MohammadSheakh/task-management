@@ -1,0 +1,157 @@
+---
+title: Group Module - Component Architecture Diagram
+description: Component breakdown showing modules, interfaces, and dependencies
+date: 07-03-26
+---
+
+flowchart TB
+    subgraph PresentationLayer["Presentation Layer"]
+        WebComponent[Web Components<br/>React/Next.js]
+        MobileComponent[Mobile Components<br/>Flutter]
+        AdminComponent[Admin Components<br/>Dashboard]
+    end
+    
+    subgraph APILayer["API Layer"]
+        GroupRoutes[Group Routes<br/>group.route.ts]
+        MemberRoutes[Member Routes<br/>groupMember.route.ts]
+        InvitationRoutes[Invitation Routes<br/>groupInvitation.route.ts]
+    end
+    
+    subgraph ControllerLayer["Controller Layer"]
+        GroupCtrl[Group Controller<br/>group.controller.ts<br/>- create<br/>- getMyGroups<br/>- getGroupById<br/>- updateById<br/>- deleteById<br/>- getStatistics<br/>- searchGroups]
+        
+        MemberCtrl[Member Controller<br/>groupMember.controller.ts<br/>- getGroupMembers<br/>- getMember<br/>- addMember<br/>- updateMemberRole<br/>- removeMember<br/>- leaveGroup<br/>- getMemberCount<br/>- checkMembership]
+        
+        InvitationCtrl[Invitation Controller<br/>groupInvitation.controller.ts<br/>- createInvitation<br/>- acceptInvitation<br/>- declineInvitation<br/>- cancelInvitation<br/>- resendInvitation<br/>- getInvitationStatus]
+    end
+    
+    subgraph ServiceLayer["Service Layer"]
+        GroupSvc[Group Service<br/>group.service.ts<br/>- validateGroupData<br/>- createGroup<br/>- updateGroup<br/>- deleteGroup<br/>- searchGroups<br/>- getStatistics<br/>- checkMemberLimit]
+        
+        MemberSvc[Member Service<br/>groupMember.service.ts<br/>- validateMembership<br/>- addMember<br/>- updateRole<br/>- removeMember<br/>- leaveGroup<br/>- getMembers<br/>- checkPermission]
+        
+        InvitationSvc[Invitation Service<br/>groupInvitation.service.ts<br/>- createInvitation<br/>- validateInvitation<br/>- acceptInvitation<br/>- declineInvitation<br/>- expireInvitation<br/>- sendInvitationEmail]
+    end
+    
+    subgraph BusinessLogic["Business Logic Layer"]
+        GroupLogic[Group Business Logic<br/>- Name Uniqueness<br/>- Visibility Rules<br/>- Member Limits<br/>- Status Transitions<br/>- Ownership Transfer]
+        
+        MemberLogic[Member Business Logic<br/>- Role Hierarchy<br/>- Permission Checks<br/>- Membership States<br/>- Activity Tracking<br/>- Seniority Rules]
+        
+        InvitationLogic[Invitation Logic<br/>- Token Generation<br/>- Expiry Handling<br/>- Rate Limiting<br/>- Email Templates<br/>- Status Tracking]
+    end
+    
+    subgraph DataLayer["Data Layer"]
+        GroupModel[Group Model<br/>group.model.ts<br/>- Schema<br/>- Indexes<br/>- Virtuals<br/>- Static Methods<br/>- Instance Methods]
+        
+        MemberModel[Member Model<br/>groupMember.model.ts<br/>- Schema<br/>- Indexes<br/>- Virtuals<br/>- Static Methods<br/>- Instance Methods]
+        
+        InvitationModel[Invitation Model<br/>groupInvitation.model.ts<br/>- Schema<br/>- Indexes<br/>- Virtuals<br/>- Static Methods<br/>- Instance Methods]
+    end
+    
+    subgraph MiddlewareLayer["Middleware Layer"]
+        AuthMW[Auth Middleware<br/>- JWT Verification<br/>- User Context]
+        
+        PermissionMW[Permission Middleware<br/>- Role Checks<br/>- Ownership Checks<br/>- Member Checks]
+        
+        ValidationMW[Validation Middleware<br/>- Zod Schemas<br/>- Input Sanitization<br/>- Type Checking]
+        
+        RateLimitMW[Rate Limit Middleware<br/>- Request Throttling<br/>- IP-based Limits<br/>- User-based Limits]
+    end
+    
+    subgraph SharedModules["Shared Modules"]
+        GenericCtrl[Generic Controller<br/>generic.controller.ts<br/>- getAll<br/>- getById<br/>- create<br/>- updateById<br/>- deleteById]
+        
+        GenericSvc[Generic Service<br/>generic.service.ts<br/>- CRUD Operations<br/>- Pagination<br/>- Filtering]
+        
+        PaginationSvc[Pagination Service<br/>pagination.service.ts<br/>- aggregationPaginate<br/>- cursorPagination]
+        
+        NotificationSvc[Notification Service<br/>notification.service.ts<br/>- enqueueWebNotification<br/>- sendEmail<br/>- sendPush]
+    end
+    
+    subgraph ExternalServices["External Services"]
+        EmailService[Email Service<br/>SendGrid/AWS SES]
+        PushService[Push Service<br/>FCM/APNs]
+        BullMQService[BullMQ Service<br/>Job Queue<br/>- Email Jobs<br/>- Notification Jobs<br/>- Cleanup Jobs]
+        RedisService[Redis Service<br/>- Caching<br/>- Session Store<br/>- Rate Limiting]
+    end
+    
+    %% Presentation to API
+    WebComponent --> GroupRoutes
+    WebComponent --> MemberRoutes
+    WebComponent --> InvitationRoutes
+    MobileComponent --> GroupRoutes
+    MobileComponent --> MemberRoutes
+    MobileComponent --> InvitationRoutes
+    AdminComponent --> GroupRoutes
+    AdminComponent --> MemberRoutes
+    
+    %% API to Controllers
+    GroupRoutes --> GroupCtrl
+    MemberRoutes --> MemberCtrl
+    InvitationRoutes --> InvitationCtrl
+    
+    %% Controllers to Services
+    GroupCtrl --> GroupSvc
+    MemberCtrl --> MemberSvc
+    InvitationCtrl --> InvitationSvc
+    
+    %% Controllers to Generic
+    GroupCtrl -.-> GenericCtrl
+    MemberCtrl -.-> GenericCtrl
+    InvitationCtrl -.-> GenericCtrl
+    
+    %% Services to Business Logic
+    GroupSvc --> GroupLogic
+    MemberSvc --> MemberLogic
+    InvitationSvc --> InvitationLogic
+    
+    %% Services to Generic
+    GroupSvc -.-> GenericSvc
+    MemberSvc -.-> GenericSvc
+    InvitationSvc -.-> GenericSvc
+    
+    %% Business Logic to Models
+    GroupLogic --> GroupModel
+    MemberLogic --> MemberModel
+    InvitationLogic --> InvitationModel
+    
+    %% Middleware Flow
+    GroupRoutes --> AuthMW
+    MemberRoutes --> AuthMW
+    InvitationRoutes --> AuthMW
+    
+    AuthMW --> PermissionMW
+    PermissionMW --> ValidationMW
+    ValidationMW --> RateLimitMW
+    
+    %% Services to External
+    GroupSvc --> RedisService
+    MemberSvc --> RedisService
+    InvitationSvc --> BullMQService
+    
+    InvitationSvc --> EmailService
+    InvitationSvc --> PushService
+    
+    BullMQService --> EmailService
+    BullMQService --> PushService
+    
+    %% Shared Module Usage
+    GroupSvc -.-> PaginationSvc
+    MemberSvc -.-> PaginationSvc
+    InvitationSvc -.-> PaginationSvc
+    
+    GroupSvc -.-> NotificationSvc
+    MemberSvc -.-> NotificationSvc
+    InvitationSvc -.-> NotificationSvc
+    
+    %% Styling
+    style PresentationLayer fill:#E3F2FD
+    style APILayer fill:#E8F5E9
+    style ControllerLayer fill:#FFF3E0
+    style ServiceLayer fill:#F3E5F5
+    style BusinessLogic fill:#E0F7FA
+    style DataLayer fill:#F1F8E9
+    style MiddlewareLayer fill:#FFEBEE
+    style SharedModules fill:#FCE4EC
+    style ExternalServices fill:#F9FBE7

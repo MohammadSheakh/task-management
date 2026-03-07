@@ -130,3 +130,49 @@ group.module and notification.module .. what are the other module you should gen
 dont need to generate anything just tell .. what are the other module left to complete this backend
 
 =================> Shift to new branch feat-07-03-26
+
+====================>
+Instruction #12:
+
+dear qwen .. i have my all my project figma screenshot in my task-management-backend-template folders figma-asset 
+    folder .. and in that folder .. i put all figma screenshot role wise and section wise .. please go through all those
+     images so that you can get all clear understanding of my project
+
+====================>
+Instruction #13:
+
+yes make agenda.md with a verification plan ... and i think as this agend.md is a global level
+  document .. for that you should make a folder called qwen under __Documentation folder .. and create
+  folder and file as you with for this kind of global level documentation
+
+====================>
+Instruction #14:
+
+lets say you found some new agenda .. for agenda / documentation type of thing .. you should not edit previous one .. its may be better you create new one .. with name like agenda<date--time>also version .. lets say agenda-07-03-26-<3 digit unique number>-V2.md 
+
+
+====================>
+Instruction #15:
+
+if you think flutter code variable and backend code variable has a slight mismatch .. i think you dont need to change backend code variable .. flutter developer can manually align variable name
+later with backend variable name .. 
+
+====================>
+Instruction #16:
+
+i think your generated support-mode-IMPLEMENTATION-COMPLETE.md is user module related ..
+so you should generate this details markdown file in that user module ..
+also in global level in qwen folder .. you should just tell ..
+some support mode related work done in user.module .. so that a person can go that 
+markdown file and know what actually was done there
+
+====================>
+Instruction #17:
+
+i think any markdown file you generate should contain at least date at the end .. like
+  -07-03-26 
+
+====================>
+Instruction #18:
+
+before that .. as task module is updated .. do your task modules  diagram aligned with new task.module logic and everything  

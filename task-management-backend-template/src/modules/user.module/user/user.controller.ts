@@ -508,20 +508,86 @@ export class UserController extends GenericController<
   updateProfileImageSeparately = catchAsync(async (req: Request, res: Response) => {
     const id = req.user.userId;
     req.body.profileImage = req.uploadedFiles.profileImage; // it actually returns array of string
-    
+
     const data = req.body;
 
     const result = await this.userService.updateProfileImageSeperately(id, data);
-    
+
     sendResponse(res, {
       code: StatusCodes.OK,
       data: result,
       message: `${this.modelName} updated successfully`,
       success: true,
     });
-    
+
   });
-  
+
+  // ────────────────────────────────────────────────────────────────────────
+  // Support Mode & Notification Preferences
+  // ────────────────────────────────────────────────────────────────────────
+
+  /** ----------------------------------------------
+   * @role User
+   * @Section Profile
+   * @module UserProfile
+   * @figmaIndex 06-03
+   * @desc Get user's support mode preference
+   *----------------------------------------------*/
+  getSupportMode = catchAsync(async (req: Request, res: Response) => {
+    const userId = (req.user as IUser).userId;
+
+    const result = await this.userService.getSupportMode(userId);
+
+    sendResponse(res, {
+      code: StatusCodes.OK,
+      data: result,
+      message: 'Support mode retrieved successfully',
+      success: true,
+    });
+  });
+
+  /** ----------------------------------------------
+   * @role User
+   * @Section Profile
+   * @module UserProfile
+   * @figmaIndex 06-03
+   * @desc Update user's support mode preference
+   *----------------------------------------------*/
+  updateSupportMode = catchAsync(async (req: Request, res: Response) => {
+    const userId = (req.user as IUser).userId;
+    const { supportMode } = req.body;
+
+    const result = await this.userService.updateSupportMode(userId, supportMode);
+
+    sendResponse(res, {
+      code: StatusCodes.OK,
+      data: result,
+      message: 'Support mode updated successfully',
+      success: true,
+    });
+  });
+
+  /** ----------------------------------------------
+   * @role User
+   * @Section Profile
+   * @module UserProfile
+   * @figmaIndex 06-03
+   * @desc Update user's notification style preference
+   *----------------------------------------------*/
+  updateNotificationStyle = catchAsync(async (req: Request, res: Response) => {
+    const userId = (req.user as IUser).userId;
+    const { notificationStyle } = req.body;
+
+    const result = await this.userService.updateNotificationStyle(userId, notificationStyle);
+
+    sendResponse(res, {
+      code: StatusCodes.OK,
+      data: result,
+      message: 'Notification style updated successfully',
+      success: true,
+    });
+  });
+
 }
 
 
