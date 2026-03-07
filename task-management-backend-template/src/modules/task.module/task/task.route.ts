@@ -197,4 +197,19 @@ router.route('/:id/permanent').delete(
 └──────────────────────────────────*/
 router.use('/:id', SubTaskRoute);
 
+// ────────────────────────────────────────────────────────────────────────
+// Figma-Aligned Routes: Daily Progress
+// ────────────────────────────────────────────────────────────────────────
+
+/*-─────────────────────────────────
+|  User | 01-12 | Get daily progress
+|  @module Task
+|  @figmaIndex 01
+|  @desc Get daily task progress (Figma: home-flow.png)
+└──────────────────────────────────*/
+router.route('/daily-progress').get(
+  auth(TRole.commonUser),
+  controller.getDailyProgress
+);
+
 export const TaskRoute = router;

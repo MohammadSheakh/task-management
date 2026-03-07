@@ -157,4 +157,28 @@ router.route('/:id/permissions/toggle').post(
   controller.toggleTaskCreationPermission
 );
 
+// ────────────────────────────────────────────────────────────────────────
+// Figma-Aligned Routes: Direct Member Creation & Profile Management
+// ────────────────────────────────────────────────────────────────────────
+
+//-------------------------------------------
+// Primary | GroupMember #12 | Create member account (direct creation)
+//-------------------------------------------
+router.route('/:id/members/create').post(
+  auth(TRole.user),
+  membershipLimiter,
+  validateRequest(validation.createMemberAccountValidationSchema),
+  controller.createMemberAccount
+);
+
+//-------------------------------------------
+// Primary | GroupMember #13 | Update member profile
+//-------------------------------------------
+router.route('/:id/members/:userId/profile').patch(
+  auth(TRole.user),
+  membershipLimiter,
+  validateRequest(validation.updateMemberProfileValidationSchema),
+  controller.updateMemberProfile
+);
+
 export const GroupMemberRoute = router;

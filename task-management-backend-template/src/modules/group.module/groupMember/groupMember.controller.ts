@@ -362,4 +362,75 @@ export class GroupMemberController extends GenericController<typeof GroupMember,
       success: true,
     });
   };
+
+  // ────────────────────────────────────────────────────────────────────────
+  // Figma-Aligned Controllers: Direct Member Creation & Profile Management
+  // ────────────────────────────────────────────────────────────────────────
+
+  /** ----------------------------------------------
+   * @role Primary (Group Owner/Admin)
+   * @Section Team Members
+   * @module GroupMember
+   * @figmaIndex 02
+   * @desc Create member account (direct creation flow)
+   *----------------------------------------------*/
+  createMemberAccount = async (req: Request, res: Response) => {
+    const groupId = req.params.id;
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      throw new ApiError(StatusCodes.UNAUTHORIZED, 'User not authenticated');
+    }
+
+    const memberData = req.body;
+
+    const result = await this.groupMemberService.createMemberAccount(
+      groupId,
+      memberData,
+      userId
+    );
+
+    (res as any).sendResponse({
+      code: StatusCodes.CREATED,
+      data: {
+        member: result.member,
+        user: result.user,
+      },
+      message: 'Member account created successfully',
+      success: true,
+    });
+  };
+
+  /** ----------------------------------------------
+   * @role Primary (Group Owner/Admin)
+   * @Section Team Members
+   * @module GroupMember
+   * @figmaIndex 03
+   * @desc Update member profile
+   *----------------------------------------------*/
+  updateMemberProfile = async (req: Request, res: Response) => {
+    const groupId = req.params.id;
+    const userId = req.params.userId;
+    const currentUserId = req.user?.userId;
+
+    if (!currentUserId) {
+      throw new ApiError(StatusCodes.UNAUTHORIZED, 'User not authenticated');
+    }
+
+    const updateData = req.body;
+
+    const result = await this.groupMemberService.updateMemberProfile(
+      groupId,
+      userId,
+      updateData,
+      currentUserId
+    );
+
+    (res as any).sendResponse({
+      code: StatusCodes.OK,
+      data: result,
+      message: 'Member profile updated successfully',
+      success: true,
+    });
+  };
 }

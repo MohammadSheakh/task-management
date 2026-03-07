@@ -154,4 +154,17 @@ router.route('/schedule-reminder').post(
   controller.scheduleReminder
 );
 
+// ────────────────────────────────────────────────────────────────────────
+// Figma-Aligned Routes: Live Activity Feed
+// ────────────────────────────────────────────────────────────────────────
+
+//-------------------------------------------
+// User | Notification #08 | Get live activity feed for group
+//-------------------------------------------
+router.route('/activity-feed/:groupId').get(
+  auth(TRole.user),
+  notificationLimiter,
+  controller.getLiveActivityFeed
+);
+
 export const NotificationRoute = router;

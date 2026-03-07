@@ -263,17 +263,21 @@ export class TaskService extends GenericService<typeof Task, ITask> {
 
   /**
    * Get daily progress for a user
+   * Figma: home-flow.png (Daily Progress: 1/5)
+   * 
    * @param userId - User ID
-   * @param date - Date to check
-   * @returns Daily progress info
+   * @param date - Date to check (default: today)
+   * @returns Daily progress info with task details
    */
-  async getDailyProgress(userId: Types.ObjectId, date: Date) {
-    const startOfDay = new Date(date);
+  async getDailyProgress(userId: Types.ObjectId, date?: Date) {
+    const targetDate = date || new Date();
+    const startOfDay = new Date(targetDate);
     startOfDay.setHours(0, 0, 0, 0);
 
-    const endOfDay = new Date(date);
+    const endOfDay = new Date(targetDate);
     endOfDay.setHours(23, 59, 59, 999);
 
+    // Get all tasks for the user on this date
     const tasks = await this.model.find({
       ownerUserId: userId,
       startTime: {
@@ -281,18 +285,40 @@ export class TaskService extends GenericService<typeof Task, ITask> {
         $lte: endOfDay,
       },
       isDeleted: false,
-    });
+    }).sort({ startTime: 1 });
 
-    const completedTasks = tasks.filter(t => t.status === TTaskStatus.completed).length;
+    // Calculate statistics
+    const total = tasks.length;
+    const completed = tasks.filter(t => t.status === TTaskStatus.completed).length;
+    const inProgress = tasks.filter(t => t.status === TTaskStatus.inProgress).length;
+    const pending = tasks.filter(t => t.status === TTaskStatus.pending).length;
+
+    // Build task list with subtask info
+    const taskList = tasks.map(task => ({
+      _id: task._id.toString(),
+      title: task.title,
+      status: task.status,
+      startTime: task.startTime,
+      taskType: task.taskType,
+      subtasks: task.totalSubtasks > 0 ? {
+        total: task.totalSubtasks || 0,
+        completed: task.completedSubtasks || 0,
+      } : undefined,
+      progressPercentage: task.totalSubtasks && task.totalSubtasks > 0
+        ? Math.round(((task.completedSubtasks || 0) / task.totalSubtasks) * 100)
+        : (task.status === TTaskStatus.completed ? 100 : 0),
+    }));
 
     return {
-      date,
-      totalTasks: tasks.length,
-      completedTasks,
-      remainingTasks: tasks.length - completedTasks,
-      completionPercentage: tasks.length > 0
-        ? Math.round((completedTasks / tasks.length) * 100)
+      date: targetDate.toISOString().split('T')[0],
+      total,
+      completed,
+      pending,
+      inProgress,
+      progressPercentage: total > 0
+        ? Math.round((completed / total) * 100)
         : 0,
+      tasks: taskList,
     };
   }
 }

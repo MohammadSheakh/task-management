@@ -394,4 +394,35 @@ export class TaskController extends GenericController<typeof Task, ITask> {
       success: true,
     });
   };
+
+  // ────────────────────────────────────────────────────────────────────────
+  // Figma-Aligned Controllers: Daily Progress
+  // ────────────────────────────────────────────────────────────────────────
+
+  /** ----------------------------------------------
+   * @role User (Primary/Secondary)
+   * @Section Home
+   * @module Task
+   * @figmaIndex 01
+   * @desc Get daily progress (Figma: home-flow.png)
+   *----------------------------------------------*/
+  getDailyProgress = async (req: Request, res: Response) => {
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      throw new ApiError(StatusCodes.UNAUTHORIZED, 'User not authenticated');
+    }
+
+    const dateParam = req.query.date as string;
+    const date = dateParam ? new Date(dateParam) : new Date();
+
+    const result = await this.taskService.getDailyProgress(userId, date);
+
+    (res as any).sendResponse({
+      code: StatusCodes.OK,
+      data: result,
+      message: 'Daily progress retrieved successfully',
+      success: true,
+    });
+  };
 }
