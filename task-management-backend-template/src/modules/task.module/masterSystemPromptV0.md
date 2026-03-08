@@ -213,3 +213,12 @@ Instruction #22:
 next i think you want to work to payment.module .. if you check my backend code .. i have also payment.module and     
     subscritpion.module .. before start working on those .. check my codebase first .. then check figma-asset i think my  
     previous projects  subscription.module and payment.module is properly aligned with this task management project 
+
+====================> [GENEARATE NEXT MODULE]
+Instruction #22:
+
+
+i love how you generate MODULE_ARCHITECTURE.md and SYSTEM_GUIDE.md for notification module .. can
+  you generate these for task.module, group.module, analytics.module, subscription.module,
+  payment.module .. i think besides diagrams these two markdown files are also be helpful to
+  understand flow and inner modules architecture

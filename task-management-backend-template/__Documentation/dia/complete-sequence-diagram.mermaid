@@ -1,0 +1,150 @@
+sequenceDiagram
+    %% ===========================================
+    %% COMPLETE SEQUENCE DIAGRAM - KEY OPERATIONS
+    %% ===========================================
+    
+    participant U as 👤 User
+    participant FE as 📱 Frontend
+    participant API as 🔌 API Gateway
+    participant TASK as 📋 Task Service
+    participant GROUP as 👥 Group Service
+    participant NOTIF as 🔔 Notification Service
+    participant ANALYTICS as 📊 Analytics Service
+    participant SUB as 💳 Subscription Service
+    participant PAY as 💰 Payment Service
+    participant STRIPE as 💳 Stripe
+    participant MONGO as 🍃 MongoDB
+    participant REDIS as 🔴 Redis
+    participant QUEUE as 🐂 BullMQ
+    
+    %% Operation 1: User Signup and Login
+    rect rgb(227, 242, 253)
+    note over U,QUEUE: 🎯 Operation 1: User Signup & Login
+    U->>FE: Enter signup details
+    FE->>API: POST /auth/signup
+    API->>MONGO: Create user
+    MONGO-->>API: User created
+    API-->>FE: Return JWT token
+    FE-->>U: Logged in
+    end
+    
+    %% Operation 2: Create Group and Invite Members
+    rect rgb(232, 245, 233)
+    note over U,QUEUE: 👥 Operation 2: Create Group & Invite
+    U->>FE: Create group
+    FE->>API: POST /groups
+    API->>GROUP: Create group
+    GROUP->>MONGO: Save group
+    MONGO-->>GROUP: Group saved
+    GROUP->>QUEUE: Queue invitation emails
+    QUEUE-->>GROUP: Queued
+    GROUP-->>API: Group created
+    API-->>FE: Return group
+    FE-->>U: Group created
+    end
+    
+    %% Operation 3: Create Task
+    rect rgb(255, 243, 224)
+    note over U,QUEUE: 📋 Operation 3: Create Task
+    U->>FE: Create task
+    FE->>API: POST /tasks
+    API->>TASK: Create task
+    TASK->>MONGO: Save task
+    MONGO-->>TASK: Task saved
+    TASK->>REDIS: Invalidate cache
+    REDIS-->>TASK: Cache invalidated
+    TASK->>NOTIF: Record activity
+    NOTIF->>MONGO: Save activity
+    MONGO-->>NOTIF: Activity saved
+    NOTIF-->>TASK: Activity recorded
+    TASK-->>API: Task created
+    API-->>FE: Return task
+    FE-->>U: Task created
+    end
+    
+    %% Operation 4: Complete Task
+    rect rgb(252, 228, 236)
+    note over U,QUEUE: ✅ Operation 4: Complete Task
+    U->>FE: Mark task complete
+    FE->>API: PUT /tasks/:id/status
+    API->>TASK: Update status
+    TASK->>MONGO: Update task
+    MONGO-->>TASK: Task updated
+    TASK->>REDIS: Invalidate cache
+    REDIS-->>TASK: Cache invalidated
+    TASK->>NOTIF: Record completion
+    NOTIF->>MONGO: Save notification
+    MONGO-->>NOTIF: Notification saved
+    NOTIF-->>TASK: Recorded
+    TASK-->>API: Task completed
+    API-->>FE: Return updated task
+    FE-->>U: Task completed
+    end
+    
+    %% Operation 5: View Analytics
+    rect rgb(243, 229, 245)
+    note over U,QUEUE: 📊 Operation 5: View Analytics
+    U->>FE: View analytics
+    FE->>API: GET /analytics/user/my/overview
+    API->>ANALYTICS: Get analytics
+    ANALYTICS->>REDIS: Check cache
+    REDIS-->>ANALYTICS: Cache miss
+    ANALYTICS->>MONGO: Aggregate data
+    MONGO-->>ANALYTICS: Aggregated data
+    ANALYTICS->>REDIS: Store in cache
+    REDIS-->>ANALYTICS: Cached
+    ANALYTICS-->>API: Return analytics
+    API-->>FE: Return analytics
+    FE-->>U: Display analytics
+    end
+    
+    %% Operation 6: Subscribe to Plan
+    rect rgb(255, 248, 225)
+    note over U,QUEUE: 💳 Operation 6: Subscribe
+    U->>FE: Select plan
+    FE->>API: POST /user-subscriptions/create
+    API->>SUB: Create subscription
+    SUB->>STRIPE: Create Stripe subscription
+    STRIPE-->>SUB: Stripe subscription
+    SUB->>MONGO: Save subscription
+    MONGO-->>SUB: Subscription saved
+    SUB->>PAY: Create transaction
+    PAY->>MONGO: Save transaction
+    MONGO-->>PAY: Transaction saved
+    PAY-->>SUB: Transaction created
+    SUB-->>API: Subscription created
+    API-->>FE: Return subscription
+    FE-->>U: Subscription active
+    end
+    
+    %% Operation 7: Stripe Webhook
+    rect rgb(224, 247, 250)
+    note over U,QUEUE: 💳 Operation 7: Stripe Webhook
+    STRIPE->>API: POST /stripe-webhook
+    API->>PAY: Handle webhook
+    PAY->>PAY: Verify signature
+    PAY->>MONGO: Update transaction
+    MONGO-->>PAY: Transaction updated
+    PAY->>NOTIF: Send notification
+    NOTIF->>QUEUE: Queue notification
+    QUEUE-->>NOTIF: Queued
+    NOTIF-->>PAY: Notification queued
+    PAY-->>API: Webhook processed
+    API-->>STRIPE: 200 OK
+    end
+    
+    %% Styling
+    rect rgb(227, 242, 253)
+    end
+    rect rgb(232, 245, 233)
+    end
+    rect rgb(255, 243, 224)
+    end
+    rect rgb(252, 228, 236)
+    end
+    rect rgb(243, 229, 245)
+    end
+    rect rgb(255, 248, 225)
+    end
+    rect rgb(224, 247, 250)
+    end

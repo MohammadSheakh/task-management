@@ -152,6 +152,29 @@ export const QUEUE_CONFIG = {
 } as const;
 
 /**
+ * Activity Types for Group Activity Feed
+ * Figma: dashboard-flow-01.png (Live Activity section)
+ */
+export const ACTIVITY_TYPE = {
+  TASK_CREATED: 'task_created',
+  TASK_STARTED: 'task_started',
+  TASK_UPDATED: 'task_updated',
+  TASK_COMPLETED: 'task_completed',
+  TASK_DELETED: 'task_deleted',
+  SUBTASK_COMPLETED: 'subtask_completed',
+  TASK_ASSIGNED: 'task_assigned',
+  MEMBER_JOINED: 'member_joined',
+  MEMBER_LEFT: 'member_left',
+  COMMENT_ADDED: 'comment_added',
+  ATTACHMENT_ADDED: 'attachment_added',
+} as const;
+
+/**
+ * Activity Type Union Type
+ */
+export type TActivityType = typeof ACTIVITY_TYPE[keyof typeof ACTIVITY_TYPE];
+
+/**
  * Reminder Configuration
  */
 export const REMINDER_CONFIG = {

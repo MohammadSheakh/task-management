@@ -7,6 +7,10 @@ import { Types } from 'mongoose';
 import { DAILY_TASK_LIMIT, TTaskStatus, TASK_CACHE_CONFIG } from './task.constant';
 import { redisClient } from '../../../helpers/redis/redis';
 import { logger, errorLogger } from '../../../shared/logger';
+import { NotificationService } from '../../notification.module/notification/notification.service';
+import { ACTIVITY_TYPE } from '../../notification.module/notification/notification.constant';
+
+const notificationService = new NotificationService();
 
 /**
  * Task Service
@@ -156,6 +160,16 @@ export class TaskService extends GenericService<typeof Task, ITask> {
     // Invalidate cache after creating task
     await this.invalidateCache(userId.toString(), task._id.toString());
 
+    // ✨ NEW: Record activity for group tasks
+    if (data.groupId) {
+      await notificationService.recordGroupActivity(
+        data.groupId.toString(),
+        userId.toString(),
+        ACTIVITY_TYPE.TASK_CREATED,
+        { taskId: task._id.toString(), taskTitle: task.title }
+      );
+    }
+
     return task;
   }
 
@@ -277,6 +291,20 @@ export class TaskService extends GenericService<typeof Task, ITask> {
 
     // Invalidate cache after updating task
     await this.invalidateCache(userId.toString(), taskId);
+
+    // ✨ NEW: Record activity for task status changes
+    if (updatedTask.groupId) {
+      const activityType = status === TTaskStatus.completed 
+        ? ACTIVITY_TYPE.TASK_COMPLETED 
+        : ACTIVITY_TYPE.TASK_STARTED;
+      
+      await notificationService.recordGroupActivity(
+        updatedTask.groupId.toString(),
+        userId.toString(),
+        activityType,
+        { taskId: updatedTask._id.toString(), taskTitle: updatedTask.title }
+      );
+    }
 
     return updatedTask;
   }

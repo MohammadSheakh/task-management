@@ -44,10 +44,26 @@ The notification module is responsible for:
 ```
 notification.module/
 ├── doc/
+│   ├── dia/                                   # All Mermaid diagrams ✅
+│   │   ├── notification-schema.mermaid
+│   │   ├── notification-system-architecture-07-03-26.mermaid
+│   │   ├── notification-sequence-07-03-26.mermaid
+│   │   ├── notification-user-flow.mermaid
+│   │   ├── notification-user-flow-V2-07-03-26.mermaid
+│   │   ├── notification-swimlane.mermaid
+│   │   ├── notification-state-machine-07-03-26.mermaid
+│   │   ├── notification-component-architecture-07-03-26.mermaid
+│   │   ├── notification-data-flow-07-03-26.mermaid
+│   │   ├── notification-flow.mermaid
+│   │   ├── notification-user-journey.mermaid
+│   │   └── taskReminder-schema.mermaid
 │   ├── NOTIFICATION_MODULE_ARCHITECTURE.md    # This file
-│   ├── notification-schema.mermaid            # Notification ER diagram
-│   ├── notification-flow.mermaid              # Sequence diagram
-│   ├── notification-user-journey.mermaid      # User journey map
+│   ├── NOTIFICATION_SYSTEMS_GUIDE-08-03-26.md # ✅ NEW: Comparison guide
+│   ├── notification-member.md
+│   ├── taskReminder-member.md
+│   └── perf/
+│       └── (performance reports)
+│
 │   ├── notification-user-flow.mermaid         # User flow diagram
 │   ├── notification-swimlane.mermaid          # Swimlane diagram
 │   ├── taskReminder-schema.mermaid            # TaskReminder ER diagram
