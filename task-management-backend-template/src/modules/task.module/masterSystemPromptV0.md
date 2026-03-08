@@ -199,3 +199,10 @@ as you know after completing backend or while creating backend .. we add endpoin
 Instruction #20:
 
 dear qwen that you for generating postman collection .. but my postman collection is well categorized by role .. but your collection is not .. your collection is categorized by feature category .. as you have my all figma screen shot .. so you can know about the roles and what role have what pages .. features  .. so make category like that and inside role based category then feature wise category .. then endpoint  
+
+====================> [GENEARATE NEXT MODULE]
+Instruction #21:
+
+now analyze the figma-asset .. as you generate task.module, group.module, notification.module so far .. what are the other module
+    .. you want to generate next which should be aligned with figma-asset and askfemi-flutter and Task-Management-website .. but your
+    main reference should be figma-asset.

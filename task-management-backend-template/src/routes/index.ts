@@ -41,6 +41,7 @@ import { GroupMemberRoute } from '../modules/group.module/groupMember/groupMembe
 import { GroupInvitationRoute } from '../modules/group.module/groupInvitation/groupInvitation.route';
 import { NotificationRoute } from '../modules/notification.module/notification/notification.route';
 import { TaskReminderRoute } from '../modules/notification.module/taskReminder/taskReminder.route';
+import { AnalyticsRoutes } from '../modules/analytics.module/analytics.route';
 
 // import { ChatRoutes } from '../modules/chat/chat.routes';
 // import { MessageRoutes } from '../modules/message/message.routes';
@@ -92,6 +93,12 @@ const apiRoutes = [
   { // 🟢
     path: '/task-reminders',
     route: TaskReminderRoute,
+  },
+
+  /////////////////////////////////////////  Analytics
+  { // 🟢 NEW
+    path: '/analytics',
+    route: AnalyticsRoutes,
   },
 
   ////////////////////// Created By Mohammad Sheakh
