@@ -188,5 +188,33 @@ userSchema.set('toJSON', {
   }
 });
 
+// ────────────────────────────────────────────────────────────────────────
+// Indexes for Performance Optimization
+// ────────────────────────────────────────────────────────────────────────
+
+// Single field indexes
+userSchema.index({ email: 1 }, { unique: true });  // Already exists from schema
+userSchema.index({ role: 1 });
+userSchema.index({ phoneNumber: 1 });
+userSchema.index({ isEmailVerified: 1 });
+userSchema.index({ isDeleted: 1 });
+
+// Compound indexes for common query patterns
+userSchema.index({ role: 1, isDeleted: 1 });  // Admin queries for active users by role
+userSchema.index({ email: 1, isDeleted: 1 });  // Login with soft delete check
+userSchema.index({ role: 1, isEmailVerified: 1, isDeleted: 1 });  // Filter by role, verification, and deletion
+userSchema.index({ phoneNumber: 1, isDeleted: 1 });  // Phone lookup with soft delete
+userSchema.index({ createdAt: -1, isDeleted: 1 });  // Recent users query
+userSchema.index({ updatedAt: -1, isDeleted: 1 });  // Recently updated users
+
+// Index for wallet queries
+userSchema.index({ walletId: 1, isDeleted: 1 });
+
+// Index for Calendly integration
+userSchema.index({ 'calendly.userId': 1 }, { sparse: true });
+
+// Text index for search (if needed in future)
+// userSchema.index({ name: 'text', email: 'text' });
+
 // Export the User model
 export const User = model<IUser, UserModal>('User', userSchema);

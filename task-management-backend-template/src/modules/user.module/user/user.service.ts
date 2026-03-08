@@ -33,21 +33,15 @@ import { IUserRoleData } from '../userRoleData/userRoleData.interface';
 //@ts-ignore
 import bcryptjs from 'bcryptjs';
 
-//@ts-ignore
-import {
-  startOfDay,
-  // startOfWeek,
-  // startOfMonth,
-  // startOfYear,
-  startOfQuarter,
-  endOfWeek,
-  endOfMonth,
-  subWeeks,
-  subMonths,
-  subDays,
-} from 'date-fns';
-import { TAdminStatus } from '../userRoleData/userRoleData.constant';
-import { PaymentTransaction } from '../../payment.module/paymentTransaction/paymentTransaction.model';
+import { redisClient } from '../../../helpers/redis/redis';
+import { logger, errorLogger } from '../../../shared/logger';
+
+// User cache configuration
+const USER_CACHE_CONFIG = {
+  PROFILE_TTL: 300,        // 5 minutes
+  STATISTICS_TTL: 600,     // 10 minutes
+  OVERVIEW_TTL: 300,       // 5 minutes
+} as const;
 
 import { Attachment } from '../../attachments/attachment.model';
 import { IAttachment } from '../../attachments/attachment.interface';
@@ -158,7 +152,7 @@ export class UserService extends GenericService<typeof User, IUser> {
   };
 
   //--------------------------------- kaj bd
-  // User | Profile | 06-01 | get profile information of a user 
+  // User | Profile | 06-01 | get profile information of a user
   //---------------------------------
   getProfileInformationOfAUser = async (loggedInUser: IUserFromToken) => {
     //-- name, email, phoneNumber from User table ..
@@ -166,16 +160,45 @@ export class UserService extends GenericService<typeof User, IUser> {
 
     //-- serviceName and rating from Service Provider Or Service Provider Details table
     const id = loggedInUser.userId
+    const cacheKey = `user:${id}:profile`;
 
+    // 🔒 Try cache first
+    try {
+      const cached = await redisClient.get(cacheKey);
+      if (cached) {
+        logger.debug(`Cache hit for user profile: ${cacheKey}`);
+        return JSON.parse(cached);
+      }
+    } catch (error) {
+      errorLogger.error('Redis GET error in getProfileInformationOfAUser:', error);
+      // Continue without cache
+    }
+
+    // Cache miss - query database
     const user = await User.findById(id).select('name email phoneNumber profileImage').lean();
     const userProfile =  await UserProfile.findOne({
       userId: id
     }).select('location dob gender').lean();
 
-    return {
+    const result = {
       ...user,
       ...userProfile
     };
+
+    // 🔒 Cache the result
+    try {
+      await redisClient.setEx(
+        cacheKey,
+        USER_CACHE_CONFIG.PROFILE_TTL,  // 5 minutes
+        JSON.stringify(result)
+      );
+      logger.debug(`User profile cached: ${cacheKey}`);
+    } catch (error) {
+      errorLogger.error('Redis SET error in getProfileInformationOfAUser:', error);
+      // Don't throw - profile retrieval should succeed even if caching fails
+    }
+
+    return result;
   };
 
 //☑️☑️☑️☑️☑️☑️☑️
@@ -717,8 +740,17 @@ export class UserService extends GenericService<typeof User, IUser> {
     if(data.dob){
       updateUserProfile.dob = data.dob;
     }
-  
+
     const res =  await updateUserProfile.save();
+
+    // 🔒 Invalidate cache after update
+    try {
+      const cacheKey = `user:${id}:profile`;
+      await redisClient.del(cacheKey);
+      logger.info(`User profile cache invalidated: ${cacheKey}`);
+    } catch (error) {
+      errorLogger.error('Cache invalidation error:', error);
+    }
 
     return {
       ...updateUser,
