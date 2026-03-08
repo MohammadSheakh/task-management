@@ -18,13 +18,13 @@ After thorough analysis, I found that **activity tracking ALREADY EXISTS** in `n
 
 ### Current Activity Types (5 types)
 
-| Activity Type | Implemented | Endpoint | Usage |
-|---------------|-------------|----------|-------|
-| ✅ `task_completed` | ✅ Yes | notification.service.ts | When user completes task |
-| ✅ `task_started` | ✅ Yes | notification.service.ts | When user starts task |
-| ✅ `subtask_completed` | ✅ Yes | notification.service.ts | When subtask is completed |
-| ✅ `member_joined` | ✅ Yes | notification.service.ts | When new member joins group |
-| ✅ `task_assigned` | ✅ Yes | notification.service.ts | When task is assigned to user |
+| Activity Type          | Implemented | Endpoint                | Usage                         |
+| ---------------------- | ----------- | ----------------------- | ----------------------------- |
+| ✅ `task_completed`    | ✅ Yes      | notification.service.ts | When user completes task      |
+| ✅ `task_started`      | ✅ Yes      | notification.service.ts | When user starts task         |
+| ✅ `subtask_completed` | ✅ Yes      | notification.service.ts | When subtask is completed     |
+| ✅ `member_joined`     | ✅ Yes      | notification.service.ts | When new member joins group   |
+| ✅ `task_assigned`     | ✅ Yes      | notification.service.ts | When task is assigned to user |
 
 ### Existing Methods
 
@@ -47,13 +47,13 @@ GET /notifications/activity-feed/:groupId
 
 ### Priority 1: Task-Related Activities
 
-| Activity Type | Priority | Why Needed | Figma Reference |
-|---------------|----------|------------|-----------------|
-| ❌ `task_created` | 🔴 HIGH | Track when tasks are created | dashboard-flow-01.png |
-| ❌ `task_updated` | 🔴 HIGH | Track task edits/updates | task-monitoring-flow-01.png |
-| ❌ `task_deleted` | 🟡 MEDIUM | Track task deletions (audit) | - |
-| ❌ `comment_added` | 🟡 MEDIUM | Track comments on tasks | (if comments exist) |
-| ❌ `attachment_added` | 🟢 LOW | Track file uploads | - |
+| Activity Type         | Priority  | Why Needed                   | Figma Reference             |
+| --------------------- | --------- | ---------------------------- | --------------------------- |
+| ❌ `task_created`     | 🔴 HIGH   | Track when tasks are created | dashboard-flow-01.png       |
+| ❌ `task_updated`     | 🔴 HIGH   | Track task edits/updates     | task-monitoring-flow-01.png |
+| ❌ `task_deleted`     | 🟡 MEDIUM | Track task deletions (audit) | -                           |
+| ❌ `comment_added`    | 🟡 MEDIUM | Track comments on tasks      | (if comments exist)         |
+| ❌ `attachment_added` | 🟢 LOW    | Track file uploads           | -                           |
 
 ---
 
@@ -65,17 +65,17 @@ GET /notifications/activity-feed/:groupId
 
 ```typescript
 // Add to activityType union
-type TActivityType = 
+type TActivityType =
   | 'task_completed'
   | 'task_started'
   | 'subtask_completed'
   | 'member_joined'
   | 'task_assigned'
-  | 'task_created'        // ✨ NEW
-  | 'task_updated'        // ✨ NEW
-  | 'task_deleted'        // ✨ NEW
-  | 'comment_added'       // ✨ NEW
-  | 'attachment_added';   // ✨ NEW
+  | 'task_created' // ✨ NEW
+  | 'task_updated' // ✨ NEW
+  | 'task_deleted' // ✨ NEW
+  | 'comment_added' // ✨ NEW
+  | 'attachment_added'; // ✨ NEW
 ```
 
 **Update**: `recordGroupActivity()` method
@@ -106,7 +106,7 @@ async recordGroupActivity(
 // 1. When creating a task
 async createTask(data: Partial<ITask>, userId: Types.ObjectId) {
   const task = await this.model.create(data);
-  
+
   // ✨ NEW: Record activity if group task
   if (data.groupId) {
     await notificationService.recordGroupActivity(
@@ -116,14 +116,14 @@ async createTask(data: Partial<ITask>, userId: Types.ObjectId) {
       { taskId: task._id.toString(), taskTitle: task.title }
     );
   }
-  
+
   return task;
 }
 
 // 2. When updating a task
 async updateById(id: string, data: Partial<ITask>) {
   const updatedTask = await this.model.findByIdAndUpdate(id, data, { new: true });
-  
+
   // ✨ NEW: Record activity if group task
   if (updatedTask.groupId) {
     await notificationService.recordGroupActivity(
@@ -133,16 +133,16 @@ async updateById(id: string, data: Partial<ITask>) {
       { taskId: id, taskTitle: updatedTask.title }
     );
   }
-  
+
   return updatedTask;
 }
 
 // 3. When deleting a task
 async deleteById(id: string) {
   const task = await this.model.findById(id);
-  
+
   await this.model.findByIdAndUpdate(id, { isDeleted: true });
-  
+
   // ✨ NEW: Record activity if group task
   if (task && task.groupId) {
     await notificationService.recordGroupActivity(
@@ -167,17 +167,18 @@ async deleteById(id: string) {
 |  @figmaIndex dashboard-flow-01.png
 |  @desc Get activities with type/date filtering
 └──────────────────────────────────*/
-router.route('/activity-feed/:groupId').get(
-  auth(TRole.common),
-  controller.getLiveActivityFeed
-);
+router
+  .route('/activity-feed/:groupId')
+  .get(auth(TRole.common), controller.getLiveActivityFeed);
 
 // ✨ NEW: Add filtering options
-router.route('/activity-feed/:groupId/filtered').get(
-  auth(TRole.common),
-  validateFiltersForQuery(['type', 'from', 'to', 'limit']),
-  controller.getFilteredActivityFeed
-);
+router
+  .route('/activity-feed/:groupId/filtered')
+  .get(
+    auth(TRole.common),
+    validateFiltersForQuery(['type', 'from', 'to', 'limit']),
+    controller.getFilteredActivityFeed,
+  );
 ```
 
 **New Controller Method**:
@@ -187,12 +188,12 @@ router.route('/activity-feed/:groupId/filtered').get(
 getFilteredActivityFeed = catchAsync(async (req: Request, res: Response) => {
   const { groupId } = req.params;
   const { type, from, to, limit = 20 } = req.query;
-  
+
   const result = await this.notificationService.getFilteredActivityFeed(
     groupId,
-    { type, from, to, limit }
+    { type, from, to, limit },
   );
-  
+
   sendResponse(res, {
     code: StatusCodes.OK,
     data: result,
@@ -214,10 +215,9 @@ getFilteredActivityFeed = catchAsync(async (req: Request, res: Response) => {
 |  Admin | User | Get user's activity timeline
 |  @desc Get all activities by a specific user
 └──────────────────────────────────*/
-router.route('/activity-log/user/:userId').get(
-  auth(TRole.admin),
-  controller.getUserActivityLog
-);
+router
+  .route('/activity-log/user/:userId')
+  .get(auth(TRole.admin), controller.getUserActivityLog);
 ```
 
 **Service Method**:
@@ -233,18 +233,18 @@ async getUserActivityLog(userId: string, options: {
     receiverId: new Types.ObjectId(userId),
     isDeleted: false,
   };
-  
+
   if (options.from || options.to) {
     query.createdAt = {};
     if (options.from) query.createdAt.$gte = options.from;
     if (options.to) query.createdAt.$lte = options.to;
   }
-  
+
   const activities = await this.model.find(query)
     .sort({ createdAt: -1 })
     .limit(options.limit || 50)
     .lean();
-  
+
   return activities;
 }
 ```
@@ -261,27 +261,33 @@ async getUserActivityLog(userId: string, options: {
 |  Admin | Export activity logs (CSV)
 |  @desc Export group/user activity logs
 └──────────────────────────────────*/
-router.route('/activity-log/export').post(
-  auth(TRole.admin),
-  validateRequest(validation.exportActivityLogSchema),
-  controller.exportActivityLog
-);
+router
+  .route('/activity-log/export')
+  .post(
+    auth(TRole.admin),
+    validateRequest(validation.exportActivityLogSchema),
+    controller.exportActivityLog,
+  );
 ```
 
 **BullMQ Integration**:
 
 ```typescript
 // Queue heavy export job
-await notificationQueue.add('exportActivityLog', {
-  groupId,
-  userId,
-  format: 'csv',
-  from,
-  to,
-}, {
-  attempts: 3,
-  backoff: { type: 'exponential', delay: 2000 }
-});
+await notificationQueue.add(
+  'exportActivityLog',
+  {
+    groupId,
+    userId,
+    format: 'csv',
+    from,
+    to,
+  },
+  {
+    attempts: 3,
+    backoff: { type: 'exponential', delay: 2000 },
+  },
+);
 ```
 
 ---
@@ -290,21 +296,21 @@ await notificationQueue.add('exportActivityLog', {
 
 ### Current Coverage
 
-| Module | Activity Tracking | Status |
-|--------|------------------|--------|
-| **task.module** | ❌ Not integrated | 🔴 Missing |
-| **group.module** | ✅ member_joined | ✅ Complete |
-| **notification.module** | ✅ 5 activity types | ✅ Complete |
-| **analytics.module** | ✅ getActivityFeed() | ✅ Complete |
+| Module                  | Activity Tracking    | Status      |
+| ----------------------- | -------------------- | ----------- |
+| **task.module**         | ❌ Not integrated    | 🔴 Missing  |
+| **group.module**        | ✅ member_joined     | ✅ Complete |
+| **notification.module** | ✅ 5 activity types  | ✅ Complete |
+| **analytics.module**    | ✅ getActivityFeed() | ✅ Complete |
 
 ### After Enhancements
 
-| Module | Activity Tracking | Status |
-|--------|------------------|--------|
-| **task.module** | ✅ task_created/updated/deleted | ✅ Complete |
-| **group.module** | ✅ member_joined/left | ✅ Complete |
-| **notification.module** | ✅ 10 activity types | ✅ Complete |
-| **analytics.module** | ✅ getActivityFeed() | ✅ Complete |
+| Module                  | Activity Tracking               | Status      |
+| ----------------------- | ------------------------------- | ----------- |
+| **task.module**         | ✅ task_created/updated/deleted | ✅ Complete |
+| **group.module**        | ✅ member_joined/left           | ✅ Complete |
+| **notification.module** | ✅ 10 activity types            | ✅ Complete |
+| **analytics.module**    | ✅ getActivityFeed()            | ✅ Complete |
 
 ---
 
@@ -340,12 +346,14 @@ await notificationQueue.add('exportActivityLog', {
 ### **Do Phase 1 Only** (1-2 hours)
 
 **Why**:
+
 - ✅ Completes core activity tracking
 - ✅ Minimal code changes
 - ✅ High impact for admins/group owners
 - ✅ Aligns with Figma requirements
 
 **Skip Phase 2** because:
+
 - ❌ Comments may not exist in your app
 - ❌ Attachments can be tracked separately
 - ❌ Filtering/export are "nice-to-have"
