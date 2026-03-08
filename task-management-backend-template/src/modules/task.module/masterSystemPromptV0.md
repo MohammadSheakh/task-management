@@ -206,3 +206,10 @@ Instruction #21:
 now analyze the figma-asset .. as you generate task.module, group.module, notification.module so far .. what are the other module
     .. you want to generate next which should be aligned with figma-asset and askfemi-flutter and Task-Management-website .. but your
     main reference should be figma-asset.
+
+====================> [GENEARATE NEXT MODULE]
+Instruction #22:
+
+next i think you want to work to payment.module .. if you check my backend code .. i have also payment.module and     
+    subscritpion.module .. before start working on those .. check my codebase first .. then check figma-asset i think my  
+    previous projects  subscription.module and payment.module is properly aligned with this task management project 
