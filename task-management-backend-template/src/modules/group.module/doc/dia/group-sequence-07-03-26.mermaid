@@ -16,7 +16,7 @@ sequenceDiagram
     participant Queue as BullMQ
     
     %% Scenario 1: Create Group
-    rect rgb(232, 245, 233)
+    %% rect rgb(232, 245, 233)
     note right of U: Create Group
     U->>FE: Enter group details & submit
     FE->>API: POST /groups {name, description, maxMembers}
@@ -33,10 +33,10 @@ sequenceDiagram
     Ctrl-->>API: 201 Created
     API-->>FE: group data
     FE-->>U: Success! Group created
-    end
+    %% end
     
     %% Scenario 2: Invite Members
-    rect rgb(255, 243, 224)
+    Note over U,Queue:  Invite Members
     note right of U: Invite Members
     U->>FE: Select members to invite
     FE->>API: POST /group-invitations {groupId, emails}
@@ -57,10 +57,10 @@ sequenceDiagram
     Ctrl-->>API: 201 Created
     API-->>FE: invitations sent
     FE-->>U: Invitations sent successfully
-    end
+    
     
     %% Scenario 3: Accept Invitation
-    rect rgb(227, 242, 253)
+    Note over U,Queue: Accept Invitation 
     note right of U: Accept Invitation
     U->>FE: Click accept link from email
     FE->>API: POST /group-invitations/:id/accept
@@ -84,10 +84,10 @@ sequenceDiagram
         API-->>FE: success
         FE-->>U: Joined group successfully
     end
-    end
+    
     
     %% Scenario 4: Get Group with Members
-    rect rgb(243, 229, 245)
+    Note over U,Queue: View Group Details
     note right of U: View Group Details
     U->>FE: Navigate to group
     FE->>API: GET /groups/:id?populate=members
@@ -108,10 +108,10 @@ sequenceDiagram
     Ctrl-->>API: 200 OK
     API-->>FE: group data
     FE-->>U: Display group info
-    end
+    
     
     %% Scenario 5: Update Member Role
-    rect rgb(255, 235, 238)
+    Note over U,Queue: Promote Member to Admin
     note right of U: Promote Member to Admin
     U->>FE: Select member & change role
     FE->>API: PUT /group-members/:id/role {role: 'admin'}
@@ -133,10 +133,10 @@ sequenceDiagram
         API-->>FE: error
         FE-->>U: Permission denied
     end
-    end
+    
     
     %% Scenario 6: Remove Member
-    rect rgb(224, 247, 250)
+    Note over U,Queue: Remove Member
     note right of U: Remove Member
     U->>FE: Click remove member
     FE->>API: DELETE /group-members/:groupId/members/:userId
@@ -158,10 +158,10 @@ sequenceDiagram
         API-->>FE: error
         FE-->>U: Cannot remove this member
     end
-    end
+    
     
     %% Scenario 7: Leave Group
-    rect rgb(255, 248, 225)
+    Note over U,Queue: Leave Group
     note right of U: Leave Group
     U->>FE: Click leave group
     FE->>API: POST /groups/:id/leave
@@ -183,6 +183,8 @@ sequenceDiagram
         API-->>FE: left
         FE-->>U: Left group successfully
     end
-    end
+    
+
+    
     
     Note over U,Queue: All operations trigger notifications via BullMQ

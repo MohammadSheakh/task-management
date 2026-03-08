@@ -17,7 +17,7 @@ sequenceDiagram
     participant Ext as External Service
     
     %% Scenario 1: Send Task Assignment Notification
-    rect rgb(232, 245, 233)
+    
     note right of U: Send Task Assignment Notification
     U->>FE: Assign task to member
     FE->>API: POST /tasks {assignedUserIds}
@@ -39,11 +39,13 @@ sequenceDiagram
     Ctrl-->>API: 201 Created
     API-->>FE: success
     FE-->>U: Task assigned
-    end
     
+    
+    Note over U,Ext: Create Task Reminder
+
     %% Scenario 2: Create Task Reminder
-    rect rgb(255, 243, 224)
     note right of U: Create Task Reminder
+    
     U->>FE: Set reminder for task
     FE->>API: POST /task-reminders {taskId, reminderTime}
     API->>Ctrl: createReminder()
@@ -58,10 +60,10 @@ sequenceDiagram
     Ctrl-->>API: 201 Created
     API-->>FE: reminder set
     FE-->>U: Reminder created
-    end
     
+    Note over U,Ext: Reminder Time Arrives
     %% Scenario 3: Reminder Triggered
-    rect rgb(227, 242, 253)
+    
     note right of Queue: Reminder Time Arrives
     Queue->>Queue: Process scheduled job
     Queue->>Svc: processReminder()
@@ -86,10 +88,10 @@ sequenceDiagram
     end
     Svc->>DB: updateOne(reminder, {status: sent})
     Svc-->>Queue: complete
-    end
     
+    Note over U,Ext: View Notifications
     %% Scenario 4: Get User Notifications
-    rect rgb(243, 229, 245)
+    
     note right of U: View Notifications
     U->>FE: Open notifications
     FE->>API: GET /notifications/my?page=1&limit=10
@@ -108,10 +110,10 @@ sequenceDiagram
     Ctrl-->>API: 200 OK
     API-->>FE: notifications
     FE-->>U: Display notifications
-    end
     
+    Note over U,Ext: Mark as Read
     %% Scenario 5: Mark Notification as Read
-    rect rgb(255, 235, 238)
+    
     note right of U: Mark as Read
     U->>FE: Click notification
     FE->>API: POST /notifications/:id/read
@@ -125,10 +127,10 @@ sequenceDiagram
     Ctrl-->>API: success
     API-->>FE: marked read
     FE-->>U: Notification opened
-    end
     
+    Note over U,Ext: Check Unread Badge
     %% Scenario 6: Get Unread Count
-    rect rgb(224, 247, 250)
+    
     note right of U: Check Unread Badge
     U->>FE: Open app
     FE->>API: GET /notifications/unread-count
@@ -147,10 +149,10 @@ sequenceDiagram
     Ctrl-->>API: 200 OK
     API-->>FE: count
     FE-->>U: Show badge
-    end
     
+    Note over U,Ext: Cancel Reminder
     %% Scenario 7: Cancel Reminder
-    rect rgb(255, 248, 225)
+    
     note right of U: Cancel Reminder
     U->>FE: Click cancel reminder
     FE->>API: DELETE /task-reminders/:id
@@ -173,10 +175,13 @@ sequenceDiagram
         API-->>FE: error
         FE-->>U: Permission denied
     end
-    end
+    
+    
+    %% Note over U,Ext: All notifications support multi-channel delivery
+
     
     %% Scenario 8: Recurring Reminder
-    rect rgb(236, 240, 248)
+    
     note right of Queue: Recurring Reminder
     Queue->>Queue: Process recurring job
     Queue->>Svc: processRecurringReminder()
@@ -192,6 +197,6 @@ sequenceDiagram
         Svc->>DB: updateOne({status: completed})
         Svc-->>Queue: complete
     end
-    end
+    
     
     Note over U,Ext: All notifications support multi-channel delivery
