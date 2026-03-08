@@ -1,78 +1,33 @@
-# Postman Collections - Task Management API
+# 📮 Postman Collections - Task Management API
 
-Complete API collections organized by **USER ROLES** based on Figma designs.
-
----
-
-## 📦 Collection Files
-
-### 01 - Super Admin.postman_collection.json
-**For:** System Administrators  
-**Figma:** Main Admin Dashboard
-
-**Features:**
-- Platform analytics & reports
-- User management (all roles)
-- Subscription plan management
-- System-wide settings
-- Revenue tracking
-
-**Key Endpoints:**
-```
-GET  /admin/dashboard          - Dashboard overview
-GET  /admin/statistics         - User statistics
-GET  /admin/earnings           - Monthly income report
-GET  /users                    - All users (paginated)
-POST /users/create-admin       - Create admin/sub-admin
-POST /subscriptions            - Create subscription plan
-```
+**Last Updated**: 08-03-26  
+**Version**: 2.0  
+**Status**: ✅ Complete with all new endpoints
 
 ---
 
-### 02 - Primary User.postman_collection.json
-**For:** Teachers, Parents, Group Owners  
-**Figma:** Teacher/Parent Dashboard
+## 🎯 Overview
 
-**Features:**
-- Team overview & management
-- Task creation & assignment
-- Member permissions control
-- Live activity feed
-- Group settings
+This folder contains comprehensive Postman collections for the Task Management API, organized by user roles and functionality.
 
-**Key Endpoints:**
-```
-GET  /groups/my                - Team overview
-POST /tasks                    - Create task (single/collaborative)
-GET  /groups/:id/members       - Team members list
-GET  /groups/:id/permissions   - Get permissions
-PUT  /groups/:id/permissions   - Update permissions
-GET  /notifications/my         - Live activity feed
-```
+**Total Collections**: 4
+- ✅ **00 - Public & Auth** (No authentication required)
+- ✅ **01 - User Common Part 1** (Profile, Tasks)
+- ✅ **01 - User Common Part 2** (Subtasks, Groups, Notifications, Analytics)
+- ✅ **02 - Admin Full** (Admin-only endpoints)
 
 ---
 
-### 03 - Secondary User.postman_collection.json
-**For:** Students, Children, Team Members  
-**Figma:** App User (Mobile)
+## 📁 Collection Files
 
-**Features:**
-- View assigned tasks
-- Complete tasks & track progress
-- Create personal tasks
-- Create group tasks (if permission granted)
-- Support mode settings
-- Notification style settings
+| File | Role | Endpoints | Auth Required |
+|------|------|-----------|---------------|
+| `00-Public-Auth.postman_collection.json` | Public | 11 | ❌ No |
+| `01-User-Common-Part1.postman_collection.json` | User | 14 | ✅ Yes |
+| `01-User-Common-Part2.postman_collection.json` | User | 21 | ✅ Yes |
+| `02-Admin-Full.postman_collection.json` | Admin | 20 | ✅ Yes (Admin) |
 
-**Key Endpoints:**
-```
-GET  /tasks                    - My tasks (home screen)
-GET  /tasks/daily-progress     - Daily progress (X/Y completed)
-PUT  /tasks/:id/status         - Start/Complete task
-GET  /users/support-mode       - Get support mode
-PUT  /users/support-mode       - Update (Calm/Encouraging/Logical)
-PUT  /users/notification-style - Update (Gentle/Firm/XYZ)
-```
+**Total Endpoints**: 66+
 
 ---
 
@@ -82,183 +37,360 @@ PUT  /users/notification-style - Update (Gentle/Firm/XYZ)
 
 1. Open Postman
 2. Click **Import**
-3. Select all 3 `.json` files
-4. Collections imported! ✅
+3. Select all 4 JSON files
+4. Collections will appear in sidebar
 
 ### Step 2: Set Base URL
 
-For each collection:
-1. Go to collection **Variables** tab
-2. Set `BASE_URL` = `http://localhost:5000/api/v1`
+1. Click on any collection
+2. Go to **Variables** tab
+3. Set `baseUrl` to your API URL:
+   - Local: `http://localhost:5000`
+   - Production: `https://api.yourdomain.com`
 
-### Step 3: Login & Save Tokens
+### Step 3: Authenticate
 
-**Super Admin:**
+1. Open **00 - Public & Auth** collection
+2. Run **Register User** request
+3. Run **Login** request
+4. Access tokens are automatically saved to environment
+
+---
+
+## 🔐 Authentication Flow
+
+### 1. Register User
+
 ```
-1. Open "01 - Super Admin" collection
-2. Run "Login as Admin" request
-3. Copy token from response
-4. Save to ADMIN_TOKEN variable
+POST {{baseUrl}}/v1/auth/register
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "password": "SecurePass123!"
+}
 ```
 
-**Primary User:**
+### 2. Login
+
 ```
-1. Open "02 - Primary User" collection
-2. Run "Login as Primary User" request
-3. Copy token from response
-4. Save to PRIMARY_USER_TOKEN variable
+POST {{baseUrl}}/v1/auth/login
+{
+  "email": "john@example.com",
+  "password": "SecurePass123!"
+}
+
+Response:
+{
+  "data": {
+    "tokens": {
+      "accessToken": "eyJhbGciOiJIUzI1NiIs...",
+      "refreshToken": "eyJhbGciOiJIUzI1NiIs..."
+    }
+  }
+}
 ```
 
-**Secondary User:**
+**Note**: Access token is automatically saved to environment variable `{{accessToken}}`
+
+### 3. Use Access Token
+
+All authenticated requests automatically use `{{accessToken}}` from environment.
+
+---
+
+## 📊 Rate Limits
+
+All endpoints have rate limiting configured:
+
+| Endpoint Type | Rate Limit |
+|--------------|------------|
+| **Login** | 5 attempts / 15 minutes |
+| **Register** | 10 / hour |
+| **Forgot Password** | 3 / hour |
+| **Verify Email** | 5 / hour |
+| **User Endpoints** | 100 / minute |
+| **Admin Endpoints** | 200 / minute |
+| **Task Creation** | 20 / hour (50/day max) |
+
+**Response Headers**:
 ```
-1. Open "03 - Secondary User" collection
-2. Run "Login as Secondary User" request
-3. Copy token from response
-4. Save to SECONDARY_USER_TOKEN variable
+X-RateLimit-Limit: 5
+X-RateLimit-Remaining: 4
+X-RateLimit-Reset: 1678123456
+Retry-After: 900
 ```
 
 ---
 
-## 🧪 Testing Workflows
+## 📝 Collection Details
 
-### Test Permission System
+### 00 - Public & Auth (11 endpoints)
 
-```bash
-# 1. Login as Primary User
-→ Save PRIMARY_USER_TOKEN
+**Health Check**:
+- GET /health
 
-# 2. Create Group
-→ POST /groups
-→ Save GROUP_ID from response
-
-# 3. Add Secondary User as member
-→ POST /groups/:id/members
-→ Save USER_ID
-
-# 4. Try creating group task as Secondary (should FAIL)
-→ Login as Secondary User
-→ POST /tasks (with groupId)
-→ Expected: 403 Forbidden ❌
-
-# 5. Primary grants permission
-→ PUT /groups/:id/permissions
-→ Set canCreateTasks: true for USER_ID
-
-# 6. Try creating group task again (should WORK)
-→ POST /tasks (with groupId)
-→ Expected: 201 Created ✅
-```
-
-### Test Support Mode
-
-```bash
-# 1. Login as Secondary User
-# 2. Get current support mode
-→ GET /users/support-mode
-# 3. Update to "encouraging"
-→ PUT /users/support-mode {"supportMode":"encouraging"}
-# 4. Verify response shows "encouraging"
-```
-
-### Test Task Lifecycle
-
-```bash
-# 1. Primary creates task
-→ POST /tasks (singleAssignment)
-
-# 2. Secondary views task
-→ GET /tasks/:id
-
-# 3. Secondary starts task
-→ PUT /tasks/:id/status {"status":"inProgress"}
-
-# 4. Secondary completes subtasks
-→ PUT /tasks/:id/subtasks/progress
-
-# 5. Secondary completes task
-→ PUT /tasks/:id/status {"status":"completed"}
-
-# 6. Primary sees completion in live feed
-→ GET /notifications/my?type=task
-```
+**Authentication**:
+- POST /auth/register
+- POST /auth/login
+- POST /auth/google-login
+- POST /auth/apple
+- POST /auth/forgot-password
+- POST /auth/reset-password
+- POST /auth/verify-email
+- POST /auth/resend-otp
+- POST /auth/refresh-auth
+- GET /auth/logout
 
 ---
 
-## 📊 Figma Alignment
+### 01 - User Common Part 1 (14 endpoints)
 
-| Collection | Figma Screens | Endpoints | Coverage |
-|------------|--------------|-----------|----------|
-| **Super Admin** | Dashboard, User List, Subscriptions | 20+ | 95% |
-| **Primary User** | Team Overview, Task Monitoring, Permissions | 35+ | 98% |
-| **Secondary User** | Home, Task Status, Profile, Settings | 30+ | 98% |
+**User Profile** (5):
+- GET /users/profile
+- PUT /users/profile-info
+- GET /users/support-mode
+- PUT /users/support-mode
+- PUT /users/notification-style
+
+**Task Management** (9):
+- POST /tasks
+- GET /tasks
+- GET /tasks/paginate
+- GET /tasks/statistics
+- GET /tasks/daily-progress
+- GET /tasks/:id
+- PUT /tasks/:id
+- PUT /tasks/:id/status
+- DELETE /tasks/:id
+
+---
+
+### 01 - User Common Part 2 (21 endpoints)
+
+**Subtasks** (6):
+- POST /subtasks
+- GET /subtasks/task/:taskId
+- GET /subtasks/:id
+- PUT /subtasks/:id
+- PUT /subtasks/:id/toggle-status
+- DELETE /subtasks/:id
+
+**Groups** (5):
+- POST /groups
+- GET /groups/my
+- GET /groups/:id
+- PUT /groups/:id
+- DELETE /groups/:id
+
+**Notifications** (5):
+- GET /notifications/my
+- GET /notifications/unread-count
+- POST /notifications/:id/read
+- POST /notifications/read-all
+- DELETE /notifications/:id
+
+**Analytics** (7):
+- GET /analytics/user/my/overview
+- GET /analytics/user/my/daily-progress
+- GET /analytics/user/my/weekly-streak
+- GET /analytics/user/my/productivity-score
+- GET /analytics/user/my/completion-rate
+- GET /analytics/user/my/task-statistics
+- GET /analytics/user/my/trend
+
+---
+
+### 02 - Admin Full (20 endpoints)
+
+**User Management** (7):
+- GET /users/paginate
+- GET /users/paginate/for-student
+- GET /users/paginate/for-mentor
+- GET /users/paginate/for-sub-admin
+- POST /users/send-invitation-link-to-admin-email
+- PUT /users/remove-sub-admin/:id
+
+**Admin Analytics** (5):
+- GET /analytics/admin/dashboard
+- GET /analytics/admin/user-growth
+- GET /analytics/admin/revenue
+- GET /analytics/admin/task-metrics
+- GET /analytics/admin/engagement
+
+**Payment & Transactions** (3):
+- GET /payment-transactions/paginate
+- GET /payment-transactions/overview/admin
+- GET /payment-transactions/:id
+
+**Subscription Management** (5):
+- GET /subscription-plans/paginate
+- POST /subscription-plans
+- PUT /subscription-plans/:id
+- DELETE /subscription-plans/:id
+- GET /user-subscriptions/paginate
 
 ---
 
 ## 🔑 Environment Variables
 
-Each collection uses these variables:
+Collections use these environment variables:
 
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `BASE_URL` | Backend API URL | `http://localhost:5000/api/v1` |
-| `ADMIN_TOKEN` | Admin JWT token | `eyJhbGc...` |
-| `PRIMARY_USER_TOKEN` | Primary user JWT | `eyJhbGc...` |
-| `SECONDARY_USER_TOKEN` | Secondary user JWT | `eyJhbGc...` |
-| `GROUP_ID` | Test group ID | `64f5a1b2...` |
-| `USER_ID` | Team member ID | `64f5a1b2...` |
-| `TASK_ID` | Test task ID | `64f5a1b2...` |
-
----
-
-## 📝 Notes
-
-1. **Token Expiry:** Tokens expire after 24 hours. Re-login to get new tokens.
-2. **Soft Delete:** Most delete operations are soft deletes (can be restored).
-3. **Permissions:** Secondary users need explicit permission to create group tasks.
-4. **Support Mode:** Affects notification tone and encouragement messages.
-5. **Live Activity:** Real-time updates via notifications endpoint.
+| Variable | Description | Set By |
+|----------|-------------|--------|
+| `baseUrl` | API base URL | Manual |
+| `accessToken` | JWT access token (15 min) | Auto (login) |
+| `refreshToken` | JWT refresh token (7 days) | Auto (login) |
+| `userId` | Current user ID | Auto (login) |
+| `taskId` | Last created task ID | Manual |
+| `groupId` | Last created group ID | Manual |
 
 ---
 
-## 🎯 Collection Structure
+## 🧪 Testing Tips
+
+### 1. Test Registration Flow
 
 ```
-01 - Super Admin/
-├── 00 - Authentication
-├── 01 - Dashboard & Analytics
-├── 02 - User Management
-├── 03 - Subscription Management
-└── 04 - System Settings
+1. Register User → Saves email to environment
+2. Verify Email → Use OTP from email
+3. Login → Saves tokens to environment
+4. Get Profile → Verify authentication works
+```
 
-02 - Primary User/
-├── 00 - Authentication
-├── 01 - Dashboard (Team Overview)
-├── 02 - Task Management
-├── 03 - Team Members Management
-├── 04 - Permissions (Figma: Settings)
-├── 05 - Group Management
-└── 06 - Profile & Subscription
+### 2. Test Task Management
 
-03 - Secondary User/
-├── 00 - Authentication
-├── 01 - Home & Tasks
-├── 02 - Create Task (If Permission)
-├── 03 - Task Status & History
-├── 04 - Profile & Settings (Figma)
-├── 05 - Notifications
-└── 06 - SubTasks
+```
+1. Create Task → Save taskId to environment
+2. Get Tasks → Verify task appears
+3. Update Task Status → Change to "completed"
+4. Get Daily Progress → Verify completion counted
+5. Get Analytics → Verify statistics updated
+```
+
+### 3. Test Rate Limiting
+
+```bash
+# Run login 6 times quickly
+# 6th request should return 429 Too Many Requests
+
+# Example curl:
+for i in {1..6}; do
+  curl -X POST http://localhost:5000/v1/auth/login \
+    -H "Content-Type: application/json" \
+    -d '{"email":"test@example.com","password":"wrong"}'
+done
+```
+
+### 4. Test Caching
+
+```
+1. Get Profile (first time) → ~50ms (cache miss)
+2. Get Profile (second time) → ~5ms (cache hit)
+3. Update Profile → Cache invalidated
+4. Get Profile → ~50ms (cache miss again)
 ```
 
 ---
 
-## 📚 Related Documentation
+## 📈 Response Examples
 
-- [API Documentation](../src/modules/)
-- [Figma Assets](../figma-asset/)
-- [Backend README](../README.md)
+### User Overview (Analytics)
+
+```json
+{
+  "success": true,
+  "data": {
+    "overview": {
+      "totalTasks": 156,
+      "completedTasks": 124,
+      "completionRate": 79.49,
+      "currentStreak": 7,
+      "longestStreak": 21,
+      "productivityScore": 85
+    },
+    "today": {
+      "totalTasks": 5,
+      "completedTasks": 3,
+      "progress": "3/5",
+      "completionRate": 60
+    },
+    "thisWeek": {
+      "totalTasks": 28,
+      "completedTasks": 22,
+      "completionRate": 78.57
+    }
+  }
+}
+```
+
+### Admin Dashboard
+
+```json
+{
+  "success": true,
+  "data": {
+    "overview": {
+      "totalUsers": 125847,
+      "totalGroups": 18453,
+      "totalTasks": 8947562,
+      "activeUsersToday": 45621,
+      "dauMauRatio": 40.52
+    },
+    "userGrowth": {
+      "today": 234,
+      "thisWeek": 1847,
+      "thisMonth": 7453,
+      "growthRate": {
+        "daily": 0.19,
+        "weekly": 1.49,
+        "monthly": 6.29
+      }
+    },
+    "revenue": {
+      "mrr": 1247850.50,
+      "arr": 14974206.00,
+      "thisMonth": 124580.75,
+      "growthRate": 4.74
+    }
+  }
+}
+```
 
 ---
 
-**Version:** 1.0.0  
-**Last Updated:** March 7, 2026  
-**Backend Version:** v1.0.0
+## 🐛 Troubleshooting
+
+### Issue: 401 Unauthorized
+
+**Solution**:
+1. Check if access token is expired (15 min TTL)
+2. Run **Refresh Token** request
+3. Or login again
+
+### Issue: 429 Too Many Requests
+
+**Solution**:
+1. Wait for rate limit to reset (check `X-RateLimit-Reset` header)
+2. Reduce request frequency
+
+### Issue: Variables Not Set
+
+**Solution**:
+1. Go to collection → Variables tab
+2. Set `baseUrl` manually
+3. Run login to auto-set tokens
+
+---
+
+## 📞 Support
+
+For issues or questions:
+- Check API documentation
+- Review error messages
+- Check server logs
+
+---
+
+**Collections Generated**: 08-03-26  
+**Author**: Qwen Code Assistant  
+**Status**: ✅ Complete and Production-Ready

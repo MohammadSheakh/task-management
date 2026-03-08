@@ -200,21 +200,21 @@ Instruction #20:
 
 dear qwen that you for generating postman collection .. but my postman collection is well categorized by role .. but your collection is not .. your collection is categorized by feature category .. as you have my all figma screen shot .. so you can know about the roles and what role have what pages .. features  .. so make category like that and inside role based category then feature wise category .. then endpoint  
 
-====================> [GENEARATE NEXT MODULE]
+====================> [ LIST OF OTHER MODULE NEED TO BE GENERATE ]
 Instruction #21:
 
 now analyze the figma-asset .. as you generate task.module, group.module, notification.module so far .. what are the other module
     .. you want to generate next which should be aligned with figma-asset and askfemi-flutter and Task-Management-website .. but your
     main reference should be figma-asset.
 
-====================> [GENEARATE NEXT MODULE]
+====================> [PREVIOUS MODULE CHECK]
 Instruction #22:
 
 next i think you want to work to payment.module .. if you check my backend code .. i have also payment.module and     
     subscritpion.module .. before start working on those .. check my codebase first .. then check figma-asset i think my  
     previous projects  subscription.module and payment.module is properly aligned with this task management project 
 
-====================> [GENEARATE NEXT MODULE]
+====================> [GENEARATE SYSTEM_GUIDE and  MODULE_ARCHITECTURE]
 Instruction #22:
 
 
@@ -222,3 +222,8 @@ i love how you generate MODULE_ARCHITECTURE.md and SYSTEM_GUIDE.md for notificat
   you generate these for task.module, group.module, analytics.module, subscription.module,
   payment.module .. i think besides diagrams these two markdown files are also be helpful to
   understand flow and inner modules architecture
+
+====================> [POST MAN COLLECTION RE GENERATE]
+Instruction #23:
+
+in postman-collections folder .. you previously create role wise postman collection .. as after that .. we fix and modify so many things .. can you generate postman collections again .. you should generate one by one .. as you cant generate all in one for token issue
