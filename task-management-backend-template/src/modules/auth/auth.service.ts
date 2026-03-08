@@ -37,6 +37,9 @@ import { IMentorProfile } from '../mentor.module/mentorProfile/mentorProfile.int
 import { MentorProfile } from '../mentor.module/mentorProfile/mentorProfile.model';
 import { OAuthAccount } from '../user.module/oauthAccount/oauthAccount.model';
 import { TAuthProvider } from './auth.constants';
+import { redisClient } from '../../helpers/redis/redis';
+import { logger, errorLogger } from '../../shared/logger';
+import { AUTH_SESSION_CONFIG } from './auth.constants';
 const eventEmitterForUpdateUserProfile = new EventEmitter(); // functional way
 const eventEmitterForCreateWallet = new EventEmitter();
 
@@ -392,7 +395,7 @@ const login = async (email: string,
     - access token and refresh token
 
 -------------------*/
-const loginV2 = async (email: string, 
+const loginV2 = async (email: string,
   reqpassword: string,
   fcmToken? : string,
   deviceInfo?: { deviceType?: string, deviceName?: string }
@@ -408,55 +411,11 @@ const loginV2 = async (email: string,
 
   validateUserStatus(user);
 
-  // if (!user.isEmailVerified) {
-  //   //create verification email token
-  //   const verificationToken = await TokenService.createVerifyEmailToken(user);
-  //   //create verification email otp
-  //   await OtpService.createVerificationEmailOtp(user.email);
-  //   return { verificationToken };
-
-  //   throw new ApiError(
-  //     StatusCodes.BAD_REQUEST,
-  //     'User not verified, Please verify your email, Check your email.'
-  //   );
-  // }
-
-  // if (user.lockUntil && user.lockUntil > new Date()) {
-  //   throw new ApiError(
-  //     StatusCodes.TOO_MANY_REQUESTS,
-  //     `Account is locked. Try again after ${config.auth.lockTime} minutes`,
-  //   );
-  // }
-
   const isPasswordValid = await bcryptjs.compare(reqpassword, user.password);
 
   if (!isPasswordValid) {
     throw new ApiError(StatusCodes.UNAUTHORIZED, 'Invalid credentials');
   }
-
-  /*---------------------------------------
-  if (!isPasswordValid) {
-    user.failedLoginAttempts = (user.failedLoginAttempts || 0) + 1;
-    if (user.failedLoginAttempts >= config.auth.maxLoginAttempts) {
-      user.lockUntil = moment().add(config.auth.lockTime, 'minutes').toDate();
-      await user.save();
-      throw new ApiError(
-        423,
-        `Account locked for ${config.auth.lockTime} minutes due to too many failed attempts`,
-      );
-    }
-
-    await user.save();
-    throw new ApiError(StatusCodes.UNAUTHORIZED, 'Invalid credentials');
-  }
-
-  if (user.failedLoginAttempts > 0) {
-    user.failedLoginAttempts = 0;
-    user.lockUntil = undefined;
-    await user.save();
-  }
-
-  -------------------------------------------*/
 
   const tokens = await TokenService.accessAndRefreshToken(user);
 
@@ -484,6 +443,33 @@ const loginV2 = async (email: string,
       device.lastActive = new Date();
       await device.save();
     }
+  }
+
+  // 🔒 REDIS SESSION CACHING
+  // Cache user session for faster subsequent requests
+  try {
+    const sessionKey = `session:${user._id}:${fcmToken || 'web'}`;
+    const sessionData = {
+      userId: user._id,
+      email: user.email,
+      role: user.role,
+      fcmToken,
+      deviceType: deviceInfo?.deviceType || 'web',
+      deviceName: deviceInfo?.deviceName || 'Unknown Device',
+      loginAt: new Date(),
+    };
+    
+    // Cache session for 7 days (matches refresh token expiry)
+    await redisClient.setEx(
+      sessionKey,
+      AUTH_SESSION_CONFIG.SESSION_TTL,
+      JSON.stringify(sessionData)
+    );
+    
+    logger.info(`Session cached for user ${user._id} (${sessionKey})`);
+  } catch (error) {
+    errorLogger.error('Failed to cache session:', error);
+    // Don't throw - login should succeed even if caching fails
   }
 
   const { password, ...userWithoutPassword } = user.toObject();
