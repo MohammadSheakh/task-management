@@ -500,7 +500,7 @@ Must cover:
 
 ```
 ---
--07-03-26
+-date-month-last two digit of year
 ```
 
 ---

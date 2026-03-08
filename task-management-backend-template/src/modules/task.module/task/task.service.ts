@@ -4,16 +4,106 @@ import { ITask } from './task.interface';
 import { GenericService } from '../../_generic-module/generic.services';
 import ApiError from '../../../errors/ApiError';
 import { Types } from 'mongoose';
-import { DAILY_TASK_LIMIT, TTaskStatus } from './task.constant';
+import { DAILY_TASK_LIMIT, TTaskStatus, TASK_CACHE_CONFIG } from './task.constant';
+import { redisClient } from '../../../helpers/redis/redis';
+import { logger, errorLogger } from '../../../shared/logger';
 
 /**
  * Task Service
  * Handles business logic for task operations
  * Extends GenericService for CRUD operations
+ * 
+ * Features:
+ * - Redis caching for read operations
+ * - Automatic cache invalidation on writes
+ * - Daily task limit validation
  */
 export class TaskService extends GenericService<typeof Task, ITask> {
   constructor() {
     super(Task);
+  }
+
+  /**
+   * Cache Key Generator
+   */
+  private getCacheKey(type: string, id?: string, userId?: string): string {
+    const prefix = TASK_CACHE_CONFIG.PREFIX;
+    if (type === 'detail' && id) {
+      return `${prefix}:detail:${id}`;
+    }
+    if (type === 'list' && userId) {
+      return `${prefix}:user:${userId}:list`;
+    }
+    if (type === 'statistics' && userId) {
+      return `${prefix}:user:${userId}:statistics`;
+    }
+    if (type === 'daily-progress' && userId) {
+      return `${prefix}:user:${userId}:daily:${id || 'today'}`;
+    }
+    return `${prefix}:unknown`;
+  }
+
+  /**
+   * Get from Cache
+   */
+  private async getFromCache<T>(key: string): Promise<T | null> {
+    try {
+      const cachedData = await redisClient.get(key);
+      if (cachedData) {
+        logger.debug(`Cache hit: ${key}`);
+        return JSON.parse(cachedData) as T;
+      }
+      logger.debug(`Cache miss: ${key}`);
+      return null;
+    } catch (error) {
+      errorLogger.error('Redis GET error in TaskService:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Set in Cache
+   */
+  private async setInCache<T>(key: string, data: T, ttl: number): Promise<void> {
+    try {
+      await redisClient.setEx(key, ttl, JSON.stringify(data));
+      logger.debug(`Cache set: ${key} (TTL: ${ttl}s)`);
+    } catch (error) {
+      errorLogger.error('Redis SET error in TaskService:', error);
+    }
+  }
+
+  /**
+   * Invalidate Cache
+   */
+  private async invalidateCache(userId: string, taskId?: string): Promise<void> {
+    try {
+      const keysToDelete = [
+        this.getCacheKey('list', undefined, userId),
+        this.getCacheKey('statistics', undefined, userId),
+      ];
+
+      if (taskId) {
+        keysToDelete.push(this.getCacheKey('detail', taskId));
+        keysToDelete.push(this.getCacheKey('daily-progress', taskId, userId));
+      }
+
+      // Add pattern-based invalidation
+      Object.values(TASK_CACHE_CONFIG.INVALIDATION_PATTERNS).forEach(patterns => {
+        patterns.forEach(pattern => {
+          if (pattern.includes('*') && taskId) {
+            keysToDelete.push(pattern.replace('*', taskId));
+          }
+        });
+      });
+
+      if (keysToDelete.length > 0) {
+        await redisClient.del(keysToDelete);
+        logger.info(`Invalidated ${keysToDelete.length} cache keys for user ${userId}`);
+      }
+    } catch (error) {
+      errorLogger.error('Redis DELETE error in TaskService:', error);
+    }
   }
 
   /**
@@ -62,6 +152,9 @@ export class TaskService extends GenericService<typeof Task, ITask> {
       ...data,
       createdById: userId,
     });
+
+    // Invalidate cache after creating task
+    await this.invalidateCache(userId.toString(), task._id.toString());
 
     return task;
   }
@@ -182,6 +275,9 @@ export class TaskService extends GenericService<typeof Task, ITask> {
       throw new ApiError(StatusCodes.NOT_FOUND, 'Task not found');
     }
 
+    // Invalidate cache after updating task
+    await this.invalidateCache(userId.toString(), taskId);
+
     return updatedTask;
   }
 
@@ -228,6 +324,14 @@ export class TaskService extends GenericService<typeof Task, ITask> {
    * @returns Task statistics
    */
   async getTaskStatistics(userId: Types.ObjectId) {
+    const cacheKey = this.getCacheKey('statistics', undefined, userId.toString());
+    
+    // Try cache first
+    const cached = await this.getFromCache(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
     const stats = await this.model.aggregate([
       {
         $match: {
@@ -258,19 +362,31 @@ export class TaskService extends GenericService<typeof Task, ITask> {
       result.total += stat.count;
     });
 
+    // Cache the result
+    await this.setInCache(cacheKey, result, TASK_CACHE_CONFIG.STATISTICS);
+
     return result;
   }
 
   /**
    * Get daily progress for a user
    * Figma: home-flow.png (Daily Progress: 1/5)
-   * 
+   *
    * @param userId - User ID
    * @param date - Date to check (default: today)
    * @returns Daily progress info with task details
    */
   async getDailyProgress(userId: Types.ObjectId, date?: Date) {
     const targetDate = date || new Date();
+    const dateKey = targetDate.toISOString().split('T')[0];
+    const cacheKey = this.getCacheKey('daily-progress', dateKey, userId.toString());
+    
+    // Try cache first
+    const cached = await this.getFromCache(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
     const startOfDay = new Date(targetDate);
     startOfDay.setHours(0, 0, 0, 0);
 
@@ -285,7 +401,7 @@ export class TaskService extends GenericService<typeof Task, ITask> {
         $lte: endOfDay,
       },
       isDeleted: false,
-    }).sort({ startTime: 1 });
+    }).sort({ startTime: 1 }).lean();
 
     // Calculate statistics
     const total = tasks.length;
@@ -309,8 +425,8 @@ export class TaskService extends GenericService<typeof Task, ITask> {
         : (task.status === TTaskStatus.completed ? 100 : 0),
     }));
 
-    return {
-      date: targetDate.toISOString().split('T')[0],
+    const result = {
+      date: dateKey,
       total,
       completed,
       pending,
@@ -320,5 +436,10 @@ export class TaskService extends GenericService<typeof Task, ITask> {
         : 0,
       tasks: taskList,
     };
+
+    // Cache the result
+    await this.setInCache(cacheKey, result, TASK_CACHE_CONFIG.DAILY_PROGRESS);
+
+    return result;
   }
 }

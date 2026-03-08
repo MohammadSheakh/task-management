@@ -11,8 +11,40 @@ import { getLoggedInUserAndSetReferenceToUser } from '../../../middlewares/getLo
 import * as validation from './task.validation';
 import { verifyTaskAccess, verifyTaskOwnership, validateTaskTypeConsistency, validateStatusTransition, checkDailyTaskLimit } from './task.middleware';
 import { SubTaskRoute } from '../subtask/subtask.route';
+import rateLimit from 'express-rate-limit';
+import { TASK_RATE_LIMITS } from './task.constant';
 
 const router = express.Router();
+
+// ─── Rate Limiters ─────────────────────────────────────────────────────
+/**
+ * Rate limiter for creating tasks
+ * Prevents spam and resource exhaustion
+ */
+const createTaskLimiter = rateLimit({
+  windowMs: TASK_RATE_LIMITS.CREATE_TASK.windowMs,
+  max: TASK_RATE_LIMITS.CREATE_TASK.max,
+  message: {
+    success: false,
+    message: TASK_RATE_LIMITS.CREATE_TASK.message,
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+/**
+ * Rate limiter for general task operations
+ */
+const taskLimiter = rateLimit({
+  windowMs: TASK_RATE_LIMITS.GENERAL.windowMs,
+  max: TASK_RATE_LIMITS.GENERAL.max,
+  message: {
+    success: false,
+    message: TASK_RATE_LIMITS.GENERAL.message,
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 export const optionValidationChecking = <T extends keyof ITask | 'sortBy' | 'page' | 'limit' | 'populate' | 'status' | 'taskType' | 'priority' | 'from' | 'to'>(
   filters: T[]
@@ -34,9 +66,11 @@ const controller = new TaskController();
 |  @module Task
 |  @figmaIndex 01-01
 |  @desc Create personal, single assignment, or collaborative task
+|  @rateLimit 20 requests per hour
 └──────────────────────────────────*/
 router.route('/').post(
   auth(TRole.commonUser),
+  createTaskLimiter,
   validateRequest(validation.createTaskValidationSchema),
   validateTaskTypeConsistency,
   checkDailyTaskLimit,
@@ -48,9 +82,11 @@ router.route('/').post(
 |  @module Task
 |  @figmaIndex 01-02
 |  @desc Get tasks where user is creator, owner, or assigned
+|  @rateLimit 100 requests per minute
 └──────────────────────────────────*/
 router.route('/').get(
   auth(TRole.commonUser),
+  taskLimiter,
   validateFiltersForQuery(optionValidationChecking(['status', 'taskType', 'priority', 'from', 'to', ...paginationOptions])),
   controller.getMyTasks
 );
@@ -60,9 +96,11 @@ router.route('/').get(
 |  @module Task
 |  @figmaIndex 01-03
 |  @desc Paginated list of tasks with advanced filtering
+|  @rateLimit 100 requests per minute
 └──────────────────────────────────*/
 router.route('/paginate').get(
   auth(TRole.commonUser),
+  taskLimiter,
   validateFiltersForQuery(optionValidationChecking(['status', 'taskType', 'priority', 'from', 'to', ...paginationOptions])),
   setQueryOptions({
     populate: [
@@ -79,9 +117,11 @@ router.route('/paginate').get(
 |  @module Task
 |  @figmaIndex 01-04
 |  @desc Get count of tasks by status (pending, inProgress, completed)
+|  @rateLimit 100 requests per minute
 └──────────────────────────────────*/
 router.route('/statistics').get(
   auth(TRole.commonUser),
+  taskLimiter,
   controller.getStatistics
 );
 
@@ -90,9 +130,11 @@ router.route('/statistics').get(
 |  @module Task
 |  @figmaIndex 01-05
 |  @desc Get task completion progress for a specific date
+|  @rateLimit 100 requests per minute
 └──────────────────────────────────*/
 router.route('/daily-progress').get(
   auth(TRole.commonUser),
+  taskLimiter,
   controller.getDailyProgress
 );
 
@@ -101,9 +143,11 @@ router.route('/daily-progress').get(
 |  @module Task
 |  @figmaIndex 01-06
 |  @desc Get single task with populated user details
+|  @rateLimit 100 requests per minute
 └──────────────────────────────────*/
 router.route('/:id').get(
   auth(TRole.commonUser),
+  taskLimiter,
   verifyTaskAccess,
   setQueryOptions({
     populate: [
@@ -121,9 +165,11 @@ router.route('/:id').get(
 |  @module Task
 |  @figmaIndex 01-07
 |  @desc Update task details (creator/owner only)
+|  @rateLimit 100 requests per minute
 └──────────────────────────────────*/
 router.route('/:id').put(
   auth(TRole.commonUser),
+  taskLimiter,
   verifyTaskAccess,
   verifyTaskOwnership,
   validateRequest(validation.updateTaskValidationSchema),
