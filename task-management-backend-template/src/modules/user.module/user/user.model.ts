@@ -4,11 +4,9 @@ import { TProfileImage, IUser, UserModal } from './user.interface';
 import paginate from '../../../common/plugins/paginate';
 //@ts-ignore
 import bcryptjs from 'bcryptjs';
-import { config } from '../../../config';
-import { TpreferredLanguage, TStatusType } from './user.constant';
 import { Roles } from '../../../middlewares/roles';
-import { TSubscription } from '../../../enums/subscription';
 import { TAuthProvider } from '../../auth/auth.constants';
+import { TSubscription } from '../../../enums/subscription';
 
 // Profile Image Schema
 const profileImageSchema = new Schema<TProfileImage>({
@@ -72,39 +70,35 @@ const userSchema = new Schema<IUser, UserModal>(
       type: String,
     },
 
-    // 🔑 CALendly Integration Fields
-    calendly: {
-      userId: { 
-        type: String, 
-        unique: true,
-        sparse: true,
-        index: true 
-      },
-
-      // ✅ store full URIs — needed for all API calls
-      userUri: String,
-      organizationUri : String,
-
-      // tokens
-      encryptedAccessToken: String, // NEVER store raw tokens
-      refreshToken : String,
-      expiresAt : Date,
-
-      // meta
-      webhookSubscriptionId: String,
-      profileUrl: String, // e.g., "https://calendly.com/mentor-john"
-      connectedAt: Date,
-      disconnectedAt: Date
+    /*-─────────────────────────────────
+    |  Subscription Related
+    └──────────────────────────────────*/
+    subscriptionType: {
+      type: String,
+      enum: TSubscription 
+      ,
+      required: [
+        false,
+        `TSubscription is required it can be ${Object.values(
+          TSubscription
+        ).join(', ')}`,
+      ],
+      default: TSubscription.none, 
     },
-    
-    //---------------------------------
-    // Auth related
-    //---------------------------------
 
+    // 🆓 FREE TRIAL TRACKING
+    hasUsedFreeTrial: { //✅ TRIAL_USED (prevent multiple trials)
+      type: Boolean,
+      default: false,
+    },
+
+    /*-─────────────────────────────────
+    |  Auth related
+    └──────────────────────────────────*/
     authProvider: {
       type: String,
       enum: [ TAuthProvider.local, TAuthProvider.google, TAuthProvider.apple],
-      default: 'local',
+      default: TAuthProvider.local,
     },
 
     lastPasswordChange: { type: Date },
@@ -120,14 +114,14 @@ const userSchema = new Schema<IUser, UserModal>(
 
     
     //---------------------------------
-    // Wallet Related Info
+    // Wallet Related Info ... This Project have no wallet feature
     //---------------------------------
-    walletId : {
-      type: Types.ObjectId,
-      ref: 'Wallet',
-      required: false, // user and admin dont need any wallet .. only provider need wallet 
-      default: null,
-    },
+    // walletId : {
+    //   type: Types.ObjectId,
+    //   ref: 'Wallet',
+    //   required: false, // user and admin dont need any wallet .. only provider need wallet 
+    //   default: null,
+    // },
 
     isDeleted: {
       type: Boolean,

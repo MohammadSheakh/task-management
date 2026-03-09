@@ -27,7 +27,8 @@ export interface IUser extends Document {
   lockUntil: Date | undefined;
 
 
-  walletId?: Types.ObjectId;
+  //---------- This project have no wallet feature
+  // walletId?: Types.ObjectId;
 
   isDeleted: boolean;
   deletedAt: Date | null;

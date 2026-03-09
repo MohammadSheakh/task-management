@@ -24,9 +24,10 @@ const subscriptionPlanSchema = new Schema<ISubscriptionPlan>(
     subscriptionType: {
       type: String,
       enum: [
-        TSubscription.standard,
-        TSubscription.standardPlus,
-        TSubscription.vise
+        TSubscription.individual,
+        TSubscription.business_starter,
+        TSubscription.business_level1,
+        TSubscription.business_level2,
       ],
       required: [
         true,
@@ -62,6 +63,7 @@ const subscriptionPlanSchema = new Schema<ISubscriptionPlan>(
         )}`,
       ],
     },
+
     renewalFrequncy: {
       type: String,
       enum: [
@@ -76,6 +78,7 @@ const subscriptionPlanSchema = new Schema<ISubscriptionPlan>(
         ).join(', ')}`,
       ],
     },
+    
     amount: {
       type: String, // Number
       required: [false, 'Initial Fee is required'],
@@ -91,6 +94,17 @@ const subscriptionPlanSchema = new Schema<ISubscriptionPlan>(
         )}`,
       ],
       default: TCurrency.usd,
+    },
+
+    /*-─────────────────────────────────
+    |  Subscription Specific Features
+    └──────────────────────────────────*/
+    maxChildrenAccount:{
+      type: Number, 
+      required : [
+        true,
+        `maxChildrenAccount is required.`,
+      ]
     },
     
     //---------------------------------

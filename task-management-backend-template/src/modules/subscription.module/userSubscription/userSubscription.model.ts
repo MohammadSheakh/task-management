@@ -6,7 +6,6 @@ import {
   IUserSubscription,
   IUserSubscriptionModel,
 } from './userSubscription.interface';
-import { User } from '../../user/user.model';
 
 const userSubscriptionSchema = new Schema<IUserSubscription>(
   {

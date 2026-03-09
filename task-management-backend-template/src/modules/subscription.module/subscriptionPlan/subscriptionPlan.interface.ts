@@ -1,7 +1,8 @@
 import { Model, Types } from 'mongoose';
 import { PaginateOptions, PaginateResult } from '../../../types/paginate';
-import { TInitialDuration, TRenewalFrequency, TSubscription } from './subscriptionPlan.constant';
+import { TInitialDuration, TRenewalFrequency } from './subscriptionPlan.constant';
 import { TCurrency } from '../../../enums/payment';
+import { TSubscription } from '../../../enums/subscription';
 
 export interface IConfirmPayment {
     userId: string | any;
@@ -16,10 +17,11 @@ export interface ISubscriptionPlan {
   // _taskId: undefined | Types.ObjectId;
   _id?: Types.ObjectId; // undefined |  Types.ObjectId |
   subscriptionName : string;
-  subscriptionType: TSubscription.standard |
-  TSubscription.standardPlus |
-  TSubscription.vise ;
-   
+  subscriptionType: TSubscription.individual |
+            TSubscription.business_starter |
+            TSubscription.business_level1 |
+            TSubscription.business_level2;
+  
   initialDuration :  TInitialDuration.month ;
   renewalFrequncy : TRenewalFrequency.monthly ;
   amount : string //number;
@@ -27,8 +29,10 @@ export interface ISubscriptionPlan {
   currency : TCurrency.usd;
   features: String[];
   
-  fullAccessToInteractiveChat : Boolean;
-  canViewCycleInsights: Boolean;
+  /*-─────────────────────────────────
+  |  Subscription Specific Features
+  └──────────────────────────────────*/
+  maxChildrenAccount : Number;
   
   stripe_product_id : String;
   stripe_price_id : String;
@@ -39,25 +43,6 @@ export interface ISubscriptionPlan {
   updatedAt?: Date;
 }
 
-export type TSubscriptionPlan = {
-  _id?: Types.ObjectId; // undefined |  Types.ObjectId |
-  subscriptionName : string;
-  subscriptionType: TSubscription.premium;  // ISSUE
-  initialDuration :  TInitialDuration.month  ;
-  renewalFrequncy :  TRenewalFrequency.monthly ;
-  amount : 0;
-  currency : TCurrency.usd;
-  features: String[];
-
-  stripe_product_id : String;
-  stripe_price_id : String;
-
-  isActive : Boolean;
-
-  isDeleted : Boolean;
-  createdAt?: Date;
-  updatedAt?: Date;
-}
 
 export interface ISubscriptionPlanModel extends Model<ISubscriptionPlan> {
   paginate: (
