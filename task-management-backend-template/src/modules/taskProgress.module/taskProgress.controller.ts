@@ -1,119 +1,150 @@
-//@ts-ignore
+import { Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
-import { CatchAsync } from '../../../shared/catchAsync';
-import { SuccessResponse } from '../../../shared/SuccessResponse';
-import { taskProgressService } from './taskProgress.service';
-import { TASK_PROGRESS_STATUS } from './taskProgress.constant';
+import { TaskProgressService } from './taskProgress.service';
+import ApiError from '../../errors/ApiError';
 
 /**
  * Task Progress Controller
  * Handles HTTP requests for task progress operations
- * 
+ *
  * @version 1.0.0
  * @author Senior Engineering Team
  */
 export class TaskProgressController {
+  private service: TaskProgressService;
+
+  constructor() {
+    this.service = new TaskProgressService();
+  }
+
   /**
    * Get progress for a specific task and user
    * GET /task-progress/:taskId/user/:userId
    */
-  getProgress = CatchAsync(async (req: any, res: any) => {
+  getProgress = async (req: Request, res: Response) => {
     const { taskId } = req.params;
-    const userId = (req as any).user.userId;
+    const userId = req.user?.userId;
 
-    const result = await taskProgressService.getProgress(taskId, userId);
+    if (!userId) {
+      throw new ApiError(StatusCodes.UNAUTHORIZED, 'User not authenticated');
+    }
 
-    new SuccessResponse(
-      StatusCodes.OK,
-      'Progress retrieved successfully',
-      result
-    ).send(res);
-  });
+    const result = await this.service.getProgress(taskId, userId);
+
+    (res as any).sendResponse({
+      code: StatusCodes.OK,
+      data: result,
+      message: 'Progress retrieved successfully',
+      success: true,
+    });
+  };
 
   /**
    * Get all children's progress for a task (Parent Dashboard)
    * GET /task-progress/:taskId/children
    */
-  getAllChildrenProgress = CatchAsync(async (req: any, res: any) => {
+  getAllChildrenProgress = async (req: Request, res: Response) => {
     const { taskId } = req.params;
 
-    const result = await taskProgressService.getAllChildrenProgress(taskId);
+    const result = await this.service.getAllChildrenProgress(taskId);
 
-    new SuccessResponse(
-      StatusCodes.OK,
-      'Children progress retrieved successfully',
-      result
-    ).send(res);
-  });
+    (res as any).sendResponse({
+      code: StatusCodes.OK,
+      data: result,
+      message: 'Children progress retrieved successfully',
+      success: true,
+    });
+  };
 
   /**
    * Get all tasks progress for a child
    * GET /task-progress/child/:childId/tasks
    */
-  getAllTasksProgress = CatchAsync(async (req: any, res: any) => {
+  getAllTasksProgress = async (req: Request, res: Response) => {
     const { childId } = req.params;
     const { status, taskType } = req.query;
 
-    const result = await taskProgressService.getAllTasksProgress(childId, { status, taskType });
+    const result = await this.service.getAllTasksProgress(childId, { status, taskType });
 
-    new SuccessResponse(
-      StatusCodes.OK,
-      'Tasks progress retrieved successfully',
-      result
-    ).send(res);
-  });
+    (res as any).sendResponse({
+      code: StatusCodes.OK,
+      data: result,
+      message: 'Tasks progress retrieved successfully',
+      success: true,
+    });
+  };
 
   /**
    * Update progress status (start/complete task)
    * PUT /task-progress/:taskId/status
    */
-  updateProgressStatus = CatchAsync(async (req: any, res: any) => {
+  updateProgressStatus = async (req: Request, res: Response) => {
     const { taskId } = req.params;
-    const userId = (req as any).user.userId;
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      throw new ApiError(StatusCodes.UNAUTHORIZED, 'User not authenticated');
+    }
+
     const { status, note } = req.body;
 
-    const result = await taskProgressService.updateProgressStatus(taskId, userId, status, note);
+    if (!status) {
+      throw new ApiError(StatusCodes.BAD_REQUEST, 'Status is required');
+    }
 
-    new SuccessResponse(
-      StatusCodes.OK,
-      `Task ${status} successfully`,
-      result
-    ).send(res);
-  });
+    const result = await this.service.updateProgressStatus(taskId, userId, status, note);
+
+    (res as any).sendResponse({
+      code: StatusCodes.OK,
+      data: result,
+      message: `Task ${status} successfully`,
+      success: true,
+    });
+  };
 
   /**
    * Mark a subtask as complete
    * PUT /task-progress/:taskId/subtasks/:subtaskIndex/complete
    */
-  completeSubtask = CatchAsync(async (req: any, res: any) => {
+  completeSubtask = async (req: Request, res: Response) => {
     const { taskId, subtaskIndex } = req.params;
-    const userId = (req as any).user.userId;
+    const userId = req.user?.userId;
 
-    const result = await taskProgressService.completeSubtask(taskId, parseInt(subtaskIndex), userId);
+    if (!userId) {
+      throw new ApiError(StatusCodes.UNAUTHORIZED, 'User not authenticated');
+    }
 
-    new SuccessResponse(
-      StatusCodes.OK,
-      'Subtask completed successfully',
-      result
-    ).send(res);
-  });
+    const result = await this.service.completeSubtask(taskId, parseInt(subtaskIndex), userId);
+
+    (res as any).sendResponse({
+      code: StatusCodes.OK,
+      data: result,
+      message: 'Subtask completed successfully',
+      success: true,
+    });
+  };
 
   /**
    * Create or update progress (internal use)
    * POST /task-progress/:taskId
    */
-  createOrUpdateProgress = CatchAsync(async (req: any, res: any) => {
+  createOrUpdateProgress = async (req: Request, res: Response) => {
     const { taskId } = req.params;
     const { userId, status } = req.body;
 
-    const result = await taskProgressService.createOrUpdateProgress(taskId, userId, status);
+    if (!userId) {
+      throw new ApiError(StatusCodes.BAD_REQUEST, 'User ID is required');
+    }
 
-    new SuccessResponse(
-      StatusCodes.CREATED,
-      'Progress created successfully',
-      result
-    ).send(res);
-  });
+    const result = await this.service.createOrUpdateProgress(taskId, userId, status);
+
+    (res as any).sendResponse({
+      code: StatusCodes.CREATED,
+      data: result,
+      message: 'Progress created successfully',
+      success: true,
+    });
+  };
 }
 
 export const taskProgressController = new TaskProgressController();

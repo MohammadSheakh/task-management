@@ -1,6 +1,5 @@
 import { Model, Types, Document } from 'mongoose';
 import { PaginateOptions, PaginateResult } from '../../../types/paginate';
-import { TSubTaskStatus } from './subTask.constant';
 
 /**
  * SubTask Interface

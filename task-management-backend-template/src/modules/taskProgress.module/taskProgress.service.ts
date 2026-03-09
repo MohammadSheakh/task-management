@@ -1,16 +1,16 @@
 //@ts-ignore
 import { StatusCodes } from 'http-status-codes';
 import { Types } from 'mongoose';
-import { GenericService } from '../../_generic-module/generic.services';
+import { GenericService } from '../_generic-module/generic.services';
 import { TaskProgress } from './taskProgress.model';
 import { ITaskProgress, ITaskProgressDocument, ITaskProgressSummary } from './taskProgress.interface';
-import ApiError from '../../../errors/ApiError';
-import { Task } from '../../task.module/task/task.model';
+import ApiError from '../../errors/ApiError';
+import { Task } from '../task.module/task/task.model';
 import { TASK_PROGRESS_STATUS, TASK_PROGRESS_CACHE_CONFIG, TASK_PROGRESS_EVENTS } from './taskProgress.constant';
-import { redisClient } from '../../../helpers/redis/redis';
-import { errorLogger, logger } from '../../../shared/logger';
-import { User } from '../../user.module/user/user.model';
-import { NotificationService } from '../../notification.module/notification/notification.service';
+import { redisClient } from '../../helpers/redis/redis';
+import { errorLogger, logger } from '../../shared/logger';
+import { User } from '../user.module/user/user.model';
+import { NotificationService } from '../notification.module/notification/notification.service';
 
 const notificationService = new NotificationService();
 

@@ -1,10 +1,11 @@
 import { StatusCodes } from 'http-status-codes';
-import { SubTask } from './subTask.model';
+
 import { ISubTask } from './subTask.interface';
 import { GenericService } from '../../_generic-module/generic.services';
 import ApiError from '../../../errors/ApiError';
 import { Types } from 'mongoose';
 import { Task } from '../task/task.model';
+import { SubTask } from './subTask.model';
 
 /**
  * SubTask Service

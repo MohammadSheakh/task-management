@@ -1,6 +1,6 @@
 //@ts-ignore
 import { model, Schema, Types } from 'mongoose';
-import paginate from '../../../common/plugins/paginate';
+import paginate from '../../common/plugins/paginate';
 import {
   ITaskProgress,
   ITaskProgressDocument,

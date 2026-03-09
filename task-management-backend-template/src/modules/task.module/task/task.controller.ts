@@ -4,10 +4,10 @@ import { GenericController } from '../../_generic-module/generic.controller';
 import { Task } from './task.model';
 import { ITask } from './task.interface';
 import { TaskService } from './task.service';
-import { SubTaskService } from '../subtask/subtask.service';
 import { TRole } from '../../../middlewares/roles';
 import ApiError from '../../../errors/ApiError';
 import { GroupMember } from '../../group.module/groupMember/groupMember.model';
+import { SubTaskService } from '../subtask/subtask.service';
 
 /**
  * Task Controller

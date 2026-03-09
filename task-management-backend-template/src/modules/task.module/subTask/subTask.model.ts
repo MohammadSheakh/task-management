@@ -1,6 +1,7 @@
 //@ts-ignore
 import { model, Schema } from 'mongoose';
 import paginate from '../../../common/plugins/paginate';
+import { ISubTask } from './subTask.interface';
 
 /**
  * SubTask Schema
