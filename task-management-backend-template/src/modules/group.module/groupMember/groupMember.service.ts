@@ -2,7 +2,6 @@ import { StatusCodes } from 'http-status-codes';
 import { Types } from 'mongoose';
 import { GroupMember } from './groupMember.model';
 import { IGroupMember, IGroupMemberDocument } from './groupMember.interface';
-import { GenericService } from '../../../_generic-module/generic.services';
 import ApiError from '../../../errors/ApiError';
 import { redisClient } from '../../../helpers/redis/redis';
 import { GROUP_MEMBER_STATUS, GROUP_MEMBER_ROLES, MEMBER_CACHE_CONFIG } from './groupMember.constant';
@@ -11,6 +10,7 @@ import { Group } from '../group/group.model';
 import { User } from '../../user.module/user/user.model';
 import { UserProfile } from '../../user.module/userProfile/userProfile.model';
 import { notificationQueue } from '../../../helpers/bullmq/bullmq';
+import { GenericService } from '../../_generic-module/generic.services';
 
 /**
  * GroupMember Service

@@ -2,7 +2,6 @@ import { StatusCodes } from 'http-status-codes';
 import { Types } from 'mongoose';
 import { TaskReminder } from './taskReminder.model';
 import { ITaskReminder, ITaskReminderDocument } from './taskReminder.interface';
-import { GenericService } from '../../../_generic-module/generic.services';
 import ApiError from '../../../errors/ApiError';
 import { errorLogger, logger } from '../../../shared/logger';
 import { TASK_REMINDER_STATUS, TASK_REMINDER_LIMITS, REMINDER_QUEUE_CONFIG } from './taskReminder.constant';
@@ -10,6 +9,7 @@ import { Task } from '../../task.module/task/task.model';
 import { NotificationService } from '../notification/notification.service';
 // Import BullMQ queue
 import { taskRemindersQueue } from '../../../helpers/bullmq/bullmq';
+import { GenericService } from '../../_generic-module/generic.services';
 
 /**
  * TaskReminder Service

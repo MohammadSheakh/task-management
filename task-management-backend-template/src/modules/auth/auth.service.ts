@@ -12,7 +12,6 @@ import { config } from '../../config';
 import { TokenService } from '../token/token.service';
 import { TokenType } from '../token/token.interface';
 import { OtpType } from '../otp/otp.interface';
-import { WalletService } from '../wallet.module/wallet/wallet.service';
 import { TCurrency } from '../../enums/payment';
 //@ts-ignore
 import { OAuth2Client } from 'google-auth-library';
@@ -33,8 +32,6 @@ import { IUserDevices } from '../user.module/userDevices/userDevices.interface';
 import { UserRoleDataService } from '../user.module/userRoleData/userRoleData.service';
 import { IUser } from '../user.module/user/user.interface';
 import { ICreateUser, IGoogleLoginPayload } from './auth.interface';
-import { IMentorProfile } from '../mentor.module/mentorProfile/mentorProfile.interface';
-import { MentorProfile } from '../mentor.module/mentorProfile/mentorProfile.model';
 import { OAuthAccount } from '../user.module/oauthAccount/oauthAccount.model';
 import { TAuthProvider } from './auth.constants';
 import { redisClient } from '../../helpers/redis/redis';
@@ -43,7 +40,7 @@ import { AUTH_SESSION_CONFIG } from './auth.constants';
 const eventEmitterForUpdateUserProfile = new EventEmitter(); // functional way
 const eventEmitterForCreateWallet = new EventEmitter();
 
-let walletService = new WalletService();
+
 let userRoleDataService = new UserRoleDataService();
 
 eventEmitterForUpdateUserProfile.on('eventEmitterForUpdateUserProfile', async (valueFromRequest: any) => {
@@ -62,18 +59,6 @@ eventEmitterForCreateWallet.on('eventEmitterForCreateWallet', async (valueFromRe
   try {
       const { userId } = valueFromRequest;
       
-      const wallet =  await walletService.create({
-        userId: userId,
-        amount: 0, //  default 0
-        currency: TCurrency.bdt,
-      });
-
-      await User.findByIdAndUpdate(
-        userId,
-        { walletId: wallet._id },
-        { new: true }
-      )
-
     }catch (error) {
       console.error('Error occurred while handling token creation and deletion:', error);
     }
@@ -124,42 +109,6 @@ const createUser = async (userData: ICreateUser, userProfileId:string) => {
       OtpService.createVerificationEmailOtp(user.email)
   ]);
 
-  if(userData.role === TRole.mentor){
-    /*-─────────────────────────────────
-    | Mentor must have wallet
-    | TODO : use redis bullmq to create wallet in stead of event emitter .. 
-    └──────────────────────────────────*/
-  
-    // 📈⚙️ OPTIMIZATION: with event emmiter 
-    eventEmitterForCreateWallet.emit('eventEmitterForCreateWallet', { 
-      userId : user._id
-    });
-
-  
-    /*-─────────────────────────────────
-    |  TODO : MUST
-    | Lets send notification to admin that new Provider registered
-    └──────────────────────────────────*/
-    await enqueueWebNotification(
-      `A ${userData.role} registered successfully . verify document to activate account`,
-      null, // senderId
-      null, // receiverId 
-      TRole.admin, // receiverRole
-      TNotificationType.newUser, // type
-      /**********
-       * In UI there is no details page for specialist's schedule
-       * **** */
-      // '', // linkFor
-      // existingWorkoutClass._id // linkId
-    );
-
-    //--------- Lets create UserRole Data 
-    await userRoleDataService.create({
-      userId: user._id,
-    })
-    
-    return { user, verificationToken };
-  }
 
   // eventEmitterForOTPCreateAndSendMail.emit('eventEmitterForOTPCreateAndSendMail', { email: user.email });
 
@@ -227,45 +176,6 @@ const createUserV2 = async (userData: ICreateUser, userProfileId:string) => {
       OtpService.createVerificationEmailOtp(user.email)
   ]);
 
-  if(userData.role === TRole.mentor){
-    /*-─────────────────────────────────
-    | Mentor must have wallet
-    | TODO : use redis bullmq to create wallet in stead of event emitter .. 
-    └──────────────────────────────────*/
-  
-    // 📈⚙️ OPTIMIZATION: with event emmiter 
-    eventEmitterForCreateWallet.emit('eventEmitterForCreateWallet', { 
-      userId : user._id
-    });
-
-    const createMentorProfile : IMentorProfile = await MentorProfile.create({
-      userId : user._id
-    });
-
-    /*-─────────────────────────────────
-    |  TODO : MUST
-    | Lets send notification to admin that new Provider registered
-    └──────────────────────────────────*/
-    await enqueueWebNotification(
-      `A ${userData.role} registered successfully `,
-      null, // senderId
-      null, // receiverId 
-      TRole.admin, // receiverRole
-      TNotificationType.newUser, // type
-      /**********
-       * In UI there is no details page for specialist's schedule
-       * **** */
-      // '', // linkFor
-      // existingWorkoutClass._id // linkId
-    );
-
-    //--------- Lets create UserRole Data 
-    await userRoleDataService.create({
-      userId: user._id,
-    })
-    
-    return { user, verificationToken };
-  }
 
   // eventEmitterForOTPCreateAndSendMail.emit('eventEmitterForOTPCreateAndSendMail', { email: user.email });
 
@@ -687,30 +597,6 @@ const googleLogin = async ({ idToken, role, acceptTOC }: IGoogleLoginPayload) =>
     isVerified: true,
   });
 
-  // Handle mentor-specific logic (same as createUserV2)
-  if (role === TRole.mentor) {
-    eventEmitterForCreateWallet.emit('eventEmitterForCreateWallet', { userId: newUser._id });
-    await MentorProfile.create({ userId: newUser._id });
-    await userRoleDataService.create({ userId: newUser._id });
-    
-    /*-─────────────────────────────────
-    |  TODO : MUST
-    | Lets send notification to admin that new Provider registered
-    └──────────────────────────────────*/
-    await enqueueWebNotification(
-      `A ${role} registered via Google`,
-      null, // senderId
-      null, // receiverId 
-      TRole.admin, // receiverRole
-      TNotificationType.newUser, // type
-      /**********
-       * In UI there is no details page for specialist's schedule
-       * **** */
-      // '', // linkFor
-      // existingWorkoutClass._id // linkId
-    );
-  }
-
   const tokens = TokenService.accessAndRefreshToken(newUser);
   return { user: newUser, ...tokens, isNewUser: true };
 };
@@ -818,33 +704,8 @@ const appleLogin = async ({ idToken, role, acceptTOC }: IGoogleLoginPayload) => 
     isVerified: true,
   });
 
-  // Handle mentor-specific logic (same as createUserV2)
-  if (role === TRole.mentor) {
-    eventEmitterForCreateWallet.emit('eventEmitterForCreateWallet', { userId: newUser._id });
-    await MentorProfile.create({ userId: newUser._id });
-    await userRoleDataService.create({ userId: newUser._id });
-    /*-─────────────────────────────────
-    |  TODO : MUST
-    | Lets send notification to admin that new Provider registered
-    └──────────────────────────────────*/
-    await enqueueWebNotification(
-      `A ${role} registered via Google`,
-      null, // senderId
-      null, // receiverId 
-      TRole.admin, // receiverRole
-      TNotificationType.newUser, // type
-      /**********
-       * In UI there is no details page for specialist's schedule
-       * **** */
-      // '', // linkFor
-      // existingWorkoutClass._id // linkId
-    );
-  }
-
   const tokens = TokenService.accessAndRefreshToken(newUser);
   return { user: newUser, ...tokens, isNewUser: true };
-
-
 };
 
 export const AuthService = {

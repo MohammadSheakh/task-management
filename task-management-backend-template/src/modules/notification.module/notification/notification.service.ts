@@ -2,13 +2,13 @@ import { StatusCodes } from 'http-status-codes';
 import { Types } from 'mongoose';
 import { Notification } from './notification.model';
 import { INotification, INotificationDocument, INotificationQueryOptions, IBulkNotificationPayload } from './notification.interface';
-import { GenericService } from '../../../_generic-module/generic.services';
 import ApiError from '../../../errors/ApiError';
 import { redisClient } from '../../../helpers/redis/redis';
 import { NOTIFICATION_STATUS, NOTIFICATION_PRIORITY, NOTIFICATION_CHANNEL, NOTIFICATION_CACHE_CONFIG, QUEUE_CONFIG, ACTIVITY_TYPE, TActivityType } from './notification.constant';
 import { errorLogger, logger } from '../../../shared/logger';
 import { notificationQueue } from '../../../helpers/bullmq/bullmq';
 import PaginationService from '../../../common/service/paginationService';
+import { GenericService } from '../../_generic-module/generic.services';
 
 /**
  * Notification Service

@@ -1,17 +1,16 @@
-//@ts-ignore
+import { Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
-import { CatchAsync } from '../../../shared/catchAsync';
-import { SuccessResponse } from '../../../shared/SuccessResponse';
 import { ChildrenBusinessUserService } from './childrenBusinessUser.service';
-import { pick } from '../../../shared/pick';
-import { IChildrenBusinessUser } from './childrenBusinessUser.interface';
+import { pick } from '../../shared/pick';
 import { IChildrenBusinessUserQueryOptions } from './childrenBusinessUser.interface';
 import { CHILDREN_BUSINESS_USER_STATUS } from './childrenBusinessUser.constant';
+import catchAsync from '../../shared/catchAsync';
+import ApiError from '../../errors/ApiError';
 
 /**
  * Children Business User Controller
  * Handles HTTP requests for children business user operations
- * 
+ *
  * @version 1.0.0
  * @author Senior Engineering Team
  */
@@ -25,15 +24,19 @@ export class ChildrenBusinessUserController {
   /**
    * Create child account
    * POST /children-business-users/children
-   * 
+   *
    * @description Business user creates a child account and adds to family
    * @auth Business user with active business subscription
    */
-  createChild = CatchAsync(async (req: any, res: any) => {
+  createChild = catchAsync(async (req: Request, res: Response) => {
     // ─────────────────────────────────────────────────────────────
     // Step 1: Get business user ID from request
     // ─────────────────────────────────────────────────────────────
-    const businessUserId = (req as any).user.userId;
+    const businessUserId = req.user?.userId;
+
+    if (!businessUserId) {
+      throw new ApiError(StatusCodes.UNAUTHORIZED, 'User not authenticated');
+    }
 
     // ─────────────────────────────────────────────────────────────
     // Step 2: Extract child data from request body
@@ -48,33 +51,38 @@ export class ChildrenBusinessUserController {
     // ─────────────────────────────────────────────────────────────
     // Step 4: Send success response
     // ─────────────────────────────────────────────────────────────
-    new SuccessResponse(
-      StatusCodes.CREATED,
-      'Child account created successfully and added to family',
-      result
-    ).send(res);
+    (res as any).sendResponse({
+      code: StatusCodes.CREATED,
+      data: result,
+      message: 'Child account created successfully and added to family',
+      success: true,
+    });
   });
 
   /**
    * Get all children of business user
    * GET /children-business-users/my-children
-   * 
+   *
    * @description Get all children accounts for the authenticated business user
    * @auth Business user
    */
-  getMyChildren = CatchAsync(async (req: any, res: any) => {
+  getMyChildren = catchAsync(async (req: Request, res: Response) => {
     // ─────────────────────────────────────────────────────────────
     // Step 1: Get business user ID from request
     // ─────────────────────────────────────────────────────────────
-    const businessUserId = (req as any).user.userId;
+    const businessUserId = req.user?.userId;
+
+    if (!businessUserId) {
+      throw new ApiError(StatusCodes.UNAUTHORIZED, 'User not authenticated');
+    }
 
     // ─────────────────────────────────────────────────────────────
     // Step 2: Extract query parameters
     // ─────────────────────────────────────────────────────────────
     const options: IChildrenBusinessUserQueryOptions = {
       status: req.query.status as any,
-      page: req.query.page ? parseInt(req.query.page) : undefined,
-      limit: req.query.limit ? parseInt(req.query.limit) : undefined,
+      page: req.query.page ? parseInt(req.query.page as string) : undefined,
+      limit: req.query.limit ? parseInt(req.query.limit as string) : undefined,
       sortBy: req.query.sortBy || '-addedAt',
     };
 
@@ -94,28 +102,33 @@ export class ChildrenBusinessUserController {
     // ─────────────────────────────────────────────────────────────
     // Step 5: Send success response
     // ─────────────────────────────────────────────────────────────
-    new SuccessResponse(
-      StatusCodes.OK,
-      'Children retrieved successfully',
-      {
+    (res as any).sendResponse({
+      code: StatusCodes.OK,
+      data: {
         children,
         count,
-      }
-    ).send(res);
+      },
+      message: 'Children retrieved successfully',
+      success: true,
+    });
   });
 
   /**
    * Get parent business user (for children)
    * GET /children-business-users/my-parent
-   * 
+   *
    * @description Get the parent business user for the authenticated child
    * @auth Child user
    */
-  getParentBusinessUser = CatchAsync(async (req: any, res: any) => {
+  getParentBusinessUser = catchAsync(async (req: Request, res: Response) => {
     // ─────────────────────────────────────────────────────────────
     // Step 1: Get child user ID from request
     // ─────────────────────────────────────────────────────────────
-    const childUserId = (req as any).user.userId;
+    const childUserId = req.user?.userId;
+
+    if (!childUserId) {
+      throw new ApiError(StatusCodes.UNAUTHORIZED, 'User not authenticated');
+    }
 
     // ─────────────────────────────────────────────────────────────
     // Step 2: Get parent business user
@@ -125,25 +138,31 @@ export class ChildrenBusinessUserController {
     // ─────────────────────────────────────────────────────────────
     // Step 3: Send success response
     // ─────────────────────────────────────────────────────────────
-    new SuccessResponse(
-      StatusCodes.OK,
-      'Parent business user retrieved successfully',
-      parentInfo
-    ).send(res);
+    (res as any).sendResponse({
+      code: StatusCodes.OK,
+      data: parentInfo,
+      message: 'Parent business user retrieved successfully',
+      success: true,
+    });
   });
 
   /**
    * Remove child from family
    * DELETE /children-business-users/children/:childId
-   * 
+   *
    * @description Remove a child account from the family (soft delete)
    * @auth Business user
    */
-  removeChild = CatchAsync(async (req: any, res: any) => {
+  removeChild = catchAsync(async (req: Request, res: Response) => {
     // ─────────────────────────────────────────────────────────────
     // Step 1: Get business user ID and child ID
     // ─────────────────────────────────────────────────────────────
-    const businessUserId = (req as any).user.userId;
+    const businessUserId = req.user?.userId;
+
+    if (!businessUserId) {
+      throw new ApiError(StatusCodes.UNAUTHORIZED, 'User not authenticated');
+    }
+
     const childUserId = req.params.childId;
 
     // ─────────────────────────────────────────────────────────────
@@ -159,25 +178,31 @@ export class ChildrenBusinessUserController {
     // ─────────────────────────────────────────────────────────────
     // Step 4: Send success response
     // ─────────────────────────────────────────────────────────────
-    new SuccessResponse(
-      StatusCodes.OK,
-      'Child removed from family successfully',
-      null
-    ).send(res);
+    (res as any).sendResponse({
+      code: StatusCodes.OK,
+      data: null,
+      message: 'Child removed from family successfully',
+      success: true,
+    });
   });
 
   /**
    * Reactivate child account
    * POST /children-business-users/children/:childId/reactivate
-   * 
+   *
    * @description Reactivate a previously removed child account
    * @auth Business user
    */
-  reactivateChild = CatchAsync(async (req: any, res: any) => {
+  reactivateChild = catchAsync(async (req: Request, res: Response) => {
     // ─────────────────────────────────────────────────────────────
     // Step 1: Get business user ID and child ID
     // ─────────────────────────────────────────────────────────────
-    const businessUserId = (req as any).user.userId;
+    const businessUserId = req.user?.userId;
+
+    if (!businessUserId) {
+      throw new ApiError(StatusCodes.UNAUTHORIZED, 'User not authenticated');
+    }
+
     const childUserId = req.params.childId;
 
     // ─────────────────────────────────────────────────────────────
@@ -188,25 +213,30 @@ export class ChildrenBusinessUserController {
     // ─────────────────────────────────────────────────────────────
     // Step 3: Send success response
     // ─────────────────────────────────────────────────────────────
-    new SuccessResponse(
-      StatusCodes.OK,
-      'Child account reactivated successfully',
-      null
-    ).send(res);
+    (res as any).sendResponse({
+      code: StatusCodes.OK,
+      data: null,
+      message: 'Child account reactivated successfully',
+      success: true,
+    });
   });
 
   /**
    * Get children statistics
    * GET /children-business-users/statistics
-   * 
+   *
    * @description Get statistics about children accounts
    * @auth Business user
    */
-  getStatistics = CatchAsync(async (req: any, res: any) => {
+  getStatistics = catchAsync(async (req: Request, res: Response) => {
     // ─────────────────────────────────────────────────────────────
     // Step 1: Get business user ID
     // ─────────────────────────────────────────────────────────────
-    const businessUserId = (req as any).user.userId;
+    const businessUserId = req.user?.userId;
+
+    if (!businessUserId) {
+      throw new ApiError(StatusCodes.UNAUTHORIZED, 'User not authenticated');
+    }
 
     // ─────────────────────────────────────────────────────────────
     // Step 2: Get counts for each status
@@ -236,24 +266,25 @@ export class ChildrenBusinessUserController {
       status: 'active',
     }).populate('subscriptionPlanId', 'maxChildrenAccount subscriptionName');
 
-    const maxChildren = subscription?.subscriptionPlanId ? 
+    const maxChildren = subscription?.subscriptionPlanId ?
       (subscription.subscriptionPlanId as any).maxChildrenAccount : 0;
 
     // ─────────────────────────────────────────────────────────────
     // Step 4: Send success response
     // ─────────────────────────────────────────────────────────────
-    new SuccessResponse(
-      StatusCodes.OK,
-      'Statistics retrieved successfully',
-      {
+    (res as any).sendResponse({
+      code: StatusCodes.OK,
+      data: {
         active: activeCount,
         inactive: inactiveCount,
         removed: removedCount,
         total: activeCount + inactiveCount + removedCount,
         maxAllowed: maxChildren,
         remaining: maxChildren - activeCount,
-      }
-    ).send(res);
+      },
+      message: 'Statistics retrieved successfully',
+      success: true,
+    });
   });
 }
 

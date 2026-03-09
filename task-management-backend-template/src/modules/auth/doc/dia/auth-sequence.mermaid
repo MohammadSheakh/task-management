@@ -49,6 +49,8 @@ sequenceDiagram
         FE-->>U: Navigate to Dashboard
     end
 
+Note over U,Ext: Access Protected Route
+
     U->>FE: Access Protected Route
     FE->>API: GET /user/profile
     API->>AuthSvc: authenticate JWT
@@ -76,6 +78,8 @@ sequenceDiagram
         API-->>FE: New access token
         FE->>API: GET /user/profile
     end
+
+Note over U,Ext: Logout
 
     U->>FE: Logout
     FE->>API: POST /auth/logout

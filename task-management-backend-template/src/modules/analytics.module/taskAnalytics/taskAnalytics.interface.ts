@@ -1,6 +1,6 @@
 //@ts-ignore
 import { Types } from 'mongoose';
-import { TAnalyticsTimeRange } from './analytics.constant';
+import { TAnalyticsTimeRange } from '../analytics.constant';
 
 /**
  * Task Analytics Interface

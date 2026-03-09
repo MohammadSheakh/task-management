@@ -11,7 +11,7 @@ import { UserSubscription } from '../../subscription.module/userSubscription/use
 import { UserSubscriptionStatusType } from '../../subscription.module/userSubscription/userSubscription.constant';
 import { CHILDREN_BUSINESS_USER_STATUS, CHILDREN_CACHE_CONFIG } from './childrenBusinessUser.constant';
 import { redisClient } from '../../../helpers/redis/redis';
-import { errorLogger, logger } from '../../../shared/logger';
+import { errorLogger, logger } from '../../shared/logger';
 import bcryptjs from 'bcryptjs';
 
 /**

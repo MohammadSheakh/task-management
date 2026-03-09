@@ -1,5 +1,5 @@
 //@ts-ignore
-import { model, Schema } from 'mongoose';
+import { model, Schema, Types } from 'mongoose';
 import { ITask, ITaskModel } from './task.interface';
 import paginate from '../../../common/plugins/paginate';
 
@@ -193,20 +193,20 @@ taskSchema.virtual('isOverdue').get(function () {
   return new Date() > task.dueDate;
 });
 
-/**
+/** -------- we dont need this .. 
  * Virtual populate for subtasks
  * Automatically includes subtasks when getting task details
  * Matches Flutter expectation of embedded subtasks
  */
-taskSchema.virtual('subtasks', {
-  ref: 'SubTask',
-  localField: '_id',
-  foreignField: 'taskId',
-  options: { 
-    sort: { order: 1 },
-    limit: 100 // Prevent too many subtasks
-  }
-});
+// taskSchema.virtual('subtasks', {
+//   ref: 'SubTask',
+//   localField: '_id',
+//   foreignField: 'taskId',
+//   options: { 
+//     sort: { order: 1 },
+//     limit: 100 // Prevent too many subtasks
+//   }
+// });
 
 /**
  * Virtual: time alias for scheduledTime
