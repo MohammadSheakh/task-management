@@ -5,6 +5,7 @@ import ApiError from '../../../errors/ApiError';
 import { redisClient } from '../../../helpers/redis/redis';
 import { logger, errorLogger } from '../../../shared/logger';
 import { Task } from '../../task.module/task/task.model';
+import { TaskProgress } from '../../taskProgress.module/taskProgress.model';
 import { Group } from '../../group.module/group/group.model';
 import { GroupMember } from '../../group.module/groupMember/groupMember.model';
 import {
@@ -350,6 +351,306 @@ export class TaskAnalyticsService {
    */
   async getTaskActivity(range: TAnalyticsTimeRange): Promise<any[]> {
     return [];
+  }
+
+  /**
+   * NEW: Get collaborative task progress analytics (for parent dashboard)
+   * Shows which children completed/started/not started a collaborative task
+   */
+  async getCollaborativeTaskProgress(taskId: string): Promise<any> {
+    const cacheKey = this.getCacheKey('collaborative-progress', taskId);
+
+    const cached = await this.getFromCache(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    // Get task details
+    const task = await Task.findById(taskId).select('title subtasks taskType');
+    if (!task) {
+      throw new ApiError(StatusCodes.NOT_FOUND, 'Task not found');
+    }
+
+    if (task.taskType !== 'collaborative') {
+      throw new ApiError(StatusCodes.BAD_REQUEST, 'This is not a collaborative task');
+    }
+
+    // Get all children's progress
+    const progressRecords = await TaskProgress.find({
+      taskId: new Types.ObjectId(taskId),
+      isDeleted: false,
+    }).populate('userId', 'name email profileImage');
+
+    // Build children progress array
+    const childrenProgress = progressRecords.map((record: any) => {
+      const userDoc = record.userId as any;
+      return {
+        childId: record.userId,
+        childName: userDoc?.name || 'Unknown',
+        email: userDoc?.email,
+        status: record.status,
+        startedAt: record.startedAt,
+        completedAt: record.completedAt,
+        progressPercentage: record.progressPercentage,
+        completedSubtaskCount: record.completedSubtaskIndexes.length,
+        totalSubtasks: task.subtasks?.length || 0,
+      };
+    });
+
+    // Calculate summary
+    const summary = {
+      totalChildren: childrenProgress.length,
+      notStarted: childrenProgress.filter((c: any) => c.status === 'notStarted').length,
+      inProgress: childrenProgress.filter((c: any) => c.status === 'inProgress').length,
+      completed: childrenProgress.filter((c: any) => c.status === 'completed').length,
+      completionRate: childrenProgress.length > 0
+        ? Math.round((childrenProgress.filter((c: any) => c.status === 'completed').length / childrenProgress.length) * 100)
+        : 0,
+      averageProgress: childrenProgress.length > 0
+        ? Math.round(childrenProgress.reduce((sum: number, c: any) => sum + c.progressPercentage, 0) / childrenProgress.length)
+        : 0,
+    };
+
+    const result = {
+      taskId: task._id,
+      taskTitle: task.title,
+      taskType: task.taskType,
+      totalSubtasks: task.subtasks?.length || 0,
+      childrenProgress,
+      summary,
+    };
+
+    await this.setInCache(cacheKey, result, ANALYTICS_CACHE_CONFIG.TASK_DETAIL);
+    return result;
+  }
+
+  /**
+   * NEW: Get child's performance analytics
+   * Shows task completion, streaks, and productivity for a specific child
+   */
+  async getChildPerformance(childId: string, timeRange: TAnalyticsTimeRange = 'all'): Promise<any> {
+    const cacheKey = this.getCacheKey('child-performance', childId);
+
+    const cached = await this.getFromCache(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    // Get all tasks progress for this child
+    const progressRecords = await TaskProgress.find({
+      userId: new Types.ObjectId(childId),
+      isDeleted: false,
+    }).populate('taskId', 'title taskType status totalSubtasks');
+
+    // Calculate task statistics
+    const tasks = progressRecords.map((record: any) => {
+      const taskDoc = record.taskId as any;
+      return {
+        taskId: record.taskId,
+        taskTitle: taskDoc?.title || 'Unknown',
+        taskType: taskDoc?.taskType || 'personal',
+        status: record.status,
+        progressPercentage: record.progressPercentage,
+        completedSubtaskCount: record.completedSubtaskIndexes.length,
+        totalSubtasks: taskDoc?.totalSubtasks || 0,
+      };
+    });
+
+    const stats = {
+      total: tasks.length,
+      completed: tasks.filter((t: any) => t.status === 'completed').length,
+      inProgress: tasks.filter((t: any) => t.status === 'inProgress').length,
+      notStarted: tasks.filter((t: any) => t.status === 'notStarted').length,
+      completionRate: tasks.length > 0
+        ? Math.round((tasks.filter((t: any) => t.status === 'completed').length / tasks.length) * 100)
+        : 0,
+    };
+
+    // Calculate streak
+    const streak = await this.calculateChildStreak(childId);
+
+    // Calculate productivity score
+    const productivityScore = this.calculateProductivityScore(stats, streak);
+
+    const result = {
+      childId,
+      tasks: stats,
+      streak,
+      productivity: {
+        score: productivityScore,
+        rank: this.getProductivityRank(productivityScore),
+      },
+      recentTasks: tasks.slice(0, 10),
+    };
+
+    await this.setInCache(cacheKey, result, ANALYTICS_CACHE_CONFIG.USER_PERFORMANCE);
+    return result;
+  }
+
+  /**
+   * NEW: Get parent dashboard overview (all children's performance)
+   */
+  async getParentDashboardOverview(parentId: string): Promise<any> {
+    const cacheKey = this.getCacheKey('parent-dashboard', parentId);
+
+    const cached = await this.getFromCache(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    // Get all children's progress for tasks created by parent
+    const childrenTasks = await TaskProgress.aggregate([
+      {
+        $lookup: {
+          from: 'tasks',
+          localField: 'taskId',
+          foreignField: '_id',
+          as: 'task',
+        },
+      },
+      { $unwind: '$task' },
+      {
+        $match: {
+          'task.createdById': new Types.ObjectId(parentId),
+          'task.taskType': 'collaborative',
+          isDeleted: false,
+        },
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'userId',
+          foreignField: '_id',
+          as: 'child',
+        },
+      },
+      { $unwind: '$child' },
+      {
+        $group: {
+          _id: '$userId',
+          childName: { $first: '$child.name' },
+          childEmail: { $first: '$child.email' },
+          totalTasks: { $sum: 1 },
+          completedTasks: {
+            $sum: { $cond: [{ $eq: ['$status', 'completed'] }, 1, 0] },
+          },
+          inProgressTasks: {
+            $sum: { $cond: [{ $eq: ['$status', 'inProgress'] }, 1, 0] },
+          },
+          notStartedTasks: {
+            $sum: { $cond: [{ $eq: ['$status', 'notStarted'] }, 1, 0] },
+          },
+          averageProgress: { $avg: '$progressPercentage' },
+          lastActive: { $max: '$updatedAt' },
+        },
+      },
+    ]);
+
+    // Format children data
+    const children = childrenTasks.map((child: any) => ({
+      childId: child._id,
+      childName: child.childName,
+      childEmail: child.childEmail,
+      tasks: {
+        total: child.totalTasks,
+        completed: child.completedTasks,
+        inProgress: child.inProgressTasks,
+        notStarted: child.notStartedTasks,
+        completionRate: child.totalTasks > 0
+          ? Math.round((child.completedTasks / child.totalTasks) * 100)
+          : 0,
+      },
+      averageProgress: Math.round(child.averageProgress),
+      lastActive: child.lastActive,
+    }));
+
+    // Calculate overall statistics
+    const overall = {
+      totalChildren: children.length,
+      totalTasksCompleted: children.reduce((sum: number, c: any) => sum + c.tasks.completed, 0),
+      totalTasks: children.reduce((sum: number, c: any) => sum + c.tasks.total, 0),
+      averageCompletionRate: children.length > 0
+        ? Math.round(children.reduce((sum: number, c: any) => sum + c.tasks.completionRate, 0) / children.length)
+        : 0,
+    };
+
+    const result = {
+      parentId,
+      children,
+      overall,
+    };
+
+    await this.setInCache(cacheKey, result, ANALYTICS_CACHE_CONFIG.TASK_OVERVIEW);
+    return result;
+  }
+
+  /**
+   * Helper: Calculate child's streak
+   */
+  private async calculateChildStreak(childId: string): Promise<any> {
+    const completedTasks = await TaskProgress.find({
+      userId: new Types.ObjectId(childId),
+      status: 'completed',
+      isDeleted: false,
+    }).select('completedAt').sort({ completedAt: -1 });
+
+    if (completedTasks.length === 0) {
+      return { current: 0, longest: 0 };
+    }
+
+    let currentStreak = 0;
+    let longestStreak = 0;
+    let tempStreak = 0;
+    let lastDate: Date | null = null;
+    const today = startOfDay(new Date());
+
+    for (const task of completedTasks) {
+      if (!task.completedAt) continue;
+
+      const completedDate = startOfDay(task.completedAt);
+      const daysDiff = lastDate ? (lastDate.getTime() - completedDate.getTime()) / (1000 * 60 * 60 * 24) : 0;
+
+      if (!lastDate || daysDiff <= 1) {
+        tempStreak++;
+        if (isSameDay(completedDate, today)) {
+          currentStreak = tempStreak;
+        }
+      } else {
+        longestStreak = Math.max(longestStreak, tempStreak);
+        tempStreak = 1;
+      }
+
+      lastDate = completedDate;
+    }
+
+    longestStreak = Math.max(longestStreak, tempStreak);
+    if (currentStreak === 0) {
+      currentStreak = isSameDay(startOfDay(completedTasks[0].completedAt!), today) ? tempStreak : 0;
+    }
+
+    return { current: currentStreak, longest: longestStreak };
+  }
+
+  /**
+   * Helper: Calculate productivity score (0-100)
+   */
+  private calculateProductivityScore(stats: any, streak: any): number {
+    const completionScore = stats.completionRate * 0.5;
+    const streakScore = Math.min(streak.current * 5, 100) * 0.3;
+    const volumeScore = Math.min(stats.total * 2, 100) * 0.2;
+    return Math.round(completionScore + streakScore + volumeScore);
+  }
+
+  /**
+   * Helper: Get productivity rank based on score
+   */
+  private getProductivityRank(score: number): string {
+    if (score >= 90) return 'Excellent';
+    if (score >= 75) return 'Very Good';
+    if (score >= 60) return 'Good';
+    if (score >= 40) return 'Average';
+    if (score >= 20) return 'Below Average';
+    return 'Needs Improvement';
   }
 }
 

@@ -9,8 +9,10 @@ import { redisClient } from '../../../helpers/redis/redis';
 import { logger, errorLogger } from '../../../shared/logger';
 import { NotificationService } from '../../notification.module/notification/notification.service';
 import { ACTIVITY_TYPE } from '../../notification.module/notification/notification.constant';
+import { TaskProgressService } from '../../taskProgress.module/taskProgress.service';
 
 const notificationService = new NotificationService();
+const taskProgressService = new TaskProgressService();
 
 /**
  * Task Service
@@ -156,6 +158,14 @@ export class TaskService extends GenericService<typeof Task, ITask> {
       ...data,
       createdById: userId,
     });
+
+    // ✅ NEW: Auto-create TaskProgress records for all assigned children
+    if (data.taskType === 'collaborative' && data.assignedUserIds && data.assignedUserIds.length > 0) {
+      await taskProgressService.bulkCreateForTask(
+        task._id.toString(),
+        data.assignedUserIds.map(id => id.toString())
+      );
+    }
 
     // Invalidate cache after creating task
     await this.invalidateCache(userId.toString(), task._id.toString());

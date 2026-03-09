@@ -42,6 +42,7 @@ import { NotificationRoute } from '../modules/notification.module/notification/n
 import { TaskReminderRoute } from '../modules/notification.module/taskReminder/taskReminder.route';
 import { AnalyticsRoutes } from '../modules/analytics.module/analytics.route';
 import { ChildrenBusinessUserRoute } from '../modules/childrenBusinessUser.module/childrenBusinessUser.route';
+import { TaskProgressRoute } from '../modules/taskProgress.module/taskProgress.route';
 
 // import { ChatRoutes } from '../modules/chat/chat.routes';
 // import { MessageRoutes } from '../modules/message/message.routes';
@@ -101,6 +102,12 @@ const apiRoutes = [
   { // 🟢 NEW - Business user can manage children accounts
     path: '/children-business-users',
     route: ChildrenBusinessUserRoute,
+  },
+
+  /////////////////////////////////////////  Task Progress Tracking
+  { // 🟢 NEW - Track per-child progress on collaborative tasks
+    path: '/task-progress',
+    route: TaskProgressRoute,
   },
 
   ////////////////////// Created By Mohammad Sheakh

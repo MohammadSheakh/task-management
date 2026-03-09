@@ -1,7 +1,7 @@
 //@ts-ignore
 import { model, Schema } from 'mongoose';
 import { ITask, ITaskModel } from './task.interface';
-import paginate from '../../common/plugins/paginate';
+import paginate from '../../../common/plugins/paginate';
 
 /**
  * Task Schema

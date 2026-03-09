@@ -96,6 +96,72 @@ export class TaskAnalyticsController {
       success: true,
     });
   });
+
+  /** ----------------------------------------------
+   * @role Parent | Business User
+   * @Section Analytics
+   * @module TaskAnalytics
+   * @figmaIndex task-details-with-subTasks.png
+   * @desc Get collaborative task progress (which children completed)
+   *----------------------------------------------*/
+  getCollaborativeTaskProgress = catchAsync(async (req: Request, res: Response) => {
+    const { taskId } = req.params;
+
+    const result = await taskAnalyticsService.getCollaborativeTaskProgress(taskId);
+
+    sendResponse(res, {
+      code: StatusCodes.OK,
+      data: result,
+      message: 'Collaborative task progress retrieved successfully',
+      success: true,
+    });
+  });
+
+  /** ----------------------------------------------
+   * @role Parent | Business User
+   * @Section Analytics
+   * @module TaskAnalytics
+   * @figmaIndex team-member-flow-01.png
+   * @desc Get child's performance analytics
+   *----------------------------------------------*/
+  getChildPerformance = catchAsync(async (req: Request, res: Response) => {
+    const { childId } = req.params;
+    const { timeRange } = req.query;
+
+    const result = await taskAnalyticsService.getChildPerformance(
+      childId,
+      timeRange as any
+    );
+
+    sendResponse(res, {
+      code: StatusCodes.OK,
+      data: result,
+      message: 'Child performance retrieved successfully',
+      success: true,
+    });
+  });
+
+  /** ----------------------------------------------
+   * @role Parent | Business User
+   * @Section Analytics
+   * @module TaskAnalytics
+   * @figmaIndex dashboard-flow-01.png
+   * @desc Get parent dashboard overview (all children)
+   *----------------------------------------------*/
+  getParentDashboardOverview = catchAsync(async (req: Request, res: Response) => {
+    const userId = (req.user as IUser).userId;
+
+    const result = await taskAnalyticsService.getParentDashboardOverview(
+      userId.toString()
+    );
+
+    sendResponse(res, {
+      code: StatusCodes.OK,
+      data: result,
+      message: 'Parent dashboard overview retrieved successfully',
+      success: true,
+    });
+  });
 }
 
 export const taskAnalyticsController = new TaskAnalyticsController();

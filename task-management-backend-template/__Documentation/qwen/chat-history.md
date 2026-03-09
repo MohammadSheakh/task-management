@@ -15,4 +15,12 @@ dear qwen.. your understanding is wrong .. admin dont create business .. busines
   check if any group/ family exist or not .. if exist .. then assign that childrean to that group/family ..
   otherwise create a group/family then assign ..
 
+//===============  9/3/26
 
+now i tell you my usecases .. parent can create a task .. and create multiple subTask for that
+  task .. now as that task is collaborative .. then parent add their some children to that task
+  .. lets say child1 and child2 .. so parent assign a children that task level not subTask level
+  ..  and once a child1 complete that tasks all subTask .. that task will be completed by child1
+  .. and child2 can see that child1 is completed that task .. or it showing in-progress or
+  not-started .. parent can see which child start ,,, which child complete that task .. this is
+  my projects situation .. also for individual task .. normal flow
