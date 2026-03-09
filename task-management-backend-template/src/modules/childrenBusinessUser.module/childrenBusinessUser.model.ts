@@ -1,6 +1,6 @@
 //@ts-ignore
 import { model, Schema, Types } from 'mongoose';
-import paginate from '../../../common/plugins/paginate';
+import paginate from '../../common/plugins/paginate';
 import {
   IChildrenBusinessUser,
   IChildrenBusinessUserDocument,
@@ -59,9 +59,9 @@ const childrenBusinessUserSchema = new Schema<IChildrenBusinessUser>(
   }
 );
 
-/**
- * Compound indexes for efficient queries
- */
+/*-─────────────────────────────────
+|  Compound indexes for efficient queries
+└──────────────────────────────────*/
 // Primary query pattern: Get all active children of a business user
 childrenBusinessUserSchema.index({ parentBusinessUserId: 1, status: 1, isDeleted: 1 });
 
@@ -74,9 +74,9 @@ childrenBusinessUserSchema.index({ status: 1, isDeleted: 1 });
 // Text search for notes (optional feature)
 childrenBusinessUserSchema.index({ note: 'text' });
 
-/**
- * Static method: Check if user is already a child of this business user
- */
+/*-─────────────────────────────────
+|  Static method: Check if user is already a child of this business user
+└──────────────────────────────────*/
 childrenBusinessUserSchema.statics.isChildOfBusinessUser = async function (
   parentBusinessUserId: Types.ObjectId,
   childUserId: Types.ObjectId
@@ -89,9 +89,9 @@ childrenBusinessUserSchema.statics.isChildOfBusinessUser = async function (
   return !!existing;
 };
 
-/**
- * Static method: Get children count for a business user
- */
+/*-─────────────────────────────────
+|  Static method: Get children count for a business user
+└──────────────────────────────────*/
 childrenBusinessUserSchema.statics.getChildrenCount = async function (
   parentBusinessUserId: Types.ObjectId
 ): Promise<number> {
@@ -103,9 +103,9 @@ childrenBusinessUserSchema.statics.getChildrenCount = async function (
   return result;
 };
 
-/**
- * Static method: Get all active children for a business user
- */
+/*-─────────────────────────────────
+|  Static method: Get all active children for a business user
+└──────────────────────────────────*/
 childrenBusinessUserSchema.statics.getActiveChildren = async function (
   parentBusinessUserId: Types.ObjectId
 ): Promise<Types.ObjectId[]> {
@@ -118,21 +118,21 @@ childrenBusinessUserSchema.statics.getActiveChildren = async function (
   return results.map((doc) => doc.childUserId);
 };
 
-/**
- * Instance method: Check if this child account is active
- */
+/*-─────────────────────────────────
+|  Instance method: Check if this child account is active
+└──────────────────────────────────*/
 childrenBusinessUserSchema.methods.isActive = function (): boolean {
   return this.status === CHILDREN_BUSINESS_USER_STATUS.ACTIVE && !this.isDeleted;
 };
 
-/**
- * Apply paginate plugin
- */
+/*-─────────────────────────────────
+|  Apply paginate plugin
+└──────────────────────────────────*/
 childrenBusinessUserSchema.plugin(paginate);
 
-/**
- * toJSON transformation
- */
+/*-─────────────────────────────────
+|  toJSON transformation
+└──────────────────────────────────*/
 childrenBusinessUserSchema.set('toJSON', {
   transform: function (doc, ret, options) {
     ret._relationshipId = ret._id;
@@ -142,9 +142,9 @@ childrenBusinessUserSchema.set('toJSON', {
   },
 });
 
-/**
- * Pre-save hook: Validate relationship before saving
- */
+/*-─────────────────────────────────
+|  Pre-save hook: Validate relationship before saving
+└──────────────────────────────────*/
 childrenBusinessUserSchema.pre('save', async function (next) {
   // Prevent self-reference (business user cannot be their own child)
   if (this.parentBusinessUserId.equals(this.childUserId)) {
@@ -154,9 +154,9 @@ childrenBusinessUserSchema.pre('save', async function (next) {
   next();
 });
 
-/**
- * Post-remove hook: Clean up related data (optional)
- */
+/*-─────────────────────────────────
+|  Post-remove hook: Clean up related data (optional)
+└──────────────────────────────────*/
 childrenBusinessUserSchema.post('findOneAndUpdate', async function (doc) {
   if (doc && doc.status === CHILDREN_BUSINESS_USER_STATUS.REMOVED) {
     // Could trigger cleanup or notification here

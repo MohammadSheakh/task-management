@@ -29,28 +29,28 @@ export class ChildrenBusinessUserController {
    * @auth Business user with active business subscription
    */
   createChild = catchAsync(async (req: Request, res: Response) => {
-    // ─────────────────────────────────────────────────────────────
-    // Step 1: Get business user ID from request
-    // ─────────────────────────────────────────────────────────────
+    /*-─────────────────────────────────
+    |  Step 1: Get business user ID from request
+    └──────────────────────────────────*/
     const businessUserId = req.user?.userId;
 
     if (!businessUserId) {
       throw new ApiError(StatusCodes.UNAUTHORIZED, 'User not authenticated');
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // Step 2: Extract child data from request body
-    // ─────────────────────────────────────────────────────────────
+    /*-─────────────────────────────────
+    |  Step 2: Extract child data from request body
+    └──────────────────────────────────*/
     const childData = pick(req.body, ['name', 'email', 'password', 'phoneNumber']);
 
-    // ─────────────────────────────────────────────────────────────
-    // Step 3: Call service to create child account
-    // ─────────────────────────────────────────────────────────────
+    /*-─────────────────────────────────
+    |  Step 3: Call service to create child account
+    └──────────────────────────────────*/
     const result = await this.service.createChildAccount(businessUserId, childData);
 
-    // ─────────────────────────────────────────────────────────────
-    // Step 4: Send success response
-    // ─────────────────────────────────────────────────────────────
+    /*-─────────────────────────────────
+    |  Step 4: Send success response
+    └──────────────────────────────────*/
     (res as any).sendResponse({
       code: StatusCodes.CREATED,
       data: result,
@@ -67,18 +67,18 @@ export class ChildrenBusinessUserController {
    * @auth Business user
    */
   getMyChildren = catchAsync(async (req: Request, res: Response) => {
-    // ─────────────────────────────────────────────────────────────
-    // Step 1: Get business user ID from request
-    // ─────────────────────────────────────────────────────────────
+    /*-─────────────────────────────────
+    |  Step 1: Get business user ID from request
+    └──────────────────────────────────*/
     const businessUserId = req.user?.userId;
 
     if (!businessUserId) {
       throw new ApiError(StatusCodes.UNAUTHORIZED, 'User not authenticated');
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // Step 2: Extract query parameters
-    // ─────────────────────────────────────────────────────────────
+    /*-─────────────────────────────────
+    |  Step 2: Extract query parameters
+    └──────────────────────────────────*/
     const options: IChildrenBusinessUserQueryOptions = {
       status: req.query.status as any,
       page: req.query.page ? parseInt(req.query.page as string) : undefined,
@@ -86,22 +86,20 @@ export class ChildrenBusinessUserController {
       sortBy: req.query.sortBy || '-addedAt',
     };
 
-    // ─────────────────────────────────────────────────────────────
-    // Step 3: Get children from service
-    // ─────────────────────────────────────────────────────────────
+    /*-─────────────────────────────────
+    |  Step 3: Get children from service
+    └──────────────────────────────────*/
     const children = await this.service.getChildrenOfBusinessUser(
       businessUserId,
       options
     );
 
-    // ─────────────────────────────────────────────────────────────
-    // Step 4: Get children count
-    // ─────────────────────────────────────────────────────────────
+    
+    //  Step 4: Get children count
     const count = await this.service.getChildrenCount(businessUserId);
 
-    // ─────────────────────────────────────────────────────────────
-    // Step 5: Send success response
-    // ─────────────────────────────────────────────────────────────
+    
+    //  Step 5: Send success response
     (res as any).sendResponse({
       code: StatusCodes.OK,
       data: {
@@ -121,23 +119,18 @@ export class ChildrenBusinessUserController {
    * @auth Child user
    */
   getParentBusinessUser = catchAsync(async (req: Request, res: Response) => {
-    // ─────────────────────────────────────────────────────────────
     // Step 1: Get child user ID from request
-    // ─────────────────────────────────────────────────────────────
     const childUserId = req.user?.userId;
 
     if (!childUserId) {
       throw new ApiError(StatusCodes.UNAUTHORIZED, 'User not authenticated');
     }
 
-    // ─────────────────────────────────────────────────────────────
+    
     // Step 2: Get parent business user
-    // ─────────────────────────────────────────────────────────────
     const parentInfo = await this.service.getParentBusinessUser(childUserId);
 
-    // ─────────────────────────────────────────────────────────────
-    // Step 3: Send success response
-    // ─────────────────────────────────────────────────────────────
+    
     (res as any).sendResponse({
       code: StatusCodes.OK,
       data: parentInfo,
@@ -154,9 +147,8 @@ export class ChildrenBusinessUserController {
    * @auth Business user
    */
   removeChild = catchAsync(async (req: Request, res: Response) => {
-    // ─────────────────────────────────────────────────────────────
-    // Step 1: Get business user ID and child ID
-    // ─────────────────────────────────────────────────────────────
+    
+    //  Step 1: Get business user ID and child ID
     const businessUserId = req.user?.userId;
 
     if (!businessUserId) {
@@ -165,19 +157,16 @@ export class ChildrenBusinessUserController {
 
     const childUserId = req.params.childId;
 
-    // ─────────────────────────────────────────────────────────────
-    // Step 2: Extract optional note
-    // ─────────────────────────────────────────────────────────────
+    
+    //  Step 2: Extract optional note
     const note = req.body.note;
 
-    // ─────────────────────────────────────────────────────────────
-    // Step 3: Remove child from family
-    // ─────────────────────────────────────────────────────────────
+    /*-─────────────────────────────────
+    |  Step 3: Remove child from family
+    └──────────────────────────────────*/
     await this.service.removeChildFromFamily(businessUserId, childUserId, note);
 
-    // ─────────────────────────────────────────────────────────────
-    // Step 4: Send success response
-    // ─────────────────────────────────────────────────────────────
+    
     (res as any).sendResponse({
       code: StatusCodes.OK,
       data: null,
@@ -194,9 +183,9 @@ export class ChildrenBusinessUserController {
    * @auth Business user
    */
   reactivateChild = catchAsync(async (req: Request, res: Response) => {
-    // ─────────────────────────────────────────────────────────────
-    // Step 1: Get business user ID and child ID
-    // ─────────────────────────────────────────────────────────────
+    /*-─────────────────────────────────
+    |  Step 1: Get business user ID and child ID
+    └──────────────────────────────────*/
     const businessUserId = req.user?.userId;
 
     if (!businessUserId) {
@@ -205,14 +194,14 @@ export class ChildrenBusinessUserController {
 
     const childUserId = req.params.childId;
 
-    // ─────────────────────────────────────────────────────────────
-    // Step 2: Reactivate child
-    // ─────────────────────────────────────────────────────────────
+    /*-─────────────────────────────────
+    |  Step 2: Reactivate child
+    └──────────────────────────────────*/
     await this.service.reactivateChild(businessUserId, childUserId);
 
-    // ─────────────────────────────────────────────────────────────
-    // Step 3: Send success response
-    // ─────────────────────────────────────────────────────────────
+    /*-─────────────────────────────────
+    |  Step 3: Send success response
+    └──────────────────────────────────*/
     (res as any).sendResponse({
       code: StatusCodes.OK,
       data: null,
@@ -229,18 +218,18 @@ export class ChildrenBusinessUserController {
    * @auth Business user
    */
   getStatistics = catchAsync(async (req: Request, res: Response) => {
-    // ─────────────────────────────────────────────────────────────
-    // Step 1: Get business user ID
-    // ─────────────────────────────────────────────────────────────
+    /*-─────────────────────────────────
+    |  Step 1: Get business user ID
+    └──────────────────────────────────*/
     const businessUserId = req.user?.userId;
 
     if (!businessUserId) {
       throw new ApiError(StatusCodes.UNAUTHORIZED, 'User not authenticated');
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // Step 2: Get counts for each status
-    // ─────────────────────────────────────────────────────────────
+    /*-─────────────────────────────────
+    |  Step 2: Get counts for each status
+    └──────────────────────────────────*/
     const [activeCount, inactiveCount, removedCount] = await Promise.all([
       this.service.getChildrenCount(businessUserId),
       this.service.model.countDocuments({
@@ -255,9 +244,9 @@ export class ChildrenBusinessUserController {
       }),
     ]);
 
-    // ─────────────────────────────────────────────────────────────
-    // Step 3: Get subscription limit
-    // ─────────────────────────────────────────────────────────────
+    /*-─────────────────────────────────
+    |  Step 3: Get subscription limit
+    └──────────────────────────────────*/
     const { UserSubscription } = await import('../../subscription.module/userSubscription/userSubscription.model');
     const { SubscriptionPlan } = await import('../../subscription.module/subscriptionPlan/subscriptionPlan.model');
 
@@ -269,9 +258,9 @@ export class ChildrenBusinessUserController {
     const maxChildren = subscription?.subscriptionPlanId ?
       (subscription.subscriptionPlanId as any).maxChildrenAccount : 0;
 
-    // ─────────────────────────────────────────────────────────────
-    // Step 4: Send success response
-    // ─────────────────────────────────────────────────────────────
+    /*-─────────────────────────────────
+    |  Step 4: Send success response
+    └──────────────────────────────────*/
     (res as any).sendResponse({
       code: StatusCodes.OK,
       data: {

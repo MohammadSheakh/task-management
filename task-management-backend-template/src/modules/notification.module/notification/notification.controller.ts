@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
-import { GenericController } from '../../../_generic-module/generic.controller';
+import { GenericController } from '../../_generic-module/generic.controller';
 import { Notification } from './notification.model';
 import { INotificationDocument } from './notification.interface';
 import { NotificationService } from './notification.service';

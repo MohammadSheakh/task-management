@@ -1,16 +1,16 @@
 //@ts-ignore
 import { StatusCodes } from 'http-status-codes';
 import { Types } from 'mongoose';
-import { GenericService } from '../../_generic-module/generic.services';
+import { GenericService } from '../_generic-module/generic.services';
 import { ChildrenBusinessUser } from './childrenBusinessUser.model';
 import { IChildrenBusinessUser, IChildrenBusinessUserDocument } from './childrenBusinessUser.interface';
-import ApiError from '../../../errors/ApiError';
-import { User } from '../../user.module/user/user.model';
-import { SubscriptionPlan } from '../../subscription.module/subscriptionPlan/subscriptionPlan.model';
-import { UserSubscription } from '../../subscription.module/userSubscription/userSubscription.model';
-import { UserSubscriptionStatusType } from '../../subscription.module/userSubscription/userSubscription.constant';
+import ApiError from '../../errors/ApiError';
+import { User } from '../user.module/user/user.model';
+import { SubscriptionPlan } from '../subscription.module/subscriptionPlan/subscriptionPlan.model';
+import { UserSubscription } from '../subscription.module/userSubscription/userSubscription.model';
+import { UserSubscriptionStatusType } from '../subscription.module/userSubscription/userSubscription.constant';
 import { CHILDREN_BUSINESS_USER_STATUS, CHILDREN_CACHE_CONFIG } from './childrenBusinessUser.constant';
-import { redisClient } from '../../../helpers/redis/redis';
+import { redisClient } from '../../helpers/redis/redis';
 import { errorLogger, logger } from '../../shared/logger';
 import bcryptjs from 'bcryptjs';
 
@@ -100,7 +100,7 @@ export class ChildrenBusinessUserService extends GenericService<typeof ChildrenB
   /**
    * Create child account and add to family
    * This is the main method for business users to add children
-   * 
+   *
    * @param businessUserId - The business user creating the child
    * @param childData - Child account details
    * @returns Created child user and relationship
@@ -118,18 +118,18 @@ export class ChildrenBusinessUserService extends GenericService<typeof ChildrenB
     relationship: IChildrenBusinessUserDocument;
     familyGroup?: any;
   }> {
-    // ─────────────────────────────────────────────────────────────
-    // Step 1: Verify business user exists and is a business user
-    // ─────────────────────────────────────────────────────────────
+    /*-─────────────────────────────────
+    |  Step 1: Verify business user exists and is a business user
+    └──────────────────────────────────*/
     const businessUser = await User.findById(businessUserId);
-    
+
     if (!businessUser) {
       throw new ApiError(StatusCodes.NOT_FOUND, 'Business user not found');
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // Step 2: Check if business user has active business subscription
-    // ─────────────────────────────────────────────────────────────
+    /*-─────────────────────────────────
+    |  Step 2: Check if business user has active business subscription
+    └──────────────────────────────────*/
     const subscription = await UserSubscription.findOne({
       userId: new Types.ObjectId(businessUserId),
       status: UserSubscriptionStatusType.active,
@@ -143,11 +143,11 @@ export class ChildrenBusinessUserService extends GenericService<typeof ChildrenB
       );
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // Step 3: Get subscription plan to check max children limit
-    // ─────────────────────────────────────────────────────────────
+    /*-─────────────────────────────────
+    |  Step 3: Get subscription plan to check max children limit
+    └──────────────────────────────────*/
     const plan = await SubscriptionPlan.findById(subscription.subscriptionPlanId);
-    
+
     if (!plan) {
       throw new ApiError(StatusCodes.NOT_FOUND, 'Subscription plan not found');
     }
@@ -161,11 +161,11 @@ export class ChildrenBusinessUserService extends GenericService<typeof ChildrenB
       );
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // Step 4: Check current children count against subscription limit
-    // ─────────────────────────────────────────────────────────────
+    /*-─────────────────────────────────
+    |  Step 4: Check current children count against subscription limit
+    └──────────────────────────────────*/
     const currentChildrenCount = await this.getChildrenCount(businessUserId);
-    
+
     if (currentChildrenCount >= plan.maxChildrenAccount) {
       throw new ApiError(
         StatusCodes.BAD_REQUEST,
@@ -173,27 +173,27 @@ export class ChildrenBusinessUserService extends GenericService<typeof ChildrenB
       );
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // Step 5: Check if email already exists
-    // ─────────────────────────────────────────────────────────────
-    const existingUser = await User.findOne({ 
+    /*-─────────────────────────────────
+    |  Step 5: Check if email already exists
+    └──────────────────────────────────*/
+    const existingUser = await User.findOne({
       email: childData.email.toLowerCase(),
       isDeleted: false,
     });
-    
+
     if (existingUser) {
       throw new ApiError(StatusCodes.BAD_REQUEST, 'Email already exists');
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // Step 6: Hash password
-    // ─────────────────────────────────────────────────────────────
+    /*-─────────────────────────────────
+    |  Step 6: Hash password
+    └──────────────────────────────────*/
     const hashedPassword = await bcryptjs.hash(childData.password, 12);
 
-    // ─────────────────────────────────────────────────────────────
-    // Step 7: Create child user account
-    // Sets accountCreatorId = businessUserId (as per your requirement)
-    // ─────────────────────────────────────────────────────────────
+    /*-─────────────────────────────────
+    |  Step 7: Create child user account
+    |  Sets accountCreatorId = businessUserId (as per your requirement)
+    └──────────────────────────────────*/
     const childUser = await User.create({
       name: childData.name,
       email: childData.email.toLowerCase(),
@@ -206,9 +206,9 @@ export class ChildrenBusinessUserService extends GenericService<typeof ChildrenB
       isEmailVerified: false, // Child should verify email
     });
 
-    // ─────────────────────────────────────────────────────────────
-    // Step 8: Create parent-child relationship record
-    // ─────────────────────────────────────────────────────────────
+    /*-─────────────────────────────────
+    |  Step 8: Create parent-child relationship record
+    └──────────────────────────────────*/
     const relationship = await this.model.create({
       parentBusinessUserId: new Types.ObjectId(businessUserId),
       childUserId: childUser._id,
@@ -216,14 +216,14 @@ export class ChildrenBusinessUserService extends GenericService<typeof ChildrenB
       status: CHILDREN_BUSINESS_USER_STATUS.ACTIVE,
     });
 
-    // ─────────────────────────────────────────────────────────────
-    // Step 9: Invalidate cache
-    // ─────────────────────────────────────────────────────────────
-    await this.invalidateCache(businessUserId, childUser._id.toString());
+    /*-─────────────────────────────────
+    |  Step 9: Invalidate cache
+    └──────────────────────────────────*/
+    await this.invalidateCache(businessUserId);
 
-    // ─────────────────────────────────────────────────────────────
-    // Step 10: Return result (simplified - no group integration)
-    // ─────────────────────────────────────────────────────────────
+    /*-─────────────────────────────────
+    |  Step 10: Return result (simplified - no group integration)
+    └──────────────────────────────────*/
     return {
       childUser: {
         _id: childUser._id,
@@ -267,7 +267,7 @@ export class ChildrenBusinessUserService extends GenericService<typeof ChildrenB
     }
   ): Promise<any> {
     const cacheKey = this.getCacheKey('children', businessUserId);
-    
+
     // Try cache first
     const cached = await this.getFromCache(cacheKey);
     if (cached) {
@@ -275,7 +275,9 @@ export class ChildrenBusinessUserService extends GenericService<typeof ChildrenB
       return cached;
     }
 
-    // Build aggregation pipeline
+    /*-─────────────────────────────────
+    |  Build aggregation pipeline
+    └──────────────────────────────────*/
     const matchStage: any = {
       parentBusinessUserId: new Types.ObjectId(businessUserId),
       isDeleted: false,
@@ -325,7 +327,7 @@ export class ChildrenBusinessUserService extends GenericService<typeof ChildrenB
    */
   async getChildrenCount(businessUserId: string): Promise<number> {
     const cacheKey = this.getCacheKey('count', businessUserId);
-    
+
     // Try cache first
     const cached = await this.getFromCache<number>(cacheKey);
     if (cached) {
@@ -350,7 +352,7 @@ export class ChildrenBusinessUserService extends GenericService<typeof ChildrenB
    */
   async getParentBusinessUser(childUserId: string): Promise<any> {
     const cacheKey = this.getCacheKey('parent', undefined, childUserId);
-    
+
     // Try cache first
     const cached = await this.getFromCache(cacheKey);
     if (cached) {
@@ -458,10 +460,4 @@ export class ChildrenBusinessUserService extends GenericService<typeof ChildrenB
 
     await this.invalidateCache(businessUserId, childUserId);
   }
-
-  /**
-   * Get family group for business user
-   * REMOVED: No longer using group integration
-   */
-  // private async getFamilyGroup - REMOVED
 }

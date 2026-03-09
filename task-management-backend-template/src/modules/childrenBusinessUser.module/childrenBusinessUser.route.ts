@@ -1,20 +1,19 @@
 //@ts-ignore
 import express from 'express';
 import { ChildrenBusinessUserController } from './childrenBusinessUser.controller';
-import auth from '../../../middlewares/auth';
-import { TRole } from '../../../middlewares/roles';
-import validateRequest from '../../../shared/validateRequest';
+import auth from '../../middlewares/auth';
+import { TRole } from '../../middlewares/roles';
+import validateRequest from '../../shared/validateRequest';
 import * as validation from './childrenBusinessUser.validation';
 import rateLimit from 'express-rate-limit';
 import { CHILDREN_RATE_LIMITS } from './childrenBusinessUser.constant';
 
 const router = express.Router();
 
-// ─── Rate Limiters ─────────────────────────────────────────────────────
-/**
- * Rate limiter for creating children accounts
- * Prevents abuse and ensures fair usage
- */
+/*-─────────────────────────────────
+|  Rate Limiter: Create child account
+|  Prevents abuse: 10 requests per hour
+└──────────────────────────────────*/
 const createChildLimiter = rateLimit({
   windowMs: CHILDREN_RATE_LIMITS.CREATE_CHILD.windowMs,
   max: CHILDREN_RATE_LIMITS.CREATE_CHILD.max,
@@ -26,9 +25,10 @@ const createChildLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-/**
- * Rate limiter for general children operations
- */
+/*-─────────────────────────────────
+|  Rate Limiter: General children operations
+|  100 requests per minute
+└──────────────────────────────────*/
 const childrenLimiter = rateLimit({
   windowMs: CHILDREN_RATE_LIMITS.GENERAL.windowMs,
   max: CHILDREN_RATE_LIMITS.GENERAL.max,

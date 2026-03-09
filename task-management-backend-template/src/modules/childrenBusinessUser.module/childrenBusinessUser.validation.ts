@@ -6,9 +6,6 @@ import { z } from 'zod';
  */
 export const createChildValidationSchema = z.object({
   body: z.object({
-    /**
-     * Child's full name
-     */
     name: z
       .string({
         required_error: 'Name is required',
@@ -17,9 +14,6 @@ export const createChildValidationSchema = z.object({
       .max(100, 'Name cannot exceed 100 characters')
       .trim(),
 
-    /**
-     * Child's email address (must be unique)
-     */
     email: z
       .string({
         required_error: 'Email is required',
@@ -27,9 +21,6 @@ export const createChildValidationSchema = z.object({
       .email('Please provide a valid email address')
       .toLowerCase(),
 
-    /**
-     * Child's password
-     */
     password: z
       .string({
         required_error: 'Password is required',
@@ -41,9 +32,6 @@ export const createChildValidationSchema = z.object({
         'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character'
       ),
 
-    /**
-     * Child's phone number (optional)
-     */
     phoneNumber: z
       .string()
       .optional()
@@ -74,9 +62,6 @@ export const updateChildValidationSchema = z.object({
       )
       .optional(),
 
-    /**
-     * Note for removal or status change
-     */
     note: z
       .string()
       .max(500, 'Note cannot exceed 500 characters')
@@ -95,9 +80,6 @@ export const removeChildValidationSchema = z.object({
     childId: z.string().uuid('Invalid child ID format'),
   }),
   body: z.object({
-    /**
-     * Reason for removal (optional)
-     */
     note: z
       .string()
       .max(500, 'Note cannot exceed 500 characters')
@@ -110,41 +92,29 @@ export const removeChildValidationSchema = z.object({
  */
 export const getChildrenValidationSchema = z.object({
   query: z.object({
-    /**
-     * Filter by status
-     */
     status: z
       .enum(['active', 'inactive', 'removed'])
       .optional(),
 
-    /**
-     * Page number for pagination
-     */
     page: z
       .string()
       .regex(/^\d+$/, 'Page must be a number')
       .optional(),
 
-    /**
-     * Limit for pagination
-     */
     limit: z
       .string()
       .regex(/^\d+$/, 'Limit must be a number')
       .optional(),
 
-    /**
-     * Sort by field
-     */
     sortBy: z
       .string()
       .optional(),
   }),
 });
 
-/**
- * Export all validation schemas
- */
+/*-─────────────────────────────────
+|  Export all validation schemas
+└──────────────────────────────────*/
 export const childrenBusinessUserValidation = {
   createChildValidationSchema,
   updateChildValidationSchema,
