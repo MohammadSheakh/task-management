@@ -38,10 +38,10 @@ import { TaskRoute } from '../modules/task.module/task/task.route';
 import { SubTaskRoute } from '../modules/task.module/subTask/subTask.route';
 import { GroupRoute } from '../modules/group.module/group/group.route';
 import { GroupMemberRoute } from '../modules/group.module/groupMember/groupMember.route';
-import { GroupInvitationRoute } from '../modules/group.module/groupInvitation/groupInvitation.route';
 import { NotificationRoute } from '../modules/notification.module/notification/notification.route';
 import { TaskReminderRoute } from '../modules/notification.module/taskReminder/taskReminder.route';
 import { AnalyticsRoutes } from '../modules/analytics.module/analytics.route';
+import { ChildrenBusinessUserRoute } from '../modules/childrenBusinessUser.module/childrenBusinessUser.route';
 
 // import { ChatRoutes } from '../modules/chat/chat.routes';
 // import { MessageRoutes } from '../modules/message/message.routes';
@@ -80,10 +80,6 @@ const apiRoutes = [
     path: '/group-members',
     route: GroupMemberRoute,
   },
-  { // 🟢
-    path: '/group-invitations',
-    route: GroupInvitationRoute,
-  },
 
   /////////////////////////////////////////  Notification & Reminders
   { // 🟢
@@ -99,6 +95,12 @@ const apiRoutes = [
   { // 🟢 NEW
     path: '/analytics',
     route: AnalyticsRoutes,
+  },
+
+  /////////////////////////////////////////  Children Business User
+  { // 🟢 NEW - Business user can manage children accounts
+    path: '/children-business-users',
+    route: ChildrenBusinessUserRoute,
   },
 
   ////////////////////// Created By Mohammad Sheakh

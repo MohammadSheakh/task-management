@@ -123,6 +123,13 @@ const userSchema = new Schema<IUser, UserModal>(
     //   default: null,
     // },
 
+    accountCreatorId : {
+      type: Types.ObjectId,
+      ref: 'User',
+      required: false, // user and admin dont need any wallet .. only provider need wallet 
+      default: null,
+    },
+
     isDeleted: {
       type: Boolean,
       default: false,
