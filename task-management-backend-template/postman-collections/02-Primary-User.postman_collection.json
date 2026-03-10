@@ -19,22 +19,52 @@
       "item": [
         {
           "name": "Register Primary User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set(\"PRIMARY_USER_EMAIL\", jsonData.data.user.email);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [{"key": "Content-Type", "value": "application/json"}],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"John Parent\",\n  \"email\": \"parent@example.com\",\n  \"password\": \"ParentPass123!\",\n  \"role\": \"user\"\n}"
+              "raw": "{\n  \"name\": \"John Parent\",\n  \"email\": \"parent@example.com\",\n  \"password\": \"ParentPass123!\"\n}"
             },
             "url": {
-              "raw": "{{BASE_URL}}/auth/signup",
+              "raw": "{{BASE_URL}}/auth/register",
               "host": ["{{BASE_URL}}"],
-              "path": ["auth", "signup"]
-            }
+              "path": ["auth", "register"]
+            },
+            "description": "Register a new primary user (parent/teacher)\n\n**Rate Limit**: 10 per hour"
           }
         },
         {
           "name": "Login as Primary User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set(\"PRIMARY_USER_TOKEN\", jsonData.data.tokens.accessToken);",
+                  "    pm.environment.set(\"PRIMARY_USER_ID\", jsonData.data.user._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [{"key": "Content-Type", "value": "application/json"}],
@@ -47,7 +77,7 @@
               "host": ["{{BASE_URL}}"],
               "path": ["auth", "login"]
             },
-            "description": "Login and save token to PRIMARY_USER_TOKEN variable"
+            "description": "Login and save token to PRIMARY_USER_TOKEN variable\n\n**Rate Limit**: 5 attempts per 15 minutes"
           }
         }
       ]
