@@ -4,8 +4,8 @@ import ApiError from '../../../errors/ApiError';
 import { Types } from 'mongoose';
 import { Group } from './group/group.model';
 import { GroupMember } from './groupMember/groupMember.model';
-import { GROUP_MEMBER_ROLES, GROUP_MEMBER_STATUS, MEMBER_PERMISSIONS } from './groupMember/groupMember.constant';
-import { GROUP_STATUS } from './group/group.constant';
+import { GroupMemberRole, GroupMemberStatus, MEMBER_PERMISSIONS } from './groupMember/groupMember.constant';
+import { GroupStatus } from './group/group.constant';
 
 /**
  * Check if user is a member of a group
@@ -62,7 +62,7 @@ export function isGroupAdmin(groupIdParam: string = 'id') {
       const member = await GroupMember.findOne({
         groupId: new Types.ObjectId(groupId),
         userId: new Types.ObjectId(userId),
-        status: GROUP_MEMBER_STATUS.ACTIVE,
+        status: GroupMemberStatus.ACTIVE,
         isDeleted: false,
       });
 
@@ -70,7 +70,7 @@ export function isGroupAdmin(groupIdParam: string = 'id') {
         throw new ApiError(StatusCodes.FORBIDDEN, 'You are not a member of this group');
       }
 
-      if (member.role !== GROUP_MEMBER_ROLES.OWNER && member.role !== GROUP_MEMBER_ROLES.ADMIN) {
+      if (member.role !== GroupMemberRole.OWNER && member.role !== GroupMemberRole.ADMIN) {
         throw new ApiError(StatusCodes.FORBIDDEN, 'Only group owners and admins can perform this action');
       }
 
@@ -135,7 +135,7 @@ export function isGroupActive(groupIdParam: string = 'id') {
         throw new ApiError(StatusCodes.NOT_FOUND, 'Group not found');
       }
 
-      if (group.status !== GROUP_STATUS.ACTIVE) {
+      if (group.status !== GroupStatus.ACTIVE) {
         throw new ApiError(StatusCodes.BAD_REQUEST, 'This group is not active');
       }
 
@@ -167,7 +167,7 @@ export function hasGroupPermission(permission: keyof typeof MEMBER_PERMISSIONS.O
       const member = await GroupMember.findOne({
         groupId: new Types.ObjectId(groupId),
         userId: new Types.ObjectId(userId),
-        status: GROUP_MEMBER_STATUS.ACTIVE,
+        status: GroupMemberStatus.ACTIVE,
         isDeleted: false,
       });
 

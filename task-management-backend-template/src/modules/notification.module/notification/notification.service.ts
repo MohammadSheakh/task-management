@@ -4,7 +4,7 @@ import { Notification } from './notification.model';
 import { INotification, INotificationDocument, INotificationQueryOptions, IBulkNotificationPayload } from './notification.interface';
 import ApiError from '../../../errors/ApiError';
 import { redisClient } from '../../../helpers/redis/redis';
-import { NOTIFICATION_STATUS, NOTIFICATION_PRIORITY, NOTIFICATION_CHANNEL, NOTIFICATION_CACHE_CONFIG, QUEUE_CONFIG, ACTIVITY_TYPE, TActivityType } from './notification.constant';
+import { NotificationStatus, NotificationPriority, NotificationChannel, NOTIFICATION_CACHE_CONFIG, QUEUE_CONFIG, ACTIVITY_TYPE, TActivityType } from './notification.constant';
 import { errorLogger, logger } from '../../../shared/logger';
 import { notificationQueue } from '../../../helpers/bullmq/bullmq';
 import PaginationService from '../../../common/service/paginationService';
@@ -145,8 +145,8 @@ export class NotificationService extends GenericService<typeof Notification, INo
       ...data,
       scheduledFor: scheduledFor || data.scheduledFor,
       status: scheduledFor && scheduledFor > new Date() 
-        ? NOTIFICATION_STATUS.PENDING 
-        : NOTIFICATION_STATUS.PENDING,
+        ? NotificationStatus.PENDING 
+        : NotificationStatus.PENDING,
     });
 
     // Queue for async processing
@@ -167,7 +167,7 @@ export class NotificationService extends GenericService<typeof Notification, INo
    * @returns Array of created notifications
    */
   async sendBulkNotification(payload: IBulkNotificationPayload): Promise<INotificationDocument[]> {
-    const { userIds, receiverRole, title, subTitle, type, priority = NOTIFICATION_PRIORITY.NORMAL, channels = [NOTIFICATION_CHANNEL.IN_APP], linkFor, linkId, data } = payload;
+    const { userIds, receiverRole, title, subTitle, type, priority = NotificationPriority.NORMAL, channels = [NotificationChannel.IN_APP], linkFor, linkId, data } = payload;
 
     // Validate bulk limit
     if (userIds && userIds.length > 1000) {
@@ -332,11 +332,11 @@ export class NotificationService extends GenericService<typeof Notification, INo
       throw new ApiError(StatusCodes.NOT_FOUND, 'Notification not found');
     }
 
-    if (notification.status === NOTIFICATION_STATUS.READ) {
+    if (notification.status === NotificationStatus.READ) {
       return notification; // Already read
     }
 
-    notification.status = NOTIFICATION_STATUS.READ;
+    notification.status = NotificationStatus.READ;
     notification.readAt = new Date();
     await notification.save();
 
@@ -416,8 +416,8 @@ export class NotificationService extends GenericService<typeof Notification, INo
         title,
         subTitle: message || `Your task is ${reminderType.replace('_', ' ')}`,
         type: 'reminder',
-        priority: NOTIFICATION_PRIORITY.HIGH,
-        channels: [NOTIFICATION_CHANNEL.IN_APP, NOTIFICATION_CHANNEL.EMAIL],
+        priority: NotificationPriority.HIGH,
+        channels: [NotificationChannel.IN_APP, NotificationChannel.EMAIL],
         linkFor: 'task',
         linkId: new Types.ObjectId(taskId),
         referenceFor: 'task',
@@ -451,8 +451,8 @@ export class NotificationService extends GenericService<typeof Notification, INo
       title: 'New Task Assigned',
       subTitle: 'You have been assigned a new task',
       type: 'assignment',
-      priority: NOTIFICATION_PRIORITY.NORMAL,
-      channels: [NOTIFICATION_CHANNEL.IN_APP],
+      priority: NotificationPriority.NORMAL,
+      channels: [NotificationChannel.IN_APP],
       linkFor: 'task',
       linkId: new Types.ObjectId(taskId),
       referenceFor: 'task',
@@ -482,8 +482,8 @@ export class NotificationService extends GenericService<typeof Notification, INo
       title: isOverdue ? 'Task Overdue' : 'Task Due Soon',
       subTitle: isOverdue ? 'The deadline for your task has passed' : 'Your task deadline is approaching',
       type: 'deadline',
-      priority: isOverdue ? NOTIFICATION_PRIORITY.URGENT : NOTIFICATION_PRIORITY.HIGH,
-      channels: [NOTIFICATION_CHANNEL.IN_APP, NOTIFICATION_CHANNEL.EMAIL],
+      priority: isOverdue ? NotificationPriority.URGENT : NotificationPriority.HIGH,
+      channels: [NotificationChannel.IN_APP, NotificationChannel.EMAIL],
       linkFor: 'task',
       linkId: new Types.ObjectId(taskId),
       referenceFor: 'task',
@@ -636,8 +636,8 @@ export class NotificationService extends GenericService<typeof Notification, INo
       receiverId: new Types.ObjectId(userId),
       title: activityType.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()),
       type: activityType,
-      priority: NOTIFICATION_PRIORITY.NORMAL,
-      channels: [NOTIFICATION_CHANNEL.IN_APP],
+      priority: NotificationPriority.NORMAL,
+      channels: [NotificationChannel.IN_APP],
       linkFor: 'task',
       linkId: taskData ? new Types.ObjectId(taskData.taskId) : undefined,
       referenceFor: 'task',

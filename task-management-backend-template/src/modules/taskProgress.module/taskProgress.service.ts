@@ -6,7 +6,7 @@ import { TaskProgress } from './taskProgress.model';
 import { ITaskProgress, ITaskProgressDocument, ITaskProgressSummary } from './taskProgress.interface';
 import ApiError from '../../errors/ApiError';
 import { Task } from '../task.module/task/task.model';
-import { TASK_PROGRESS_STATUS, TASK_PROGRESS_CACHE_CONFIG, TASK_PROGRESS_EVENTS } from './taskProgress.constant';
+import { TaskProgressStatus, TASK_PROGRESS_CACHE_CONFIG, TASK_PROGRESS_EVENTS } from './taskProgress.constant';
 import { redisClient } from '../../helpers/redis/redis';
 import { errorLogger, logger } from '../../shared/logger';
 import { User } from '../user.module/user/user.model';
@@ -113,7 +113,7 @@ export class TaskProgressService extends GenericService<typeof TaskProgress, ITa
   async createOrUpdateProgress(
     taskId: string,
     userId: string,
-    status: TTaskProgressStatus = TASK_PROGRESS_STATUS.NOT_STARTED
+    status: TTaskProgressStatus = TaskProgressStatus.NOT_STARTED
   ): Promise<ITaskProgressDocument> {
     const taskObjectId = new Types.ObjectId(taskId);
     const userObjectId = new Types.ObjectId(userId);
@@ -177,18 +177,18 @@ export class TaskProgressService extends GenericService<typeof TaskProgress, ITa
     }
 
     // Set timestamps based on status
-    if (status === TASK_PROGRESS_STATUS.IN_PROGRESS && !progress.startedAt) {
+    if (status === TaskProgressStatus.IN_PROGRESS && !progress.startedAt) {
       progress.startedAt = new Date();
     }
     
-    if (status === TASK_PROGRESS_STATUS.COMPLETED && !progress.completedAt) {
+    if (status === TaskProgressStatus.COMPLETED && !progress.completedAt) {
       progress.completedAt = new Date();
     }
 
     await progress.save();
 
     // Send notification to parent if task completed
-    if (status === TASK_PROGRESS_STATUS.COMPLETED && oldStatus !== TASK_PROGRESS_STATUS.COMPLETED) {
+    if (status === TaskProgressStatus.COMPLETED && oldStatus !== TaskProgressStatus.COMPLETED) {
       await this.notifyParentOnTaskCompletion(taskId, userId);
     }
 
@@ -223,7 +223,7 @@ export class TaskProgressService extends GenericService<typeof TaskProgress, ITa
     });
 
     if (!progress) {
-      progress = await this.createOrUpdateProgress(taskId, userId, TASK_PROGRESS_STATUS.IN_PROGRESS);
+      progress = await this.createOrUpdateProgress(taskId, userId, TaskProgressStatus.IN_PROGRESS);
     }
 
     // Add subtask index to completed list (if not already there)
@@ -237,13 +237,13 @@ export class TaskProgressService extends GenericService<typeof TaskProgress, ITa
     // Set startedAt if this is the first subtask
     if (progress.completedSubtaskIndexes.length === 1 && !progress.startedAt) {
       progress.startedAt = new Date();
-      progress.status = TASK_PROGRESS_STATUS.IN_PROGRESS;
+      progress.status = TaskProgressStatus.IN_PROGRESS;
     }
 
     await progress.save();
 
     // Send notification if task completed
-    if (progress.status === TASK_PROGRESS_STATUS.COMPLETED) {
+    if (progress.status === TaskProgressStatus.COMPLETED) {
       await this.notifyParentOnTaskCompletion(taskId, userId);
     }
 
@@ -322,11 +322,11 @@ export class TaskProgressService extends GenericService<typeof TaskProgress, ITa
     // Calculate summary
     const summary = {
       totalChildren: childrenProgress.length,
-      notStarted: childrenProgress.filter(c => c.status === TASK_PROGRESS_STATUS.NOT_STARTED).length,
-      inProgress: childrenProgress.filter(c => c.status === TASK_PROGRESS_STATUS.IN_PROGRESS).length,
-      completed: childrenProgress.filter(c => c.status === TASK_PROGRESS_STATUS.COMPLETED).length,
+      notStarted: childrenProgress.filter(c => c.status === TaskProgressStatus.NOT_STARTED).length,
+      inProgress: childrenProgress.filter(c => c.status === TaskProgressStatus.IN_PROGRESS).length,
+      completed: childrenProgress.filter(c => c.status === TaskProgressStatus.COMPLETED).length,
       completionRate: childrenProgress.length > 0 
-        ? Math.round((childrenProgress.filter(c => c.status === TASK_PROGRESS_STATUS.COMPLETED).length / childrenProgress.length) * 100)
+        ? Math.round((childrenProgress.filter(c => c.status === TaskProgressStatus.COMPLETED).length / childrenProgress.length) * 100)
         : 0,
       averageProgress: childrenProgress.length > 0
         ? Math.round(childrenProgress.reduce((sum, c) => sum + c.progressPercentage, 0) / childrenProgress.length)
@@ -441,7 +441,7 @@ export class TaskProgressService extends GenericService<typeof TaskProgress, ITa
 
     const progressRecords = await Promise.all(
       assignedUserIds.map(async (userId) => {
-        return await this.createOrUpdateProgress(taskId, userId, TASK_PROGRESS_STATUS.NOT_STARTED);
+        return await this.createOrUpdateProgress(taskId, userId, TaskProgressStatus.NOT_STARTED);
       })
     );
 

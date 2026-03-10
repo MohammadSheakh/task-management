@@ -1,7 +1,60 @@
 /**
+ * Task Module Constants
+ * Centralized configuration for task-related enums, limits, and defaults
+ *
+ * @version 1.0.0
+ * @author Senior Engineering Team
+ */
+
+/**
+ * Task Status Enum
+ * Represents the current state of a task
+ */
+export enum TaskStatus {
+  PENDING = 'pending',
+  IN_PROGRESS = 'inProgress',
+  COMPLETED = 'completed',
+}
+
+/**
+ * Task Type Enum
+ * Defines the category and assignment style of a task
+ */
+export enum TaskType {
+  PERSONAL = 'personal',
+  SINGLE_ASSIGNMENT = 'singleAssignment',
+  COLLABORATIVE = 'collaborative',
+}
+
+/**
+ * Task Priority Enum
+ * Determines task urgency and ordering
+ */
+export enum TaskPriority {
+  LOW = 'low',
+  MEDIUM = 'medium',
+  HIGH = 'high',
+}
+
+/**
+ * Type exports from enums (for MongoDB schema validation and TypeScript)
+ */
+export type TTaskStatus = `${TaskStatus}`;
+export type TTaskType = `${TaskType}`;
+export type TTaskPriority = `${TaskPriority}`;
+
+/**
+ * Legacy type exports (for backward compatibility)
+ * @deprecated Use TaskStatus, TaskType, TaskPriority enums instead
+ */
+export const T_TASK_STATUS = TaskStatus;
+export const T_TASK_TYPE = TaskType;
+export const T_TASK_PRIORITY = TaskPriority;
+
+/**
  * Task Cache Configuration
  * TTL values for different task data types
- * 
+ *
  * @see masterSystemPrompt.md Section 8: Redis Caching Rules
  */
 

@@ -5,7 +5,7 @@ import { IGroup, IGroupDocument, IGroupQueryOptions } from './group.interface';
 import { GenericService } from '../../_generic-module/generic.services';
 import ApiError from '../../../errors/ApiError';
 import { redisClient } from '../../../helpers/redis/redis';
-import { CACHE_CONFIG, GROUP_LIMITS, GROUP_STATUS } from './group.constant';
+import { CACHE_CONFIG, GROUP_LIMITS, GroupStatus } from './group.constant';
 import { errorLogger } from '../../../shared/logger';
 
 /**
@@ -202,7 +202,7 @@ export class GroupService extends GenericService<typeof Group, IGroupDocument> {
     // Build query - find groups where user is owner or member
     const query = {
       isDeleted: false,
-      status: GROUP_STATUS.ACTIVE,
+      status: GroupStatus.ACTIVE,
       $or: [{ ownerUserId: userId }, { groupId: userId }], // groupId will match via GroupMember
     };
 
@@ -251,7 +251,7 @@ export class GroupService extends GenericService<typeof Group, IGroupDocument> {
   ): Promise<any> {
     const query: any = {
       isDeleted: false,
-      status: GROUP_STATUS.ACTIVE,
+      status: GroupStatus.ACTIVE,
       $or: [{ ownerUserId: userId }],
     };
 
@@ -438,7 +438,7 @@ export class GroupService extends GenericService<typeof Group, IGroupDocument> {
   async searchGroups(searchTerm: string, options?: IGroupQueryOptions): Promise<IGroupDocument[]> {
     const query = {
       isDeleted: false,
-      status: GROUP_STATUS.ACTIVE,
+      status: GroupStatus.ACTIVE,
       visibility: { $ne: 'private' }, // Only search public and invite-only groups
       $text: { $search: searchTerm },
     };

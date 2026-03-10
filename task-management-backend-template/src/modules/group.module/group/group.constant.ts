@@ -7,52 +7,73 @@
  */
 
 /**
- * Group Visibility Options
+ * Group Visibility Enum
+ * Determines who can find and request to join the group
  */
-export const GROUP_VISIBILITY = {
-  PRIVATE: 'private',
-  PUBLIC: 'public',
-  INVITE_ONLY: 'inviteOnly',
-} as const;
+export enum GroupVisibility {
+  PRIVATE = 'private',
+  PUBLIC = 'public',
+  INVITE_ONLY = 'inviteOnly',
+}
 
 /**
- * Group Status Options
+ * Group Status Enum
+ * Represents the current state of the group
  */
-export const GROUP_STATUS = {
-  ACTIVE: 'active',
-  SUSPENDED: 'suspended',
-  ARCHIVED: 'archived',
-} as const;
+export enum GroupStatus {
+  ACTIVE = 'active',
+  SUSPENDED = 'suspended',
+  ARCHIVED = 'archived',
+}
 
 /**
- * Group Member Roles
+ * Group Member Roles Enum
  * Defines hierarchy within a group
  */
-export const GROUP_MEMBER_ROLES = {
-  OWNER: 'owner',
-  ADMIN: 'admin',
-  MEMBER: 'member',
-} as const;
+export enum GroupMemberRole {
+  OWNER = 'owner',
+  ADMIN = 'admin',
+  MEMBER = 'member',
+}
 
 /**
- * Group Member Status
+ * Group Member Status Enum
  */
-export const GROUP_MEMBER_STATUS = {
-  ACTIVE: 'active',
-  INACTIVE: 'inactive',
-  BLOCKED: 'blocked',
-} as const;
+export enum GroupMemberStatus {
+  ACTIVE = 'active',
+  INACTIVE = 'inactive',
+  BLOCKED = 'blocked',
+}
 
 /**
- * Group Invitation Status
+ * Group Invitation Status Enum
  */
-export const GROUP_INVITATION_STATUS = {
-  PENDING: 'pending',
-  ACCEPTED: 'accepted',
-  DECLINED: 'declined',
-  EXPIRED: 'expired',
-  CANCELLED: 'cancelled',
-} as const;
+export enum GroupInvitationStatus {
+  PENDING = 'pending',
+  ACCEPTED = 'accepted',
+  DECLINED = 'declined',
+  EXPIRED = 'expired',
+  CANCELLED = 'cancelled',
+}
+
+/**
+ * Type exports from enums (for MongoDB schema validation)
+ */
+export type TGroupVisibility = `${GroupVisibility}`;
+export type TGroupStatus = `${GroupStatus}`;
+export type TGroupMemberRole = `${GroupMemberRole}`;
+export type TGroupMemberStatus = `${GroupMemberStatus}`;
+export type TGroupInvitationStatus = `${GroupInvitationStatus}`;
+
+/**
+ * Legacy constant exports (for backward compatibility)
+ * @deprecated Use GroupVisibility, GroupStatus enums instead
+ */
+export const GROUP_VISIBILITY = GroupVisibility;
+export const GROUP_STATUS = GroupStatus;
+export const GROUP_MEMBER_ROLES = GroupMemberRole;
+export const GROUP_MEMBER_STATUS = GroupMemberStatus;
+export const GROUP_INVITATION_STATUS = GroupInvitationStatus;
 
 /**
  * Group Limits Configuration

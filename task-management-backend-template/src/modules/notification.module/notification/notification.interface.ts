@@ -1,36 +1,29 @@
 import { Document, Types } from 'mongoose';
+import { NotificationType, NotificationPriority, NotificationChannel, NotificationStatus } from './notification.constant';
 
 /**
  * Notification Type
- * Defines the category of notification
+ * Derived from NotificationType enum
  */
-export type TNotificationType = 
-  | 'task'
-  | 'group'
-  | 'system'
-  | 'reminder'
-  | 'mention'
-  | 'assignment'
-  | 'deadline'
-  | 'custom';
+export type TNotificationType = `${NotificationType}`;
 
 /**
  * Notification Priority
- * Determines notification urgency and delivery method
+ * Derived from NotificationPriority enum
  */
-export type TNotificationPriority = 'low' | 'normal' | 'high' | 'urgent';
+export type TNotificationPriority = `${NotificationPriority}`;
 
 /**
  * Notification Channel
- * Defines how the notification should be delivered
+ * Derived from NotificationChannel enum
  */
-export type TNotificationChannel = 'in_app' | 'email' | 'push' | 'sms';
+export type TNotificationChannel = `${NotificationChannel}`;
 
 /**
  * Notification Status
- * Tracks the delivery and read status
+ * Derived from NotificationStatus enum
  */
-export type TNotificationStatus = 'pending' | 'sent' | 'delivered' | 'read' | 'failed';
+export type TNotificationStatus = `${NotificationStatus}`;
 
 /**
  * Notification Interface

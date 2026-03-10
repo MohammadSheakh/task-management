@@ -1,16 +1,17 @@
 import { Document, Types } from 'mongoose';
+import { GroupMemberRole, GroupMemberStatus } from './groupMember.constant';
 
 /**
- * Group Member Role
- * Defines the hierarchy within a group
+ * Group Member Role Type
+ * Derived from GroupMemberRole enum
  */
-export type TGroupMemberRole = 'owner' | 'admin' | 'member';
+export type TGroupMemberRole = `${GroupMemberRole}`;
 
 /**
- * Group Member Status
- * Represents the current state of the membership
+ * Group Member Status Type
+ * Derived from GroupMemberStatus enum
  */
-export type TGroupMemberStatus = 'active' | 'inactive' | 'blocked';
+export type TGroupMemberStatus = `${GroupMemberStatus}`;
 
 /**
  * Group Member Permissions

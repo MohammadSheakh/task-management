@@ -1,7 +1,7 @@
 //@ts-ignore
 import { model, Schema, Types, Document } from 'mongoose';
 import { IGroupMember, IGroupMemberDocument, IGroupMemberModel } from './groupMember.interface';
-import { GROUP_MEMBER_ROLES, GROUP_MEMBER_STATUS } from './groupMember.constant';
+import { GroupMemberRole, GroupMemberStatus } from './groupMember.constant';
 import paginate from '../../../common/plugins/paginate';
 
 /**
@@ -49,9 +49,9 @@ const groupMemberSchema = new Schema<IGroupMemberDocument>(
      */
     role: {
       type: String,
-      enum: Object.values(GROUP_MEMBER_ROLES),
+      enum: Object.values(GroupMemberRole),
       required: [true, 'Member role is required'],
-      default: GROUP_MEMBER_ROLES.MEMBER,
+      default: GroupMemberRole.MEMBER,
     },
 
     /**
@@ -60,9 +60,9 @@ const groupMemberSchema = new Schema<IGroupMemberDocument>(
      */
     status: {
       type: String,
-      enum: Object.values(GROUP_MEMBER_STATUS),
+      enum: Object.values(GroupMemberStatus),
       required: [true, 'Member status is required'],
-      default: GROUP_MEMBER_STATUS.ACTIVE,
+      default: GroupMemberStatus.ACTIVE,
     },
 
     // ─── Membership Details ────────────────────────────────────────────
@@ -199,7 +199,7 @@ groupMemberSchema.virtual('displayName').get(function () {
  */
 groupMemberSchema.virtual('hasElevatedPermissions').get(function () {
   const doc = this as IGroupMemberDocument;
-  return doc.role === GROUP_MEMBER_ROLES.OWNER || doc.role === GROUP_MEMBER_ROLES.ADMIN;
+  return doc.role === GroupMemberRole.OWNER || doc.role === GroupMemberRole.ADMIN;
 });
 
 // ─── Instance Methods ────────────────────────────────────────────────
@@ -209,19 +209,19 @@ groupMemberSchema.virtual('hasElevatedPermissions').get(function () {
 groupMemberSchema.methods.hasPermission = function (permission: string): boolean {
   const doc = this as IGroupMemberDocument;
   const permissions = {
-    [GROUP_MEMBER_ROLES.OWNER]: {
+    [GroupMemberRole.OWNER]: {
       CAN_EDIT_GROUP: true,
       CAN_DELETE_GROUP: true,
       CAN_INVITE_MEMBERS: true,
       CAN_REMOVE_MEMBERS: true,
     },
-    [GROUP_MEMBER_ROLES.ADMIN]: {
+    [GroupMemberRole.ADMIN]: {
       CAN_EDIT_GROUP: true,
       CAN_DELETE_GROUP: false,
       CAN_INVITE_MEMBERS: true,
       CAN_REMOVE_MEMBERS: true,
     },
-    [GROUP_MEMBER_ROLES.MEMBER]: {
+    [GroupMemberRole.MEMBER]: {
       CAN_EDIT_GROUP: false,
       CAN_DELETE_GROUP: false,
       CAN_INVITE_MEMBERS: false,
@@ -243,7 +243,7 @@ groupMemberSchema.statics.isUserMember = async function (
   const member = await this.findOne({
     groupId,
     userId,
-    status: GROUP_MEMBER_STATUS.ACTIVE,
+    status: GroupMemberStatus.ACTIVE,
     isDeleted: false,
   });
   return !!member;
@@ -257,7 +257,7 @@ groupMemberSchema.statics.getMemberCount = async function (
 ): Promise<number> {
   const count = await this.countDocuments({
     groupId,
-    status: GROUP_MEMBER_STATUS.ACTIVE,
+    status: GroupMemberStatus.ACTIVE,
     isDeleted: false,
   });
   return count;
@@ -271,7 +271,7 @@ groupMemberSchema.statics.getMemberIds = async function (
 ): Promise<Types.ObjectId[]> {
   const members = await this.find({
     groupId,
-    status: GROUP_MEMBER_STATUS.ACTIVE,
+    status: GroupMemberStatus.ACTIVE,
     isDeleted: false,
   }).select('userId');
 

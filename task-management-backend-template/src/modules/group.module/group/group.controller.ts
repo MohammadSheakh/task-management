@@ -6,7 +6,7 @@ import { IGroupDocument } from './group.interface';
 import { GroupService } from './group.service';
 import { TRole } from '../../../middlewares/roles';
 import ApiError from '../../../errors/ApiError';
-import { GROUP_MEMBER_ROLES, GROUP_STATUS, GROUP_VISIBILITY } from './group.constant';
+import { GroupMemberRoles, GroupStatus, GroupVisibility } from './group.constant';
 
 /**
  * Group Controller
@@ -55,7 +55,7 @@ export class GroupController extends GenericController<typeof Group, IGroupDocum
 
     // Set defaults
     if (!groupData.visibility) {
-      groupData.visibility = GROUP_VISIBILITY.PRIVATE;
+      groupData.visibility = GroupVisibility.PRIVATE;
     }
 
     if (!groupData.maxMembers) {
@@ -63,7 +63,7 @@ export class GroupController extends GenericController<typeof Group, IGroupDocum
     }
 
     if (!groupData.status) {
-      groupData.status = GROUP_STATUS.ACTIVE;
+      groupData.status = GroupStatus.ACTIVE;
     }
 
     const result = await this.groupService.createGroup(groupData, userId);
@@ -141,7 +141,7 @@ export class GroupController extends GenericController<typeof Group, IGroupDocum
     // Verify user has access to this group
     const hasAccess =
       result.ownerUserId._id.toString() === userId ||
-      result.visibility !== GROUP_VISIBILITY.PRIVATE;
+      result.visibility !== GroupVisibility.PRIVATE;
 
     if (!hasAccess) {
       throw new ApiError(StatusCodes.FORBIDDEN, 'You do not have access to this group');

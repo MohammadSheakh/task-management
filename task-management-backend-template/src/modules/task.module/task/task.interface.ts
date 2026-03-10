@@ -1,6 +1,6 @@
 import { Model, Types, Document } from 'mongoose';
 import { PaginateOptions, PaginateResult } from '../../../types/paginate';
-import { TTaskStatus, TTaskType, TTaskPriority } from './task.constant';
+import { TaskStatus, TaskType, TaskPriority } from './task.constant';
 
 /**
  * SubTask Interface (Embedded)
@@ -37,7 +37,7 @@ export interface ITask {
   ownerUserId?: Types.ObjectId;
 
   /** Type of task: personal, single assignment, or collaborative */
-  taskType: TTaskType;
+  taskType: `${TaskType}`;
 
   /** Users assigned to this task (for collaborative/single assignment) */
   assignedUserIds?: Types.ObjectId[];
@@ -56,11 +56,11 @@ export interface ITask {
   scheduledTime?: string;
 
   /** Priority level of the task */
-  priority?: TTaskPriority;
+  priority?: `${TaskPriority}`;
 
   // ─── Task Progress ─────────────────────────────────────────────────
   /** Current status of the task */
-  status: TTaskStatus;
+  status: `${TaskStatus}`;
 
   /** Total number of subtasks */
   totalSubtasks?: number;

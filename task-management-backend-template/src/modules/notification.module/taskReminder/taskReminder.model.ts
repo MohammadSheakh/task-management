@@ -1,7 +1,7 @@
 //@ts-ignore
 import { model, Schema, Types, Document } from 'mongoose';
 import { ITaskReminder, ITaskReminderDocument, ITaskReminderModel } from './taskReminder.interface';
-import { TASK_REMINDER_TRIGGER, TASK_REMINDER_STATUS, TASK_REMINDER_FREQUENCY, TASK_REMINDER_LIMITS, DEFAULT_CHANNELS_BY_TRIGGER } from './taskReminder.constant';
+import { TaskReminderTrigger, TaskReminderStatus, TaskReminderFrequency, TASK_REMINDER_LIMITS, DEFAULT_CHANNELS_BY_TRIGGER } from './taskReminder.constant';
 import paginate from '../../../common/plugins/paginate';
 
 /**
@@ -95,7 +95,7 @@ const taskReminderSchema = new Schema<ITaskReminderDocument>(
       type: String,
       enum: Object.values(TASK_REMINDER_STATUS),
       required: [true, 'Reminder status is required'],
-      default: TASK_REMINDER_STATUS.PENDING,
+      default: TaskReminderStatus.PENDING,
       index: true,
     },
 
@@ -106,7 +106,7 @@ const taskReminderSchema = new Schema<ITaskReminderDocument>(
       type: String,
       enum: Object.values(TASK_REMINDER_FREQUENCY),
       required: [true, 'Frequency is required'],
-      default: TASK_REMINDER_FREQUENCY.ONCE,
+      default: TaskReminderFrequency.ONCE,
     },
 
     /**
@@ -191,7 +191,7 @@ taskReminderSchema.index({ nextReminderTime: 1, frequency: 1, status: 1, isDelet
  */
 taskReminderSchema.virtual('isDue').get(function () {
   const doc = this as ITaskReminderDocument;
-  return doc.reminderTime <= new Date() && doc.status === TASK_REMINDER_STATUS.PENDING;
+  return doc.reminderTime <= new Date() && doc.status === TaskReminderStatus.PENDING;
 });
 
 /**
@@ -199,7 +199,7 @@ taskReminderSchema.virtual('isDue').get(function () {
  */
 taskReminderSchema.virtual('isRecurring').get(function () {
   const doc = this as ITaskReminderDocument;
-  return doc.frequency !== TASK_REMINDER_FREQUENCY.ONCE;
+  return doc.frequency !== TaskReminderFrequency.ONCE;
 });
 
 /**
@@ -215,14 +215,14 @@ taskReminderSchema.virtual('canSendAgain').get(function () {
  * Check if reminder is due
  */
 taskReminderSchema.methods.isDue = function (): boolean {
-  return this.reminderTime <= new Date() && this.status === TASK_REMINDER_STATUS.PENDING;
+  return this.reminderTime <= new Date() && this.status === TaskReminderStatus.PENDING;
 };
 
 /**
  * Check if reminder is recurring
  */
 taskReminderSchema.methods.isRecurring = function (): boolean {
-  return this.frequency !== TASK_REMINDER_FREQUENCY.ONCE;
+  return this.frequency !== TaskReminderFrequency.ONCE;
 };
 
 /**
@@ -239,13 +239,13 @@ taskReminderSchema.methods.calculateNextOccurrence = function (): Date | null {
   const nextDate = new Date(currentDate);
 
   switch (doc.frequency) {
-    case TASK_REMINDER_FREQUENCY.DAILY:
+    case TaskReminderFrequency.DAILY:
       nextDate.setDate(nextDate.getDate() + 1);
       break;
-    case TASK_REMINDER_FREQUENCY.WEEKLY:
+    case TaskReminderFrequency.WEEKLY:
       nextDate.setDate(nextDate.getDate() + 7);
       break;
-    case TASK_REMINDER_FREQUENCY.MONTHLY:
+    case TaskReminderFrequency.MONTHLY:
       nextDate.setMonth(nextDate.getMonth() + 1);
       break;
     default:
@@ -261,7 +261,7 @@ taskReminderSchema.methods.calculateNextOccurrence = function (): Date | null {
 taskReminderSchema.methods.markAsSent = async function (): Promise<void> {
   const doc = this as ITaskReminderDocument;
   
-  doc.status = TASK_REMINDER_STATUS.SENT;
+  doc.status = TaskReminderStatus.SENT;
   doc.sentCount += 1;
 
   if (doc.isRecurring() && doc.sentCount < doc.maxOccurrences!) {
@@ -269,7 +269,7 @@ taskReminderSchema.methods.markAsSent = async function (): Promise<void> {
     if (nextOccurrence) {
       doc.nextReminderTime = nextOccurrence;
       doc.reminderTime = nextOccurrence;
-      doc.status = TASK_REMINDER_STATUS.PENDING;
+      doc.status = TaskReminderStatus.PENDING;
     }
   }
 
@@ -285,7 +285,7 @@ taskReminderSchema.statics.getPendingReminders = async function (
 ): Promise<ITaskReminderDocument[]> {
   const reminders = await this.find({
     reminderTime: { $lte: beforeDate },
-    status: TASK_REMINDER_STATUS.PENDING,
+    status: TaskReminderStatus.PENDING,
     isDeleted: false,
   }).populate('taskId userId createdByUserId');
 
@@ -314,12 +314,12 @@ taskReminderSchema.statics.cancelRemindersForTask = async function (
   const result = await this.updateMany(
     {
       taskId,
-      status: TASK_REMINDER_STATUS.PENDING,
+      status: TaskReminderStatus.PENDING,
       isDeleted: false,
     },
     {
       $set: {
-        status: TASK_REMINDER_STATUS.CANCELLED,
+        status: TaskReminderStatus.CANCELLED,
       },
     }
   );
@@ -339,7 +339,7 @@ taskReminderSchema.pre('save', function (next) {
   }
 
   // Set maxOccurrences for one-time reminders
-  if (doc.frequency === TASK_REMINDER_FREQUENCY.ONCE && !doc.maxOccurrences) {
+  if (doc.frequency === TaskReminderFrequency.ONCE && !doc.maxOccurrences) {
     doc.maxOccurrences = 1;
   }
 

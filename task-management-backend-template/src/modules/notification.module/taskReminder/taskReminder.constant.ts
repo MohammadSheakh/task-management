@@ -6,35 +6,50 @@
  */
 
 /**
- * Task Reminder Trigger Types
+ * Task Reminder Trigger Type Enum
  */
-export const TASK_REMINDER_TRIGGER = {
-  BEFORE_DEADLINE: 'before_deadline',
-  AT_DEADLINE: 'at_deadline',
-  AFTER_DEADLINE: 'after_deadline',
-  CUSTOM_TIME: 'custom_time',
-  RECURRING: 'recurring',
-} as const;
+export enum TaskReminderTrigger {
+  BEFORE_DEADLINE = 'before_deadline',
+  AT_DEADLINE = 'at_deadline',
+  AFTER_DEADLINE = 'after_deadline',
+  CUSTOM_TIME = 'custom_time',
+  RECURRING = 'recurring',
+}
 
 /**
- * Task Reminder Status
+ * Task Reminder Status Enum
  */
-export const TASK_REMINDER_STATUS = {
-  PENDING: 'pending',
-  SENT: 'sent',
-  CANCELLED: 'cancelled',
-  FAILED: 'failed',
-} as const;
+export enum TaskReminderStatus {
+  PENDING = 'pending',
+  SENT = 'sent',
+  CANCELLED = 'cancelled',
+  FAILED = 'failed',
+}
 
 /**
- * Task Reminder Frequency
+ * Task Reminder Frequency Enum
  */
-export const TASK_REMINDER_FREQUENCY = {
-  ONCE: 'once',
-  DAILY: 'daily',
-  WEEKLY: 'weekly',
-  MONTHLY: 'monthly',
-} as const;
+export enum TaskReminderFrequency {
+  ONCE = 'once',
+  DAILY = 'daily',
+  WEEKLY = 'weekly',
+  MONTHLY = 'monthly',
+}
+
+/**
+ * Type exports from enums
+ */
+export type TTaskReminderTrigger = `${TaskReminderTrigger}`;
+export type TTaskReminderStatus = `${TaskReminderStatus}`;
+export type TTaskReminderFrequency = `${TaskReminderFrequency}`;
+
+/**
+ * Legacy constant exports (for backward compatibility)
+ * @deprecated Use TaskReminderTrigger, TaskReminderStatus, etc. enums instead
+ */
+export const TASK_REMINDER_TRIGGER = TaskReminderTrigger;
+export const TASK_REMINDER_STATUS = TaskReminderStatus;
+export const TASK_REMINDER_FREQUENCY = TaskReminderFrequency;
 
 /**
  * Task Reminder Limits

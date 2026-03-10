@@ -1,16 +1,17 @@
 import { Document, Types } from 'mongoose';
+import { GroupVisibility, GroupStatus } from './group.constant';
 
 /**
- * Group Visibility Options
- * Determines who can find and request to join the group
+ * Group Visibility Type
+ * Derived from GroupVisibility enum
  */
-export type TGroupVisibility = 'private' | 'public' | 'inviteOnly';
+export type TGroupVisibility = `${GroupVisibility}`;
 
 /**
- * Group Status
- * Represents the current state of the group
+ * Group Status Type
+ * Derived from GroupStatus enum
  */
-export type TGroupStatus = 'active' | 'suspended' | 'archived';
+export type TGroupStatus = `${GroupStatus}`;
 
 /**
  * Group Interface

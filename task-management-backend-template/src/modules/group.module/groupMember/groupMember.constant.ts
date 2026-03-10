@@ -7,23 +7,36 @@
  */
 
 /**
- * Group Member Roles
+ * Group Member Roles Enum
  * Defines hierarchy within a group
  */
-export const GROUP_MEMBER_ROLES = {
-  OWNER: 'owner',
-  ADMIN: 'admin',
-  MEMBER: 'member',
-} as const;
+export enum GroupMemberRole {
+  OWNER = 'owner',
+  ADMIN = 'admin',
+  MEMBER = 'member',
+}
 
 /**
- * Group Member Status Options
+ * Group Member Status Enum
  */
-export const GROUP_MEMBER_STATUS = {
-  ACTIVE: 'active',
-  INACTIVE: 'inactive',
-  BLOCKED: 'blocked',
-} as const;
+export enum GroupMemberStatus {
+  ACTIVE = 'active',
+  INACTIVE = 'inactive',
+  BLOCKED = 'blocked',
+}
+
+/**
+ * Type exports from enums (for MongoDB schema validation and TypeScript)
+ */
+export type TGroupMemberRole = `${GroupMemberRole}`;
+export type TGroupMemberStatus = `${GroupMemberStatus}`;
+
+/**
+ * Legacy constant exports (for backward compatibility)
+ * @deprecated Use GroupMemberRole and GroupMemberStatus enums instead
+ */
+export const GROUP_MEMBER_ROLES = GroupMemberRole;
+export const GROUP_MEMBER_STATUS = GroupMemberStatus;
 
 /**
  * Group Member Limits Configuration

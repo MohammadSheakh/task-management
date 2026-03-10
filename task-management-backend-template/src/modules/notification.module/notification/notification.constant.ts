@@ -7,49 +7,70 @@
  */
 
 /**
- * Notification Types
+ * Notification Type Enum
+ * Defines the category of notification
  */
-export const NOTIFICATION_TYPE = {
-  TASK: 'task',
-  GROUP: 'group',
-  SYSTEM: 'system',
-  REMINDER: 'reminder',
-  MENTION: 'mention',
-  ASSIGNMENT: 'assignment',
-  DEADLINE: 'deadline',
-  CUSTOM: 'custom',
-} as const;
+export enum NotificationType {
+  TASK = 'task',
+  GROUP = 'group',
+  SYSTEM = 'system',
+  REMINDER = 'reminder',
+  MENTION = 'mention',
+  ASSIGNMENT = 'assignment',
+  DEADLINE = 'deadline',
+  CUSTOM = 'custom',
+}
 
 /**
- * Notification Priority Levels
+ * Notification Priority Enum
+ * Determines notification urgency and delivery method
  */
-export const NOTIFICATION_PRIORITY = {
-  LOW: 'low',
-  NORMAL: 'normal',
-  HIGH: 'high',
-  URGENT: 'urgent',
-} as const;
+export enum NotificationPriority {
+  LOW = 'low',
+  NORMAL = 'normal',
+  HIGH = 'high',
+  URGENT = 'urgent',
+}
 
 /**
- * Notification Delivery Channels
+ * Notification Channel Enum
+ * Defines how the notification should be delivered
  */
-export const NOTIFICATION_CHANNEL = {
-  IN_APP: 'in_app',
-  EMAIL: 'email',
-  PUSH: 'push',
-  SMS: 'sms',
-} as const;
+export enum NotificationChannel {
+  IN_APP = 'in_app',
+  EMAIL = 'email',
+  PUSH = 'push',
+  SMS = 'sms',
+}
 
 /**
- * Notification Status
+ * Notification Status Enum
+ * Tracks the delivery and read status
  */
-export const NOTIFICATION_STATUS = {
-  PENDING: 'pending',
-  SENT: 'sent',
-  DELIVERED: 'delivered',
-  READ: 'read',
-  FAILED: 'failed',
-} as const;
+export enum NotificationStatus {
+  PENDING = 'pending',
+  SENT = 'sent',
+  DELIVERED = 'delivered',
+  READ = 'read',
+  FAILED = 'failed',
+}
+
+/**
+ * Type exports from enums (for MongoDB schema validation and TypeScript)
+ */
+export type TNotificationType = `${NotificationType}`;
+export type TNotificationPriority = `${NotificationPriority}`;
+export type TNotificationChannel = `${NotificationChannel}`;
+export type TNotificationStatus = `${NotificationStatus}`;
+
+/**
+ * Legacy constant exports (for backward compatibility)
+ * @deprecated Use NotificationType, NotificationPriority, etc. enums instead
+ */
+export const NOTIFICATION_TYPE = NotificationType;
+export const NOTIFICATION_PRIORITY = NotificationPriority;
+export const NOTIFICATION_CHANNEL = NotificationChannel;
+export const NOTIFICATION_STATUS = NotificationStatus;
 
 /**
  * Notification Limits Configuration

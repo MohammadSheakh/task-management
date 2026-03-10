@@ -4,7 +4,7 @@ import { ITask } from './task.interface';
 import { GenericService } from '../../_generic-module/generic.services';
 import ApiError from '../../../errors/ApiError';
 import { Types } from 'mongoose';
-import { DAILY_TASK_LIMIT, TTaskStatus, TASK_CACHE_CONFIG } from './task.constant';
+import { DAILY_TASK_LIMIT, TaskStatus, TASK_CACHE_CONFIG } from './task.constant';
 import { redisClient } from '../../../helpers/redis/redis';
 import { logger, errorLogger } from '../../../shared/logger';
 import { NotificationService } from '../../notification.module/notification/notification.service';
@@ -285,7 +285,7 @@ export class TaskService extends GenericService<typeof Task, ITask> {
     const updateData: any = { status };
 
     // Auto-set completedTime when status changes to completed
-    if (status === TTaskStatus.completed) {
+    if (status === TaskStatus.completed) {
       updateData.completedTime = new Date();
     }
 
@@ -304,7 +304,7 @@ export class TaskService extends GenericService<typeof Task, ITask> {
 
     // ✨ NEW: Record activity for task status changes
     if (updatedTask.groupId) {
-      const activityType = status === TTaskStatus.completed 
+      const activityType = status === TaskStatus.completed 
         ? ACTIVITY_TYPE.TASK_COMPLETED 
         : ACTIVITY_TYPE.TASK_STARTED;
       
@@ -339,7 +339,7 @@ export class TaskService extends GenericService<typeof Task, ITask> {
 
     // Auto-complete task if all subtasks are done
     if (totalSubtasks > 0 && completedSubtasks === totalSubtasks) {
-      updateData.status = TTaskStatus.completed;
+      updateData.status = TaskStatus.completed;
       updateData.completedTime = new Date();
     }
 
@@ -443,9 +443,9 @@ export class TaskService extends GenericService<typeof Task, ITask> {
 
     // Calculate statistics
     const total = tasks.length;
-    const completed = tasks.filter(t => t.status === TTaskStatus.completed).length;
-    const inProgress = tasks.filter(t => t.status === TTaskStatus.inProgress).length;
-    const pending = tasks.filter(t => t.status === TTaskStatus.pending).length;
+    const completed = tasks.filter(t => t.status === TaskStatus.completed).length;
+    const inProgress = tasks.filter(t => t.status === TaskStatus.inProgress).length;
+    const pending = tasks.filter(t => t.status === TaskStatus.pending).length;
 
     // Build task list with subtask info
     const taskList = tasks.map(task => ({
@@ -460,7 +460,7 @@ export class TaskService extends GenericService<typeof Task, ITask> {
       } : undefined,
       progressPercentage: task.totalSubtasks && task.totalSubtasks > 0
         ? Math.round(((task.completedSubtasks || 0) / task.totalSubtasks) * 100)
-        : (task.status === TTaskStatus.completed ? 100 : 0),
+        : (task.status === TaskStatus.completed ? 100 : 0),
     }));
 
     const result = {

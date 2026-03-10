@@ -1,7 +1,7 @@
 //@ts-ignore
 import { model, Schema, Types, Document } from 'mongoose';
 import { IGroup, IGroupDocument, IGroupModel } from './group.interface';
-import { GROUP_LIMITS, GROUP_VISIBILITY, GROUP_STATUS } from './group.constant';
+import { GROUP_LIMITS, GroupVisibility, GroupStatus } from './group.constant';
 import paginate from '../../../common/plugins/paginate';
 
 /**
@@ -61,9 +61,9 @@ const groupSchema = new Schema<IGroupDocument>(
      */
     visibility: {
       type: String,
-      enum: Object.values(GROUP_VISIBILITY),
+      enum: Object.values(GroupVisibility),
       required: [true, 'Group visibility is required'],
-      default: GROUP_VISIBILITY.PRIVATE,
+      default: GroupVisibility.PRIVATE,
     },
 
     /**
@@ -115,9 +115,9 @@ const groupSchema = new Schema<IGroupDocument>(
      */
     status: {
       type: String,
-      enum: Object.values(GROUP_STATUS),
+      enum: Object.values(GroupStatus),
       required: [true, 'Group status is required'],
-      default: GROUP_STATUS.ACTIVE,
+      default: GroupStatus.ACTIVE,
     },
 
     /**
@@ -201,8 +201,8 @@ groupSchema.virtual('isFull').get(function () {
 groupSchema.virtual('isAcceptingMembers').get(function () {
   const doc = this as IGroupDocument;
   return (
-    doc.status === GROUP_STATUS.ACTIVE &&
-    doc.visibility !== GROUP_VISIBILITY.PRIVATE &&
+    doc.status === GroupStatus.ACTIVE &&
+    doc.visibility !== GroupVisibility.PRIVATE &&
     doc.currentMemberCount < doc.maxMembers
   );
 });
@@ -220,8 +220,8 @@ groupSchema.methods.isFull = function (): boolean {
  */
 groupSchema.methods.isAcceptingMembers = function (): boolean {
   return (
-    this.status === GROUP_STATUS.ACTIVE &&
-    this.visibility !== GROUP_VISIBILITY.PRIVATE &&
+    this.status === GroupStatus.ACTIVE &&
+    this.visibility !== GroupVisibility.PRIVATE &&
     this.currentMemberCount < this.maxMembers
   );
 };
@@ -236,7 +236,7 @@ groupSchema.statics.countActiveGroupsForUser = async function (
 ): Promise<number> {
   const count = await this.countDocuments({
     ownerUserId: userId,
-    status: GROUP_STATUS.ACTIVE,
+    status: GroupStatus.ACTIVE,
     isDeleted: false,
   });
   return count;

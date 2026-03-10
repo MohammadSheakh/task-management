@@ -1,11 +1,12 @@
 import { Types, Document, Model } from 'mongoose';
 import { PaginateOptions, PaginateResult } from '../../../types/paginate';
+import { TaskProgressStatus } from './taskProgress.constant';
 
 /**
- * Task Progress Status
- * Represents the current state of a child's progress on a task
+ * Task Progress Status Type
+ * Derived from TaskProgressStatus enum
  */
-export type TTaskProgressStatus = 'notStarted' | 'inProgress' | 'completed';
+export type TTaskProgressStatus = `${TaskProgressStatus}`;
 
 /**
  * Task Progress Interface

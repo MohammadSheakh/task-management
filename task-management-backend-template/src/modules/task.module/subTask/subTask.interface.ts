@@ -1,5 +1,6 @@
 import { Model, Types, Document } from 'mongoose';
 import { PaginateOptions, PaginateResult } from '../../../types/paginate';
+import { SubTaskStatus } from './subTask.constant';
 
 /**
  * SubTask Interface
@@ -33,8 +34,11 @@ export interface ISubTask {
   duration?: string;
 
   // ─── Progress & Status ─────────────────────────────────────────────
-  /** Completion status */
+  /** Completion status (boolean for backward compatibility) */
   isCompleted: boolean;
+
+  /** Completion status enum (new field for type safety) */
+  status?: `${SubTaskStatus}`;
 
   /** When the subtask was completed */
   completedAt?: Date;

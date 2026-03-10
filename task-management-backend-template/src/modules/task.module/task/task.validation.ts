@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { TTaskStatus, TTaskType, TTaskPriority } from './task.constant';
+import { TaskStatus, TaskType, TaskPriority } from './task.constant';
 
 /**
  * Create Task Validation Schema
@@ -16,7 +16,7 @@ export const createTaskValidationSchema = z.object({
       .max(200, 'Title cannot exceed 200 characters'),
 
     taskType: z
-      .enum([TTaskType.personal, TTaskType.singleAssignment, TTaskType.collaborative], {
+      .nativeEnum(TaskType, {
         required_error: 'Task type is required',
       }),
 
@@ -39,12 +39,12 @@ export const createTaskValidationSchema = z.object({
       .optional(),
 
     priority: z
-      .enum([TTaskPriority.low, TTaskPriority.medium, TTaskPriority.high])
-      .default(TTaskPriority.medium),
+      .nativeEnum(TaskPriority)
+      .default(TaskPriority.MEDIUM),
 
     status: z
-      .enum([TTaskStatus.pending, TTaskStatus.inProgress, TTaskStatus.completed])
-      .default(TTaskStatus.pending),
+      .nativeEnum(TaskStatus)
+      .default(TaskStatus.PENDING),
 
     ownerUserId: z
       .string()
@@ -94,7 +94,7 @@ export const updateTaskValidationSchema = z.object({
       .optional(),
 
     taskType: z
-      .enum([TTaskType.personal, TTaskType.singleAssignment, TTaskType.collaborative])
+      .nativeEnum(TaskType)
       .optional(),
 
     description: z
@@ -105,11 +105,11 @@ export const updateTaskValidationSchema = z.object({
     scheduledTime: z.string().optional(),
 
     priority: z
-      .enum([TTaskPriority.low, TTaskPriority.medium, TTaskPriority.high])
+      .nativeEnum(TaskPriority)
       .optional(),
 
     status: z
-      .enum([TTaskStatus.pending, TTaskStatus.inProgress, TTaskStatus.completed])
+      .nativeEnum(TaskStatus)
       .optional(),
 
     ownerUserId: z
@@ -160,7 +160,7 @@ export const updateTaskValidationSchema = z.object({
 export const updateTaskStatusValidationSchema = z.object({
   body: z.object({
     status: z
-      .enum([TTaskStatus.pending, TTaskStatus.inProgress, TTaskStatus.completed], {
+      .nativeEnum(TaskStatus, {
         required_error: 'Status is required',
       }),
     completedTime: z
@@ -178,15 +178,15 @@ export const updateTaskStatusValidationSchema = z.object({
 export const taskQueryValidationSchema = z.object({
   query: z.object({
     status: z
-      .enum([TTaskStatus.pending, TTaskStatus.inProgress, TTaskStatus.completed])
+      .nativeEnum(TaskStatus)
       .optional(),
 
     taskType: z
-      .enum([TTaskType.personal, TTaskType.singleAssignment, TTaskType.collaborative])
+      .nativeEnum(TaskType)
       .optional(),
 
     priority: z
-      .enum([TTaskPriority.low, TTaskPriority.medium, TTaskPriority.high])
+      .nativeEnum(TaskPriority)
       .optional(),
 
     from: z.string().optional(), // Start date for range

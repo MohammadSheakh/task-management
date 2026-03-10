@@ -4,7 +4,7 @@ import { GroupMember } from './groupMember.model';
 import { IGroupMember, IGroupMemberDocument } from './groupMember.interface';
 import ApiError from '../../../errors/ApiError';
 import { redisClient } from '../../../helpers/redis/redis';
-import { GROUP_MEMBER_STATUS, GROUP_MEMBER_ROLES, MEMBER_CACHE_CONFIG } from './groupMember.constant';
+import { GroupMemberStatus, GroupMemberRole, MEMBER_CACHE_CONFIG } from './groupMember.constant';
 import { errorLogger, logger } from '../../../shared/logger';
 import { Group } from '../group/group.model';
 import { User } from '../../user.module/user/user.model';
@@ -147,7 +147,7 @@ export class GroupMemberService extends GenericService<typeof GroupMember, IGrou
       groupId: groupObjectId,
       userId: userObjectId,
       role,
-      status: GROUP_MEMBER_STATUS.ACTIVE,
+      status: GroupMemberStatus.ACTIVE,
     });
 
     // Update group member count
@@ -184,7 +184,7 @@ export class GroupMemberService extends GenericService<typeof GroupMember, IGrou
     // Fallback to database
     const query = {
       groupId: new Types.ObjectId(groupId),
-      status: GROUP_MEMBER_STATUS.ACTIVE,
+      status: GroupMemberStatus.ACTIVE,
       isDeleted: false,
     };
 
@@ -295,10 +295,10 @@ export class GroupMemberService extends GenericService<typeof GroupMember, IGrou
     }
 
     // Prevent removing the last owner
-    if (member.role === GROUP_MEMBER_ROLES.OWNER) {
+    if (member.role === GroupMemberRole.OWNER) {
       const ownerCount = await this.model.countDocuments({
         groupId: new Types.ObjectId(groupId),
-        role: GROUP_MEMBER_ROLES.OWNER,
+        role: GroupMemberRole.OWNER,
         isDeleted: false,
       });
 
@@ -366,7 +366,7 @@ export class GroupMemberService extends GenericService<typeof GroupMember, IGrou
   async getUserGroupIds(userId: string): Promise<Types.ObjectId[]> {
     const memberships = await this.model.find({
       userId: new Types.ObjectId(userId),
-      status: GROUP_MEMBER_STATUS.ACTIVE,
+      status: GroupMemberStatus.ACTIVE,
       isDeleted: false,
     }).select('groupId');
 
@@ -387,7 +387,7 @@ export class GroupMemberService extends GenericService<typeof GroupMember, IGrou
   async getGroupPermissions(groupId: string) {
     const members = await this.model.find({
       groupId: new Types.ObjectId(groupId),
-      status: GROUP_MEMBER_STATUS.ACTIVE,
+      status: GroupMemberStatus.ACTIVE,
       isDeleted: false,
     })
       .populate('userId', 'name email profileImage')
@@ -514,7 +514,7 @@ export class GroupMemberService extends GenericService<typeof GroupMember, IGrou
     const member = await this.model.findOne({
       groupId: new Types.ObjectId(groupId),
       userId: new Types.ObjectId(userId),
-      status: GROUP_MEMBER_STATUS.ACTIVE,
+      status: GroupMemberStatus.ACTIVE,
       isDeleted: false,
     }).select('permissions role');
 
@@ -523,7 +523,7 @@ export class GroupMemberService extends GenericService<typeof GroupMember, IGrou
     }
 
     // Owner and admin can always create tasks
-    if (member.role === GROUP_MEMBER_ROLES.OWNER || member.role === GROUP_MEMBER_ROLES.ADMIN) {
+    if (member.role === GroupMemberRole.OWNER || member.role === GroupMemberRole.ADMIN) {
       return true;
     }
 
@@ -542,7 +542,7 @@ export class GroupMemberService extends GenericService<typeof GroupMember, IGrou
     const member = await this.model.findOne({
       groupId: new Types.ObjectId(groupId),
       userId: new Types.ObjectId(userId),
-      status: GROUP_MEMBER_STATUS.ACTIVE,
+      status: GroupMemberStatus.ACTIVE,
       isDeleted: false,
     }).select('permissions role');
 
@@ -551,7 +551,7 @@ export class GroupMemberService extends GenericService<typeof GroupMember, IGrou
     }
 
     // Owner and admin can always invite
-    if (member.role === GROUP_MEMBER_ROLES.OWNER || member.role === GROUP_MEMBER_ROLES.ADMIN) {
+    if (member.role === GroupMemberRole.OWNER || member.role === GroupMemberRole.ADMIN) {
       return true;
     }
 
@@ -570,7 +570,7 @@ export class GroupMemberService extends GenericService<typeof GroupMember, IGrou
     const member = await this.model.findOne({
       groupId: new Types.ObjectId(groupId),
       userId: new Types.ObjectId(userId),
-      status: GROUP_MEMBER_STATUS.ACTIVE,
+      status: GroupMemberStatus.ACTIVE,
       isDeleted: false,
     }).select('permissions role');
 
@@ -579,7 +579,7 @@ export class GroupMemberService extends GenericService<typeof GroupMember, IGrou
     }
 
     // Owner and admin can always remove
-    if (member.role === GROUP_MEMBER_ROLES.OWNER || member.role === GROUP_MEMBER_ROLES.ADMIN) {
+    if (member.role === GroupMemberRole.OWNER || member.role === GroupMemberRole.ADMIN) {
       return true;
     }
 
@@ -651,8 +651,8 @@ export class GroupMemberService extends GenericService<typeof GroupMember, IGrou
       throw new ApiError(StatusCodes.FORBIDDEN, 'You are not a member of this group');
     }
 
-    if (creatorMembership.role !== GROUP_MEMBER_ROLES.OWNER && 
-        creatorMembership.role !== GROUP_MEMBER_ROLES.ADMIN) {
+    if (creatorMembership.role !== GroupMemberRole.OWNER && 
+        creatorMembership.role !== GroupMemberRole.ADMIN) {
       throw new ApiError(StatusCodes.FORBIDDEN, 'Only owners and admins can create member accounts');
     }
 
@@ -691,8 +691,8 @@ export class GroupMemberService extends GenericService<typeof GroupMember, IGrou
     const member = await this.model.create({
       groupId: groupObjectId,
       userId: user._id,
-      role: GROUP_MEMBER_ROLES.MEMBER,
-      status: GROUP_MEMBER_STATUS.ACTIVE,
+      role: GroupMemberRole.MEMBER,
+      status: GroupMemberStatus.ACTIVE,
       permissions: {
         canCreateTasks: false, // Default: no task creation permission
         canInviteMembers: false,
@@ -785,8 +785,8 @@ export class GroupMemberService extends GenericService<typeof GroupMember, IGrou
       throw new ApiError(StatusCodes.FORBIDDEN, 'You are not a member of this group');
     }
 
-    if (updaterMembership.role !== GROUP_MEMBER_ROLES.OWNER && 
-        updaterMembership.role !== GROUP_MEMBER_ROLES.ADMIN) {
+    if (updaterMembership.role !== GroupMemberRole.OWNER && 
+        updaterMembership.role !== GroupMemberRole.ADMIN) {
       throw new ApiError(StatusCodes.FORBIDDEN, 'Only owners and admins can update member profiles');
     }
 

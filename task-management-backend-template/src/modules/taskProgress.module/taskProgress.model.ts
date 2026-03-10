@@ -6,7 +6,7 @@ import {
   ITaskProgressDocument,
   ITaskProgressModel,
 } from './taskProgress.interface';
-import { TASK_PROGRESS_STATUS, TASK_PROGRESS_DEFAULTS } from './taskProgress.constant';
+import { TaskProgressStatus, TASK_PROGRESS_DEFAULTS } from './taskProgress.constant';
 
 /**
  * Task Progress Schema
@@ -28,12 +28,8 @@ const taskProgressSchema = new Schema<ITaskProgress>(
     },
     status: {
       type: String,
-      enum: [
-        TASK_PROGRESS_STATUS.NOT_STARTED,
-        TASK_PROGRESS_STATUS.IN_PROGRESS,
-        TASK_PROGRESS_STATUS.COMPLETED,
-      ],
-      default: TASK_PROGRESS_STATUS.NOT_STARTED,
+      enum: Object.values(TaskProgressStatus),
+      default: TaskProgressStatus.NOT_STARTED,
     },
     startedAt: {
       type: Date,
@@ -129,7 +125,7 @@ taskProgressSchema.statics.countCompleted = async function (
 ): Promise<number> {
   return await this.countDocuments({
     taskId,
-    status: TASK_PROGRESS_STATUS.COMPLETED,
+    status: TaskProgressStatus.COMPLETED,
     isDeleted: false,
   });
 };
@@ -142,7 +138,7 @@ taskProgressSchema.statics.countInProgress = async function (
 ): Promise<number> {
   return await this.countDocuments({
     taskId,
-    status: TASK_PROGRESS_STATUS.IN_PROGRESS,
+    status: TaskProgressStatus.IN_PROGRESS,
     isDeleted: false,
   });
 };
@@ -155,7 +151,7 @@ taskProgressSchema.statics.countNotStarted = async function (
 ): Promise<number> {
   return await this.countDocuments({
     taskId,
-    status: TASK_PROGRESS_STATUS.NOT_STARTED,
+    status: TaskProgressStatus.NOT_STARTED,
     isDeleted: false,
   });
 };
@@ -171,7 +167,7 @@ taskProgressSchema.methods.isForUser = function (userId: string): boolean {
  * Instance method: Check if task is completed by this child
  */
 taskProgressSchema.methods.isCompleted = function (): boolean {
-  return this.status === TASK_PROGRESS_STATUS.COMPLETED && !this.isDeleted;
+  return this.status === TaskProgressStatus.COMPLETED && !this.isDeleted;
 };
 
 /**
@@ -188,10 +184,10 @@ taskProgressSchema.methods.updateProgressPercentage = function (totalSubtasks: n
   
   // Auto-update status based on progress
   if (this.progressPercentage === 100 && totalSubtasks > 0) {
-    this.status = TASK_PROGRESS_STATUS.COMPLETED;
+    this.status = TaskProgressStatus.COMPLETED;
     this.completedAt = new Date();
-  } else if (this.progressPercentage > 0 && this.status === TASK_PROGRESS_STATUS.NOT_STARTED) {
-    this.status = TASK_PROGRESS_STATUS.IN_PROGRESS;
+  } else if (this.progressPercentage > 0 && this.status === TaskProgressStatus.NOT_STARTED) {
+    this.status = TaskProgressStatus.IN_PROGRESS;
     if (!this.startedAt) {
       this.startedAt = new Date();
     }
@@ -223,12 +219,12 @@ taskProgressSchema.pre('save', function (next) {
   // This is a safety check; should be updated via updateProgressPercentage
   
   // Validate completedAt is set when status is completed
-  if (this.status === TASK_PROGRESS_STATUS.COMPLETED && !this.completedAt) {
+  if (this.status === TaskProgressStatus.COMPLETED && !this.completedAt) {
     this.completedAt = new Date();
   }
   
   // Validate startedAt is set when status is inProgress
-  if (this.status === TASK_PROGRESS_STATUS.IN_PROGRESS && !this.startedAt) {
+  if (this.status === TaskProgressStatus.IN_PROGRESS && !this.startedAt) {
     this.startedAt = new Date();
   }
   

@@ -1,13 +1,32 @@
 /**
- * Task Progress Status Enum
+ * TaskProgress Module Constants
+ * Centralized configuration for task progress-related enums, limits, and defaults
+ *
+ * @version 1.0.0
+ * @author Senior Engineering Team
  */
-export const TASK_PROGRESS_STATUS = {
-  NOT_STARTED: 'notStarted',
-  IN_PROGRESS: 'inProgress',
-  COMPLETED: 'completed',
-} as const;
 
-export type TTaskProgressStatus = typeof TASK_PROGRESS_STATUS[keyof typeof TASK_PROGRESS_STATUS];
+/**
+ * Task Progress Status Enum
+ * Represents the current state of a child's progress on a task
+ */
+export enum TaskProgressStatus {
+  NOT_STARTED = 'notStarted',
+  IN_PROGRESS = 'inProgress',
+  COMPLETED = 'completed',
+}
+
+/**
+ * Type export from enum (for MongoDB schema validation and TypeScript)
+ */
+export type TTaskProgressStatus = `${TaskProgressStatus}`;
+
+/**
+ * Legacy constant exports (for backward compatibility)
+ * @deprecated Use TaskProgressStatus enum instead
+ */
+export const TASK_PROGRESS_STATUS = TaskProgressStatus;
+export const T_TASK_PROGRESS_STATUS = TaskProgressStatus;
 
 /**
  * Default values for task progress

@@ -6,7 +6,7 @@ import { ITaskReminderDocument } from './taskReminder.interface';
 import { TaskReminderService } from './taskReminder.service';
 import { TRole } from '../../../middlewares/roles';
 import ApiError from '../../../errors/ApiError';
-import { TASK_REMINDER_TRIGGER, TASK_REMINDER_FREQUENCY } from './taskReminder.constant';
+import { TaskReminderTrigger, TaskReminderFrequency } from './taskReminder.constant';
 
 /**
  * TaskReminder Controller

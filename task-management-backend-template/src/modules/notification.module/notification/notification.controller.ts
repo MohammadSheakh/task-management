@@ -6,7 +6,7 @@ import { INotificationDocument } from './notification.interface';
 import { NotificationService } from './notification.service';
 import { TRole } from '../../../middlewares/roles';
 import ApiError from '../../../errors/ApiError';
-import { NOTIFICATION_PRIORITY, NOTIFICATION_CHANNEL, NOTIFICATION_TYPE } from './notification.constant';
+import { NotificationPriority, NotificationChannel, NotificationType } from './notification.constant';
 
 /**
  * Notification Controller
@@ -201,8 +201,8 @@ export class NotificationController extends GenericController<typeof Notificatio
       title,
       subTitle,
       type,
-      priority: priority || NOTIFICATION_PRIORITY.NORMAL,
-      channels: channels || [NOTIFICATION_CHANNEL.IN_APP],
+      priority: priority || NotificationPriority.NORMAL,
+      channels: channels || [NotificationChannel.IN_APP],
       linkFor,
       linkId,
       data,
