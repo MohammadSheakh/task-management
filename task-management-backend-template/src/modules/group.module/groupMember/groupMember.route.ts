@@ -6,6 +6,7 @@ import { validateFiltersForQuery } from '../../../middlewares/queryValidation/pa
 import auth from '../../../middlewares/auth';
 import { TRole } from '../../../middlewares/roles';
 import { setQueryOptions } from '../../../middlewares/setQueryOptions';
+//@ts-ignore
 import rateLimit from 'express-rate-limit';
 import { RATE_LIMITS } from '../group/group.constant';
 import validateRequest from '../../../shared/validateRequest';
@@ -45,21 +46,27 @@ const membershipLimiter = rateLimit({
 
 // ─── Routes ────────────────────────────────────────────────────────────
 
-//-------------------------------------------
-// User | GroupMember #01 | Get all members of a group
-//-------------------------------------------
+/*-─────────────────────────────────
+|  Business | GroupMember | team-member-flow-01.png | Get all members of a group
+|  @desc Group owner/admin retrieves all group members
+|  @auth Business user (group member)
+|  @rateLimit 100 requests per minute
+└──────────────────────────────────*/
 router.route('/:id/members').get(
-  auth(TRole.user),
+  auth(TRole.business),
   membershipLimiter,
   validateFiltersForQuery(optionValidationChecking(['status', 'role', ...paginationOptions])),
   controller.getGroupMembers
 );
 
-//-------------------------------------------
-// User | GroupMember #02 | Get specific member details
-//-------------------------------------------
+/*-─────────────────────────────────
+|  Business | GroupMember | team-member-flow-01.png | Get specific member details
+|  @desc Retrieve individual member information
+|  @auth Business user (group member)
+|  @rateLimit 100 requests per minute
+└──────────────────────────────────*/
 router.route('/:groupId/members/:userId').get(
-  auth(TRole.user),
+  auth(TRole.business),
   membershipLimiter,
   setQueryOptions({
     populate: [
@@ -70,88 +77,116 @@ router.route('/:groupId/members/:userId').get(
   controller.getMember
 );
 
-//-------------------------------------------
-// Owner/Admin | GroupMember #03 | Add member to group
-//-------------------------------------------
+/*-─────────────────────────────────
+|  Business | GroupMember | team-member-flow-01.png | Add member to group
+|  @desc Group owner/admin adds a new member
+|  @auth Business user (group owner/admin)
+|  @rateLimit 100 requests per minute
+└──────────────────────────────────*/
 router.route('/:id/members').post(
-  auth(TRole.user),
+  auth(TRole.business),
   membershipLimiter,
   controller.addMember
 );
 
-//-------------------------------------------
-// Owner | GroupMember #04 | Update member role
-//-------------------------------------------
+/*-─────────────────────────────────
+|  Business | GroupMember | team-member-flow-01.png | Update member role
+|  @desc Group owner promotes/demotes member role
+|  @auth Business user (group owner)
+|  @rateLimit 100 requests per minute
+└──────────────────────────────────*/
 router.route('/:groupId/members/:userId/role').put(
-  auth(TRole.user),
+  auth(TRole.business),
   membershipLimiter,
   controller.updateMemberRole
 );
 
-//-------------------------------------------
-// Owner/Admin | GroupMember #05 | Remove member from group
-//-------------------------------------------
+/*-─────────────────────────────────
+|  Business | GroupMember | team-member-flow-01.png | Remove member from group
+|  @desc Group owner/admin removes a member
+|  @auth Business user (group owner/admin)
+|  @rateLimit 100 requests per minute
+└──────────────────────────────────*/
 router.route('/:groupId/members/:userId').delete(
-  auth(TRole.user),
+  auth(TRole.business),
   membershipLimiter,
   controller.removeMember
 );
 
-//-------------------------------------------
-// User | GroupMember #06 | Leave a group
-//-------------------------------------------
+/*-─────────────────────────────────
+|  Child | GroupMember | home-flow.png | Leave a group (self-removal)
+|  @desc Child/secondary user leaves the group voluntarily
+|  @auth Child user (group member)
+|  @rateLimit 100 requests per minute
+└──────────────────────────────────*/
 router.route('/:id/leave').post(
-  auth(TRole.user),
+  auth(TRole.commonUser),
   membershipLimiter,
   controller.leaveGroup
 );
 
-//-------------------------------------------
-// User | GroupMember #07 | Get member count
-//-------------------------------------------
+/*-─────────────────────────────────
+|  Business | GroupMember | dashboard-flow-01.png | Get member count
+|  @desc Get total number of group members
+|  @auth Business user (group member)
+|  @rateLimit 100 requests per minute
+└──────────────────────────────────*/
 router.route('/:id/count').get(
-  auth(TRole.user),
+  auth(TRole.business),
   membershipLimiter,
   controller.getMemberCount
 );
 
-//-------------------------------------------
-// User | GroupMember #08 | Check if user is member
-//-------------------------------------------
+/*-─────────────────────────────────
+|  Business | GroupMember | team-member-flow-01.png | Check if user is member
+|  @desc Verify user's membership status
+|  @auth Business user
+|  @rateLimit 100 requests per minute
+└──────────────────────────────────*/
 router.route('/:groupId/check/:userId').get(
-  auth(TRole.user),
+  auth(TRole.business),
   membershipLimiter,
   controller.checkMembership
 );
 
 // ────────────────────────────────────────────────────────────────────────
-// Group Permissions Routes
+// Group Permissions Routes (Settings/Permission Section)
+// Figma: teacher-parent-dashboard/settings-permission-section/permission-flow.png
 // ────────────────────────────────────────────────────────────────────────
 
-//-------------------------------------------
-// Primary | GroupMember #09 | Get group permissions
-//-------------------------------------------
+/*-─────────────────────────────────
+|  Business | GroupMember | permission-flow.png | Get group permissions
+|  @desc Get which members have task creation permissions
+|  @auth Business user (group owner/admin)
+|  @rateLimit 100 requests per minute
+└──────────────────────────────────*/
 router.route('/:id/permissions').get(
-  auth(TRole.user),
+  auth(TRole.business),
   membershipLimiter,
   controller.getGroupPermissions
 );
 
-//-------------------------------------------
-// Primary | GroupMember #10 | Update group permissions
-//-------------------------------------------
+/*-─────────────────────────────────
+|  Business | GroupMember | permission-flow.png | Update group permissions
+|  @desc Grant/revoke task creation permissions for members
+|  @auth Business user (group owner/admin)
+|  @rateLimit 100 requests per minute
+└──────────────────────────────────*/
 router.route('/:id/permissions').put(
-  auth(TRole.user),
+  auth(TRole.business),
   membershipLimiter,
   validateRequest(validation.updateGroupPermissionsValidationSchema),
   controller.updateGroupPermissions
 );
 
-//-------------------------------------------
-// Primary | GroupMember #11 | Toggle task creation permission
-//-------------------------------------------
+/*-─────────────────────────────────
+|  Business | GroupMember | permission-flow.png | Toggle task creation permission
+|  @desc Enable/disable task creation for a specific member
+|  @auth Business user (group owner/admin)
+|  @rateLimit 100 requests per minute
+└──────────────────────────────────*/
 router.route('/:id/permissions/toggle').post(
-  auth(TRole.user),
+  auth(TRole.business),
   membershipLimiter,
   validateRequest(validation.toggleTaskCreationPermissionValidationSchema),
   controller.toggleTaskCreationPermission
@@ -159,23 +194,31 @@ router.route('/:id/permissions/toggle').post(
 
 // ────────────────────────────────────────────────────────────────────────
 // Figma-Aligned Routes: Direct Member Creation & Profile Management
+// Figma: teacher-parent-dashboard/team-members/create-child-flow.png
+//        teacher-parent-dashboard/team-members/edit-child-flow.png
 // ────────────────────────────────────────────────────────────────────────
 
-//-------------------------------------------
-// Primary | GroupMember #12 | Create member account (direct creation)
-//-------------------------------------------
+/*-─────────────────────────────────
+|  Business | GroupMember | create-child-flow.png | Create member account
+|  @desc Primary user creates a secondary user account and adds to group
+|  @auth Business user (group owner/admin)
+|  @rateLimit 100 requests per minute
+└──────────────────────────────────*/
 router.route('/:id/members/create').post(
-  auth(TRole.user),
+  auth(TRole.business),
   membershipLimiter,
   validateRequest(validation.createMemberAccountValidationSchema),
   controller.createMemberAccount
 );
 
-//-------------------------------------------
-// Primary | GroupMember #13 | Update member profile
-//-------------------------------------------
+/*-─────────────────────────────────
+|  Business | GroupMember | edit-child-flow.png | Update member profile
+|  @desc Primary user updates a member's profile information
+|  @auth Business user (group owner/admin)
+|  @rateLimit 100 requests per minute
+└──────────────────────────────────*/
 router.route('/:id/members/:userId/profile').patch(
-  auth(TRole.user),
+  auth(TRole.business),
   membershipLimiter,
   validateRequest(validation.updateMemberProfileValidationSchema),
   controller.updateMemberProfile

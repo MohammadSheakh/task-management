@@ -12,7 +12,6 @@ import { config } from '../../config';
 import { TokenService } from '../token/token.service';
 import { TokenType } from '../token/token.interface';
 import { OtpType } from '../otp/otp.interface';
-import { TCurrency } from '../../enums/payment';
 //@ts-ignore
 import { OAuth2Client } from 'google-auth-library';
 //@ts-ignore

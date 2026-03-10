@@ -8,7 +8,8 @@ const router = express.Router();
 const controller = new AdminAnalyticsController();
 
 /*-─────────────────────────────────
-|  Admin | Analytics | dashboard-section-flow.png | Get complete admin dashboard overview
+|  Admin | Admin Analytics | dashboard-section-flow.png | Get complete admin dashboard overview
+|  @desc Returns: platform-wide stats, user growth, revenue, task metrics
 └──────────────────────────────────*/
 router.get('/admin/dashboard',
   auth(TRole.admin),
@@ -16,7 +17,8 @@ router.get('/admin/dashboard',
 );
 
 /*-─────────────────────────────────
-|  Admin | Analytics | user-list-flow.png | Get user growth analytics
+|  Admin | Admin Analytics | user-list-flow.png | Get user growth analytics
+|  @desc Returns: new user trends, active users, churn rate, subscription stats
 └──────────────────────────────────*/
 router.get('/admin/user-growth',
   auth(TRole.admin),
@@ -24,7 +26,8 @@ router.get('/admin/user-growth',
 );
 
 /*-─────────────────────────────────
-|  Admin | Analytics | subscription-flow.png | Get revenue analytics
+|  Admin | Admin Analytics | subscription-flow.png | Get revenue analytics
+|  @desc Returns: MRR, ARR, subscription tiers, revenue trends
 └──────────────────────────────────*/
 router.get('/admin/revenue',
   auth(TRole.admin),
@@ -32,7 +35,8 @@ router.get('/admin/revenue',
 );
 
 /*-─────────────────────────────────
-|  Admin | Analytics | dashboard-section-flow.png | Get platform task metrics
+|  Admin | Admin Analytics | dashboard-section-flow.png | Get platform task metrics
+|  @desc Returns: total tasks, completion rates, average task duration
 └──────────────────────────────────*/
 router.get('/admin/task-metrics',
   auth(TRole.admin),
@@ -40,7 +44,8 @@ router.get('/admin/task-metrics',
 );
 
 /*-─────────────────────────────────
-|  Admin | Analytics | dashboard-section-flow.png | Get user engagement metrics
+|  Admin | Admin Analytics | dashboard-section-flow.png | Get user engagement metrics
+|  @desc Returns: DAU/MAU, session duration, feature usage, retention
 └──────────────────────────────────*/
 router.get('/admin/engagement',
   auth(TRole.admin),

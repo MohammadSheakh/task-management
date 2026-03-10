@@ -4,9 +4,7 @@ import { GenericController } from '../../_generic-module/generic.controller';
 import { GroupMember } from './groupMember.model';
 import { IGroupMemberDocument } from './groupMember.interface';
 import { GroupMemberService } from './groupMember.service';
-import { TRole } from '../../../middlewares/roles';
 import ApiError from '../../../errors/ApiError';
-import { GROUP_MEMBER_ROLES } from './groupMember.constant';
 
 /**
  * GroupMember Controller

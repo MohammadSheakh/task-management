@@ -88,67 +88,88 @@ const scheduleReminderSchema = z.object({
 
 // ─── Routes ────────────────────────────────────────────────────────────
 
-//-------------------------------------------
-// User | Notification #01 | Get my notifications with pagination
-//-------------------------------------------
+/*-─────────────────────────────────
+|  Child | Business | Notification | home-flow.png | Get my notifications with pagination
+|  @desc User retrieves their personal notifications
+|  @auth All authenticated users (child, business)
+|  @rateLimit 100 requests per minute
+└──────────────────────────────────*/
 router.route('/my').get(
-  auth(TRole.user),
+  auth(TRole.commonUser),
   notificationLimiter,
   validateFiltersForQuery(optionValidationChecking(['status', 'type', 'priority', ...paginationOptions])),
   controller.getMyNotifications
 );
 
-//-------------------------------------------
-// User | Notification #02 | Get unread notification count
-//-------------------------------------------
+/*-─────────────────────────────────
+|  Child | Business | Notification | home-flow.png | Get unread notification count
+|  @desc Get count of unread notifications for badge display
+|  @auth All authenticated users (child, business)
+|  @rateLimit 100 requests per minute
+└──────────────────────────────────*/
 router.route('/unread-count').get(
-  auth(TRole.user),
+  auth(TRole.commonUser),
   notificationLimiter,
   controller.getUnreadCount
 );
 
-//-------------------------------------------
-// User | Notification #03 | Mark notification as read
-//-------------------------------------------
+/*-─────────────────────────────────
+|  Child | Business | Notification | home-flow.png | Mark notification as read
+|  @desc Mark a single notification as read
+|  @auth All authenticated users (child, business)
+|  @rateLimit 100 requests per minute
+└──────────────────────────────────*/
 router.route('/:id/read').post(
-  auth(TRole.user),
+  auth(TRole.commonUser),
   notificationLimiter,
   controller.markAsRead
 );
 
-//-------------------------------------------
-// User | Notification #04 | Mark all notifications as read
-//-------------------------------------------
+/*-─────────────────────────────────
+|  Child | Business | Notification | home-flow.png | Mark all notifications as read
+|  @desc Mark all user notifications as read
+|  @auth All authenticated users (child, business)
+|  @rateLimit 100 requests per minute
+└──────────────────────────────────*/
 router.route('/read-all').post(
-  auth(TRole.user),
+  auth(TRole.commonUser),
   notificationLimiter,
   controller.markAllAsRead
 );
 
-//-------------------------------------------
-// User | Notification #05 | Delete notification
-//-------------------------------------------
+/*-─────────────────────────────────
+|  Child | Business | Notification | home-flow.png | Delete notification
+|  @desc Delete a single notification
+|  @auth All authenticated users (child, business)
+|  @rateLimit 100 requests per minute
+└──────────────────────────────────*/
 router.route('/:id').delete(
-  auth(TRole.user),
+  auth(TRole.commonUser),
   notificationLimiter,
   controller.deleteNotification
 );
 
-//-------------------------------------------
-// Admin | Notification #06 | Send bulk notification
-//-------------------------------------------
+/*-─────────────────────────────────
+|  Admin | Notification | dashboard-section-flow.png | Send bulk notification
+|  @desc Admin sends system-wide or targeted notifications
+|  @auth Admin only
+|  @rateLimit 10 requests per minute
+└──────────────────────────────────*/
 router.route('/bulk').post(
-  auth(TRole.admin, TRole.superAdmin),
+  auth(TRole.admin),
   sendNotificationLimiter,
   validateRequest(sendBulkNotificationSchema),
   controller.sendBulkNotification
 );
 
-//-------------------------------------------
-// User | Notification #07 | Schedule reminder
-//-------------------------------------------
+/*-─────────────────────────────────
+|  Child | Business | Notification | home-flow.png | Schedule reminder
+|  @desc User schedules a task reminder
+|  @auth All authenticated users (child, business)
+|  @rateLimit 10 requests per minute
+└──────────────────────────────────*/
 router.route('/schedule-reminder').post(
-  auth(TRole.user),
+  auth(TRole.commonUser),
   sendNotificationLimiter,
   validateRequest(scheduleReminderSchema),
   controller.scheduleReminder
@@ -156,13 +177,18 @@ router.route('/schedule-reminder').post(
 
 // ────────────────────────────────────────────────────────────────────────
 // Figma-Aligned Routes: Live Activity Feed
+// Figma: teacher-parent-dashboard/dashboard/dashboard-flow-01.png
+//        app-user/group-children-user/home-flow.png
 // ────────────────────────────────────────────────────────────────────────
 
-//-------------------------------------------
-// User | Notification #08 | Get live activity feed for group
-//-------------------------------------------
+/*-─────────────────────────────────
+|  Child | Business | Notification | dashboard-flow-01.png | Get live activity feed for group
+|  @desc Real-time feed of group member task completions and activities
+|  @auth Group members (child, business)
+|  @rateLimit 100 requests per minute
+└──────────────────────────────────*/
 router.route('/activity-feed/:groupId').get(
-  auth(TRole.user),
+  auth(TRole.commonUser),
   notificationLimiter,
   controller.getLiveActivityFeed
 );

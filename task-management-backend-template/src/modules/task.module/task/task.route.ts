@@ -62,11 +62,11 @@ const paginationOptions: Array<'sortBy' | 'page' | 'limit' | 'populate'> = [
 const controller = new TaskController();
 
 /*-─────────────────────────────────
-|  User | 01-01 | Create a new task
-|  @module Task
-|  @figmaIndex 01-01
+|  Child | Business | Task | edit-update-task-flow.png | Create a new task
 |  @desc Create personal, single assignment, or collaborative task
-|  @rateLimit 20 requests per hour
+|  @auth All authenticated users (child, business)
+|  @rateLimit 20 requests per hour (prevents spam)
+|  @permission Child users need explicit permission for group/collaborative tasks
 └──────────────────────────────────*/
 router.route('/').post(
   auth(TRole.commonUser),
@@ -78,10 +78,9 @@ router.route('/').post(
 );
 
 /*-─────────────────────────────────
-|  User | 01-02 | Get all my tasks with filtering
-|  @module Task
-|  @figmaIndex 01-02
+|  Child | Business | Task | home-flow.png | Get all my tasks with filtering
 |  @desc Get tasks where user is creator, owner, or assigned
+|  @auth All authenticated users (child, business)
 |  @rateLimit 100 requests per minute
 └──────────────────────────────────*/
 router.route('/').get(
@@ -92,10 +91,9 @@ router.route('/').get(
 );
 
 /*-─────────────────────────────────
-|  User | 01-03 | Get all my tasks with pagination
-|  @module Task
-|  @figmaIndex 01-03
+|  Child | Business | Task | home-flow.png | Get all my tasks with pagination
 |  @desc Paginated list of tasks with advanced filtering
+|  @auth All authenticated users (child, business)
 |  @rateLimit 100 requests per minute
 └──────────────────────────────────*/
 router.route('/paginate').get(
@@ -113,10 +111,9 @@ router.route('/paginate').get(
 );
 
 /*-─────────────────────────────────
-|  User | 01-04 | Get task statistics
-|  @module Task
-|  @figmaIndex 01-04
+|  Child | Business | Task | status-section-flow-01.png | Get task statistics
 |  @desc Get count of tasks by status (pending, inProgress, completed)
+|  @auth All authenticated users (child, business)
 |  @rateLimit 100 requests per minute
 └──────────────────────────────────*/
 router.route('/statistics').get(
@@ -126,10 +123,9 @@ router.route('/statistics').get(
 );
 
 /*-─────────────────────────────────
-|  User | 01-05 | Get daily progress
-|  @module Task
-|  @figmaIndex 01-05
+|  Child | Business | Task | home-flow.png | Get daily progress
 |  @desc Get task completion progress for a specific date
+|  @auth All authenticated users (child, business)
 |  @rateLimit 100 requests per minute
 └──────────────────────────────────*/
 router.route('/daily-progress').get(
@@ -139,11 +135,11 @@ router.route('/daily-progress').get(
 );
 
 /*-─────────────────────────────────
-|  User | 01-06 | Get task details by ID
-|  @module Task
-|  @figmaIndex 01-06
-|  @desc Get single task with populated user details
+|  Child | Business | Task | task-details-with-subTasks.png | Get task details by ID
+|  @desc Get single task with populated user details and subtasks
+|  @auth All authenticated users (child, business)
 |  @rateLimit 100 requests per minute
+|  @access Task creator, owner, or assigned users only
 └──────────────────────────────────*/
 router.route('/:id').get(
   auth(TRole.commonUser),
@@ -161,11 +157,11 @@ router.route('/:id').get(
 );
 
 /*-─────────────────────────────────
-|  User | 01-07 | Update task by ID
-|  @module Task
-|  @figmaIndex 01-07
+|  Child | Business | Task | edit-update-task-flow.png | Update task by ID
 |  @desc Update task details (creator/owner only)
+|  @auth All authenticated users (child, business)
 |  @rateLimit 100 requests per minute
+|  @access Task creator or owner only
 └──────────────────────────────────*/
 router.route('/:id').put(
   auth(TRole.commonUser),
@@ -178,10 +174,10 @@ router.route('/:id').put(
 );
 
 /*-─────────────────────────────────
-|  User | 01-08 | Update task status
-|  @module Task
-|  @figmaIndex 01-08
+|  Child | Business | Task | edit-update-task-flow.png | Update task status
 |  @desc Update task status with automatic timestamp handling
+|  @auth All authenticated users (child, business)
+|  @access Task creator, owner, or assigned users only
 └──────────────────────────────────*/
 router.route('/:id/status').put(
   auth(TRole.commonUser),
@@ -193,10 +189,10 @@ router.route('/:id/status').put(
 );
 
 /*-─────────────────────────────────
-|  User | 01-09 | Update subtask progress
-|  @module Task
-|  @figmaIndex 01-09
-|  @desc Update subtask list and auto-calculate completion
+|  Child | Business | Task | edit-update-task-flow.png | Update subtask progress
+|  @desc Update subtask list and auto-calculate completion percentage
+|  @auth All authenticated users (child, business)
+|  @access Task creator or owner only
 └──────────────────────────────────*/
 router.route('/:id/subtasks/progress').put(
   auth(TRole.commonUser),
@@ -206,10 +202,10 @@ router.route('/:id/subtasks/progress').put(
 );
 
 /*-─────────────────────────────────
-|  User | 01-10 | Soft delete task by ID
-|  @module Task
-|  @figmaIndex 01-10
+|  Child | Business | Task | edit-update-task-flow.png | Soft delete task by ID
 |  @desc Soft delete a task (creator/owner only)
+|  @auth All authenticated users (child, business)
+|  @access Task creator or owner only
 └──────────────────────────────────*/
 router.route('/:id').delete(
   auth(TRole.commonUser),
@@ -219,10 +215,10 @@ router.route('/:id').delete(
 );
 
 /*-─────────────────────────────────
-|  User | 01-11 | Permanently delete task by ID
-|  @module Task
-|  @figmaIndex 01-11
+|  Admin | Task | dashboard-section-flow.png | Permanently delete task by ID
 |  @desc Permanently delete a task (admin only)
+|  @auth Admin only
+|  @access System administrators only
 └──────────────────────────────────*/
 router.route('/:id/permanent').delete(
   auth(TRole.admin),
@@ -245,13 +241,14 @@ router.use('/:id', SubTaskRoute);
 
 // ────────────────────────────────────────────────────────────────────────
 // Figma-Aligned Routes: Daily Progress
+// Figma: app-user/group-children-user/home-flow.png
+//        teacher-parent-dashboard/dashboard/dashboard-flow-01.png
 // ────────────────────────────────────────────────────────────────────────
 
 /*-─────────────────────────────────
-|  User | 01-12 | Get daily progress
-|  @module Task
-|  @figmaIndex 01
-|  @desc Get daily task progress (Figma: home-flow.png)
+|  Child | Business | Task | home-flow.png | Get daily progress (Figma aligned)
+|  @desc Get daily task progress for dashboard display
+|  @auth All authenticated users (child, business)
 └──────────────────────────────────*/
 router.route('/daily-progress').get(
   auth(TRole.commonUser),

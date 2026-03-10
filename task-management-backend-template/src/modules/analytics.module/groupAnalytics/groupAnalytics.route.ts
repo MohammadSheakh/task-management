@@ -8,42 +8,47 @@ const router = express.Router();
 const controller = new GroupAnalyticsController();
 
 /*-─────────────────────────────────
-|  Group Owner | Group Admin | Analytics | dashboard-flow-01.png | Get group overview
+|  Business | Group Analytics | dashboard-flow-01.png | Get group overview
+|  @desc Returns: group summary, task completion rates, member activity overview
 └──────────────────────────────────*/
 router.get('/group/:groupId/overview',
-  auth(TRole.common),
+  auth(TRole.business),
   controller.getGroupOverview
 );
 
 /*-─────────────────────────────────
-|  Group Owner | Group Admin | Analytics | team-member-flow-01.png | Get member statistics
+|  Business | Group Analytics | team-member-flow-01.png | Get member statistics
+|  @desc Returns: individual member stats, task counts, completion rates
 └──────────────────────────────────*/
 router.get('/group/:groupId/members',
-  auth(TRole.common),
+  auth(TRole.business),
   controller.getMemberStats
 );
 
 /*-─────────────────────────────────
-|  Group Owner | Group Admin | Analytics | dashboard-flow-01.png | Get group leaderboard
+|  Business | Group Analytics | dashboard-flow-01.png | Get group leaderboard
+|  @desc Returns: ranked list of members by productivity/completion
 └──────────────────────────────────*/
 router.get('/group/:groupId/leaderboard',
-  auth(TRole.common),
+  auth(TRole.business),
   controller.getLeaderboard
 );
 
 /*-─────────────────────────────────
-|  Group Owner | Group Admin | Analytics | dashboard-flow-01.png | Get performance metrics
+|  Business | Group Analytics | dashboard-flow-01.png | Get performance metrics
+|  @desc Returns: group-level performance KPIs and trends
 └──────────────────────────────────*/
 router.get('/group/:groupId/performance',
-  auth(TRole.common),
+  auth(TRole.business),
   controller.getPerformanceMetrics
 );
 
 /*-─────────────────────────────────
-|  Group Owner | Group Admin | Analytics | dashboard-flow-01.png | Get activity feed
+|  Business | Group Analytics | dashboard-flow-01.png | Get activity feed
+|  @desc Returns: real-time feed of member task completions and activities
 └──────────────────────────────────*/
 router.get('/group/:groupId/activity',
-  auth(TRole.common),
+  auth(TRole.business),
   controller.getActivityFeed
 );
 

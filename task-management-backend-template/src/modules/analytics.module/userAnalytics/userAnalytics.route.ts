@@ -9,72 +9,65 @@ const router = express.Router();
 const controller = new UserAnalyticsController();
 
 /*-─────────────────────────────────
-|  User | Analytics | 03-01 | Get complete user analytics overview
-|  @figmaIndex home-flow.png
+|  Child | Individual | User Analytics | home-flow.png | Get complete user analytics overview
 |  @desc Returns: overview, today's progress, weekly/monthly stats, streak, productivity score
 └──────────────────────────────────*/
 router.get('/user/my/overview',
-  auth(TRole.common),
+  auth(TRole.commonUser),
   controller.getUserOverview
 );
 
 /*-─────────────────────────────────
-|  User | Analytics | 03-01 | Get today's task progress
-|  @figmaIndex home-flow.png (Daily Progress section)
+|  Child | Individual | User Analytics | home-flow.png | Get today's task progress
 |  @desc Returns: X/Y completed format, completion rate
 └──────────────────────────────────*/
 router.get('/user/my/daily-progress',
-  auth(TRole.common),
+  auth(TRole.commonUser),
   controller.getDailyProgress
 );
 
 /*-─────────────────────────────────
-|  User | Analytics | 06-03 | Get user's streak data
-|  @figmaIndex profile-permission-account-interface.png
+|  Child | Individual | User Analytics | profile-permission-account-interface.png | Get user's streak data
 |  @desc Returns: current streak, longest streak, streak history
 └──────────────────────────────────*/
 router.get('/user/my/weekly-streak',
-  auth(TRole.common),
+  auth(TRole.commonUser),
   controller.getStreak
 );
 
 /*-─────────────────────────────────
-|  User | Analytics | 06-03 | Get user's productivity score
-|  @figmaIndex profile-permission-account-interface.png
+|  Child | Individual | User Analytics | profile-permission-account-interface.png | Get user's productivity score
 |  @desc Returns: score (0-100), breakdown, trend, percentile
 └──────────────────────────────────*/
 router.get('/user/my/productivity-score',
-  auth(TRole.common),
+  auth(TRole.commonUser),
   controller.getProductivityScore
 );
 
 /*-─────────────────────────────────
-|  User | Analytics | 06-03 | Get user's completion rate analytics
-|  @figmaIndex profile-permission-account-interface.png
+|  Child | Individual | User Analytics | profile-permission-account-interface.png | Get user's completion rate analytics
 |  @desc Returns: overall rate, by time range, trend
 └──────────────────────────────────*/
 router.get('/user/my/completion-rate',
-  auth(TRole.common),
+  auth(TRole.commonUser),
   controller.getCompletionRate
 );
 
 /*-─────────────────────────────────
-|  User | Analytics | 03-01 | Get user's task statistics
-|  @figmaIndex status-section-flow-01.png
+|  Child | Individual | User Analytics | status-section-flow-01.png | Get user's task statistics
 |  @desc Returns: tasks by status, priority, task type
 └──────────────────────────────────*/
 router.get('/user/my/task-statistics',
-  auth(TRole.common),
+  auth(TRole.commonUser),
   controller.getTaskStatistics
 );
 
 /*-─────────────────────────────────
-|  User | Analytics | 03-01 | Get user's trend analytics
-|  @figmaIndex history_screen.dart
+|  Child | Individual | User Analytics | history_screen.dart | Get user's trend analytics
 |  @desc Returns: daily/weekly/monthly trend data
 └──────────────────────────────────*/
 router.get('/user/my/trend',
-  auth(TRole.common),
+  auth(TRole.commonUser),
   controller.getTrendAnalytics
 );
 

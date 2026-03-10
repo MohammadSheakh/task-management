@@ -3,13 +3,10 @@ import express from 'express';
 import { GroupController } from './group.controller';
 import { IGroupDocument } from './group.interface';
 import { validateFiltersForQuery } from '../../../middlewares/queryValidation/paginationQueryValidationMiddleware';
-import validateRequest from '../../../shared/validateRequest';
 import auth from '../../../middlewares/auth';
 import { TRole } from '../../../middlewares/roles';
 import { setQueryOptions } from '../../../middlewares/setQueryOptions';
-import { defaultExcludes } from '../../../constants/queryOptions';
-import { getLoggedInUserAndSetReferenceToUser } from '../../../middlewares/getLoggedInUserAndSetReferenceToUser';
-import { checkLoggedInUsersPermissionToManipulateModel } from '../../../middlewares/checkPermissionToManipulateModel';
+//@ts-ignore
 import rateLimit from 'express-rate-limit';
 import { RATE_LIMITS } from './group.constant';
 
@@ -62,30 +59,39 @@ const groupLimiter = rateLimit({
 
 // ─── Routes ────────────────────────────────────────────────────────────
 
-//-------------------------------------------
-// Owner | Group #01 | Create a new group
-//-------------------------------------------
+/*-─────────────────────────────────
+|  Business | Group | dashboard-flow-01.png | Create a new group (family/team)
+|  @desc Business user (parent/teacher) creates a family/team group
+|  @auth Business user with active subscription
+|  @rateLimit 5 requests per minute
+└──────────────────────────────────*/
 router.route('/').post(
-  auth(TRole.user),
+  auth(TRole.business),
   createGroupLimiter,
   controller.create
 );
 
-//-------------------------------------------
-// User | Group #02 | Get all my groups with pagination
-//-------------------------------------------
+/*-─────────────────────────────────
+|  Business | Group | dashboard-flow-01.png | Get all my groups with pagination
+|  @desc Business user retrieves their managed groups
+|  @auth Business user (group owner/admin)
+|  @rateLimit 100 requests per minute
+└──────────────────────────────────*/
 router.route('/my').get(
-  auth(TRole.user),
+  auth(TRole.business),
   groupLimiter,
   validateFiltersForQuery(optionValidationChecking(['visibility', 'status', ...paginationOptions])),
   controller.getMyGroups
 );
 
-//-------------------------------------------
-// User | Group #03 | Get group details by ID
-//-------------------------------------------
+/*-─────────────────────────────────
+|  Business | Group | dashboard-flow-01.png | Get group details by ID
+|  @desc Retrieve specific group information
+|  @auth Business user (group member)
+|  @rateLimit 100 requests per minute
+└──────────────────────────────────*/
 router.route('/:id').get(
-  auth(TRole.user),
+  auth(TRole.business),
   groupLimiter,
   setQueryOptions({
     populate: [
@@ -96,38 +102,50 @@ router.route('/:id').get(
   controller.getGroupById
 );
 
-//-------------------------------------------
-// Owner/Admin | Group #04 | Update group by ID
-//-------------------------------------------
+/*-─────────────────────────────────
+|  Business | Group | dashboard-flow-01.png | Update group by ID
+|  @desc Group owner/admin updates group settings
+|  @auth Business user (group owner/admin)
+|  @rateLimit 100 requests per minute
+└──────────────────────────────────*/
 router.route('/:id').put(
-  auth(TRole.user),
+  auth(TRole.business),
   groupLimiter,
   controller.updateById
 );
 
-//-------------------------------------------
-// Owner | Group #05 | Delete group by ID (soft delete)
-//-------------------------------------------
+/*-─────────────────────────────────
+|  Business | Group | dashboard-flow-01.png | Delete group by ID (soft delete)
+|  @desc Group owner deletes the group
+|  @auth Business user (group owner)
+|  @rateLimit 100 requests per minute
+└──────────────────────────────────*/
 router.route('/:id').delete(
-  auth(TRole.user),
+  auth(TRole.business),
   groupLimiter,
   controller.deleteById
 );
 
-//-------------------------------------------
-// User | Group #06 | Get group statistics
-//-------------------------------------------
+/*-─────────────────────────────────
+|  Business | Group | dashboard-flow-01.png | Get group statistics
+|  @desc Get member count, utilization, status stats
+|  @auth Business user (group member)
+|  @rateLimit 100 requests per minute
+└──────────────────────────────────*/
 router.route('/:id/statistics').get(
-  auth(TRole.user),
+  auth(TRole.business),
   groupLimiter,
   controller.getStatistics
 );
 
-//-------------------------------------------
-// User | Group #07 | Search groups
-//-------------------------------------------
+/*-─────────────────────────────────
+|  Business | Group | dashboard-flow-01.png | Search groups
+|  @desc Search public/invite-only groups
+|  @auth Business user
+|  @rateLimit 100 requests per minute
+└──────────────────────────────────*/
 router.route('/search').get(
-  auth(TRole.user),
+  auth(TRole.business),
   groupLimiter,
   controller.searchGroups
 );

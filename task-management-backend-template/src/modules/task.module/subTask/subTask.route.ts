@@ -27,10 +27,10 @@ const paginationOptions: Array<'sortBy' | 'page' | 'limit' | 'populate'> = [
 const controller = new SubTaskController();
 
 /*-─────────────────────────────────
-|  User | 02-01 | Create a new subtask
-|  @module SubTask
-|  @figmaIndex 02-01
+|  Child | Business | SubTask | edit-update-task-flow.png | Create a new subtask
 |  @desc Create a subtask under a parent task
+|  @auth All authenticated users (child, business)
+|  @access Users with access to parent task
 └──────────────────────────────────*/
 router.route('/').post(
   auth(TRole.commonUser),
@@ -39,10 +39,10 @@ router.route('/').post(
 );
 
 /*-─────────────────────────────────
-|  User | 02-02 | Get all subtasks for a task
-|  @module SubTask
-|  @figmaIndex 02-02
+|  Child | Business | SubTask | task-details-with-subTasks.png | Get all subtasks for a task
 |  @desc Get all subtasks belonging to a specific task
+|  @auth All authenticated users (child, business)
+|  @access Users with access to parent task
 └──────────────────────────────────*/
 router.route('/task/:taskId').get(
   auth(TRole.commonUser),
@@ -58,10 +58,10 @@ router.route('/task/:taskId').get(
 );
 
 /*-─────────────────────────────────
-|  User | 02-03 | Get subtasks with pagination
-|  @module SubTask
-|  @figmaIndex 02-03
+|  Child | Business | SubTask | task-details-with-subTasks.png | Get subtasks with pagination
 |  @desc Paginated list of subtasks for a task
+|  @auth All authenticated users (child, business)
+|  @access Users with access to parent task
 └──────────────────────────────────*/
 router.route('/task/:taskId/paginate').get(
   auth(TRole.commonUser),
@@ -76,10 +76,9 @@ router.route('/task/:taskId/paginate').get(
 );
 
 /*-─────────────────────────────────
-|  User | 02-04 | Get subtask statistics
-|  @module SubTask
-|  @figmaIndex 02-04
+|  Child | Business | SubTask | status-section-flow-01.png | Get subtask statistics
 |  @desc Get subtask completion statistics for logged-in user
+|  @auth All authenticated users (child, business)
 └──────────────────────────────────*/
 router.route('/statistics').get(
   auth(TRole.commonUser),
@@ -87,10 +86,10 @@ router.route('/statistics').get(
 );
 
 /*-─────────────────────────────────
-|  User | 02-05 | Get subtask by ID
-|  @module SubTask
-|  @figmaIndex 02-05
-|  @desc Get single subtask details
+|  Child | Business | SubTask | task-details-with-subTasks.png | Get subtask by ID
+|  @desc Get single subtask details with populated user info
+|  @auth All authenticated users (child, business)
+|  @access Users with access to parent task
 └──────────────────────────────────*/
 router.route('/:id').get(
   auth(TRole.commonUser),
@@ -106,10 +105,10 @@ router.route('/:id').get(
 );
 
 /*-─────────────────────────────────
-|  User | 02-06 | Update subtask by ID
-|  @module SubTask
-|  @figmaIndex 02-06
+|  Child | Business | SubTask | edit-update-task-flow.png | Update subtask by ID
 |  @desc Update subtask details
+|  @auth All authenticated users (child, business)
+|  @access Subtask creator or task owner only
 └──────────────────────────────────*/
 router.route('/:id').put(
   auth(TRole.commonUser),
@@ -118,10 +117,10 @@ router.route('/:id').put(
 );
 
 /*-─────────────────────────────────
-|  User | 02-07 | Toggle subtask status
-|  @module SubTask
-|  @figmaIndex 02-07
-|  @desc Toggle subtask completion status (auto-updates parent task)
+|  Child | Business | SubTask | edit-update-task-flow.png | Toggle subtask status
+|  @desc Toggle subtask completion status (auto-updates parent task completion)
+|  @auth All authenticated users (child, business)
+|  @access Subtask creator or task owner only
 └──────────────────────────────────*/
 router.route('/:id/toggle-status').put(
   auth(TRole.commonUser),
@@ -130,10 +129,10 @@ router.route('/:id/toggle-status').put(
 );
 
 /*-─────────────────────────────────
-|  User | 02-08 | Delete subtask by ID
-|  @module SubTask
-|  @figmaIndex 02-08
-|  @desc Delete a subtask (auto-updates parent task)
+|  Child | Business | SubTask | edit-update-task-flow.png | Delete subtask by ID
+|  @desc Delete a subtask (auto-updates parent task completion)
+|  @auth All authenticated users (child, business)
+|  @access Subtask creator or task owner only
 └──────────────────────────────────*/
 router.route('/:id').delete(
   auth(TRole.commonUser),

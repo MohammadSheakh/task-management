@@ -34,11 +34,10 @@ const updateProgressLimiter = rateLimit({
 });
 
 /*-─────────────────────────────────
-|  Child | 01-01 | Get my progress on a task
-|  Role: Child User | Module: TaskProgress
-|  Action: Get personal progress on specific task
-|  Auth: Required
-|  Rate Limit: 100 requests per minute
+|  Child | TaskProgress | status-section-flow-01.png | Get my progress on a task
+|  @desc Get personal progress on specific task (status, subtasks completed)
+|  @auth Child user (task assignee)
+|  @rateLimit 100 requests per minute
 └──────────────────────────────────*/
 router.get(
   '/:taskId/user/:userId',
@@ -48,41 +47,38 @@ router.get(
 );
 
 /*-─────────────────────────────────
-|  Parent | 01-02 | Get all children's progress on a task
-|  Role: Business User | Module: TaskProgress
-|  Action: View which children completed/started/not started
-|  Auth: Required
-|  Rate Limit: 100 requests per minute
-|  Figma: task-details-with-subTasks.png
+|  Business | TaskProgress | task-monitoring-flow-01.png | Get all children's progress on a task
+|  @desc View which children completed/started/not started a task
+|  @auth Business user (parent/teacher)
+|  @rateLimit 100 requests per minute
+|  @figma task-details-with-subTasks.png
 └──────────────────────────────────*/
 router.get(
   '/:taskId/children',
-  auth(TRole.commonUser),
+  auth(TRole.business),
   progressLimiter,
   taskProgressController.getAllChildrenProgress
 );
 
 /*-─────────────────────────────────
-|  Parent | 01-03 | Get all tasks progress for a child
-|  Role: Business User | Module: TaskProgress
-|  Action: View child's overall task performance
-|  Auth: Required
-|  Rate Limit: 100 requests per minute
-|  Figma: team-member-flow-01.png
+|  Business | TaskProgress | task-monitoring-flow-01.png | Get all tasks progress for a child
+|  @desc View child's overall task performance across all tasks
+|  @auth Business user (parent/teacher)
+|  @rateLimit 100 requests per minute
+|  @figma team-member-flow-01.png
 └──────────────────────────────────*/
 router.get(
   '/child/:childId/tasks',
-  auth(TRole.commonUser),
+  auth(TRole.business),
   progressLimiter,
   taskProgressController.getAllTasksProgress
 );
 
 /*-─────────────────────────────────
-|  Child | 01-04 | Update progress status (start/complete)
-|  Role: Child User | Module: TaskProgress
-|  Action: Mark task as started or completed
-|  Auth: Required
-|  Rate Limit: 30 requests per minute
+|  Child | TaskProgress | edit-update-task-flow.png | Update progress status (start/complete)
+|  @desc Mark task as started or completed
+|  @auth Child user (task assignee)
+|  @rateLimit 30 requests per minute (prevents spam)
 └──────────────────────────────────*/
 router.put(
   '/:taskId/status',
@@ -93,11 +89,10 @@ router.put(
 );
 
 /*-─────────────────────────────────
-|  Child | 01-05 | Mark subtask as complete
-|  Role: Child User | Module: TaskProgress
-|  Action: Complete a specific subtask
-|  Auth: Required
-|  Rate Limit: 30 requests per minute
+|  Child | TaskProgress | edit-update-task-flow.png | Mark subtask as complete
+|  @desc Complete a specific subtask and update progress percentage
+|  @auth Child user (task assignee)
+|  @rateLimit 30 requests per minute (prevents spam)
 └──────────────────────────────────*/
 router.put(
   '/:taskId/subtasks/:subtaskIndex/complete',
@@ -108,11 +103,10 @@ router.put(
 );
 
 /*-─────────────────────────────────
-|  System | 01-06 | Create or update progress (internal)
-|  Role: System | Module: TaskProgress
-|  Action: Auto-create progress when child assigned to task
-|  Auth: Required
-|  Rate Limit: 100 requests per minute
+|  System | TaskProgress | internal | Create or update progress (internal)
+|  @desc Auto-create progress when child assigned to collaborative task
+|  @auth System internal use (called from task creation)
+|  @rateLimit 100 requests per minute
 └──────────────────────────────────*/
 router.post(
   '/:taskId',

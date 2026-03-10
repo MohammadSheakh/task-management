@@ -8,70 +8,65 @@ const router = express.Router();
 const controller = new TaskAnalyticsController();
 
 /*-─────────────────────────────────
-|  Admin | User | Analytics | 03-01 | Get platform-wide task overview
+|  Admin | Task Analytics | dashboard-section-flow.png | Get platform-wide task overview
+|  @desc Returns: total tasks, completion rates, platform-wide metrics
 └──────────────────────────────────*/
 router.get('/task/overview',
-  auth(TRole.common),
+  auth(TRole.admin),
   controller.getOverview
 );
 
 /*-─────────────────────────────────
-|  Admin | User | Group Member | Analytics | 03-01 | Get task status distribution
+|  Admin | Task Analytics | dashboard-section-flow.png | Get task status distribution
+|  @desc Returns: tasks grouped by status across platform
 └──────────────────────────────────*/
 router.get('/task/status-distribution',
-  auth(TRole.common),
+  auth(TRole.admin),
   controller.getStatusDistribution
 );
 
 /*-─────────────────────────────────
-|  Group Owner | Group Admin | Analytics | dashboard-flow-01.png | Get group task analytics
+|  Business | Task Analytics | dashboard-flow-01.png | Get group task analytics
+|  @desc Returns: task metrics for specific group (owner/admin view)
 └──────────────────────────────────*/
 router.get('/task/group/:groupId',
-  auth(TRole.common),
+  auth(TRole.business),
   controller.getGroupTaskAnalytics
 );
 
 /*-─────────────────────────────────
-|  Admin | User | Analytics | 03-01 | Get daily task summary
+|  Admin | Task Analytics | dashboard-section-flow.png | Get daily task summary
+|  @desc Returns: daily task creation/completion summary
 └──────────────────────────────────*/
 router.get('/task/daily-summary',
-  auth(TRole.common),
+  auth(TRole.admin),
   controller.getDailySummary
 );
 
 /*-─────────────────────────────────
-|  Parent | 01-XX | Get collaborative task progress
-|  Role: Business User | Module: Analytics
-|  Action: See which children completed/started/not started
-|  Auth: Required
-|  Figma: task-details-with-subTasks.png
+|  Business | Task Analytics | task-details-with-subTasks.png | Get collaborative task progress
+|  @desc Returns: which children/team members completed/started/not started tasks
 └──────────────────────────────────*/
 router.get('/task/:taskId/collaborative-progress',
-  auth(TRole.commonUser),
+  auth(TRole.business),
   controller.getCollaborativeTaskProgress
 );
 
 /*-─────────────────────────────────
-|  Parent | 01-XX | Get child's performance
-|  Role: Business User | Module: Analytics
-|  Action: View child's task performance analytics
-|  Auth: Required
-|  Figma: team-member-flow-01.png
+|  Business | Task Analytics | team-member-flow-01.png | Get child's performance analytics
+|  @desc Returns: child's task performance metrics and analytics
 └──────────────────────────────────*/
 router.get('/child/:childId/performance',
-  auth(TRole.commonUser),
+  auth(TRole.business),
   controller.getChildPerformance
 );
 
 /*-─────────────────────────────────
-|  Parent | 01-XX | Get parent dashboard overview
-|  Role: Business User | Module: Analytics
-|  Action: View all children's performance overview
-|  Auth: Required
-|  Figma: dashboard-flow-01.png
+|  Business | Task Analytics | dashboard-flow-01.png | Get parent dashboard overview
+|  @desc Returns: all children's/team members' performance overview
 └──────────────────────────────────*/
 router.get('/parent/my-children/overview',
-  auth(TRole.commonUser),
+  auth(TRole.business),
   controller.getParentDashboardOverview
 );
 
