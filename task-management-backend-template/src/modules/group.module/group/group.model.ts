@@ -208,23 +208,7 @@ groupSchema.virtual('isAcceptingMembers').get(function () {
 });
 
 // ─── Instance Methods ────────────────────────────────────────────────
-/**
- * Check if group is full
- */
-groupSchema.methods.isFull = function (): boolean {
-  return this.currentMemberCount >= this.maxMembers;
-};
-
-/**
- * Check if group is accepting new members
- */
-groupSchema.methods.isAcceptingMembers = function (): boolean {
-  return (
-    this.status === GroupStatus.ACTIVE &&
-    this.visibility !== GroupVisibility.PRIVATE &&
-    this.currentMemberCount < this.maxMembers
-  );
-};
+// (No instance methods - using virtuals instead)
 
 // ─── Static Methods ──────────────────────────────────────────────────
 /**

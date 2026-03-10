@@ -10,7 +10,7 @@ import { setQueryOptions } from '../../../middlewares/setQueryOptions';
 import { getLoggedInUserAndSetReferenceToUser } from '../../../middlewares/getLoggedInUserAndSetReferenceToUser';
 import * as validation from './task.validation';
 import { verifyTaskAccess, verifyTaskOwnership, validateTaskTypeConsistency, validateStatusTransition, checkDailyTaskLimit } from './task.middleware';
-import { SubTaskRoute } from '../subtask/subtask.route';
+import { SubTaskRoute } from '../subTask/subTask.route';
 import rateLimit from 'express-rate-limit';
 import { TASK_RATE_LIMITS } from './task.constant';
 

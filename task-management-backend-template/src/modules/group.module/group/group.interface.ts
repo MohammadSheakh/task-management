@@ -99,16 +99,6 @@ export interface IGroupDocument extends IGroup, Document {
   _id: Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
-
-  /**
-   * Check if group is full
-   */
-  isFull(): boolean;
-
-  /**
-   * Check if group is accepting new members
-   */
-  isAcceptingMembers(): boolean;
 }
 
 /**

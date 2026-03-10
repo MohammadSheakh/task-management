@@ -1,9 +1,9 @@
 //@ts-ignore
 import express from 'express';
 import { taskProgressController } from './taskProgress.controller';
-import auth from '../../../middlewares/auth';
-import { TRole } from '../../../middlewares/roles';
-import validateRequest from '../../../shared/validateRequest';
+import auth from '../../middlewares/auth';
+import { TRole } from '../../middlewares/roles';
+import validateRequest from '../../shared/validateRequest';
 import * as validation from './taskProgress.validation';
 import rateLimit from 'express-rate-limit';
 import { TASK_PROGRESS_RATE_LIMITS } from './taskProgress.constant';
