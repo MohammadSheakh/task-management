@@ -1,0 +1,174 @@
+---
+title: Group Module - State Machine Diagram V2
+description: Updated state transitions matching Figma screenshots (Primary/Secondary roles, permissions)
+date: 07-03-26
+version: V2
+---
+
+stateDiagram-v2
+    %% Group Member States (Updated for Figma)
+    state GroupMember {
+        [*] --> Pending: Invitation Sent
+        Pending --> Active: Accepts Invitation
+        Pending --> Expired: Invitation Expires
+        Pending --> Cancelled: Owner Cancels
+        
+        Active --> Left: Member Leaves
+        Active --> Removed: Owner Removes
+        Active --> Deactivated: Account Deactivated
+        
+        Left --> [*]: Permanently Left
+        Removed --> [*]: Permanently Removed
+        Deactivated --> [*]: Permanently Deactivated
+        Expired --> [*]: Invitation Expired
+        Cancelled --> [*]: Invitation Cancelled
+        
+        note right of Active
+            Active member
+            - Can participate in tasks
+            - Has role: Primary or Secondary
+            - Can have permissions enabled/disabled
+        end note
+        
+        note right of Left
+            Voluntary departure
+            - Member left group
+            - Data preserved
+            - Cannot access tasks
+        end note
+    }
+    
+    %% Member Role States (From Figma: Primary/Secondary)
+    state MemberRole {
+        [*] --> Secondary: Default (Invited)
+        Secondary --> Primary: Promoted by Owner
+        Primary --> Secondary: Demoted
+        Primary --> [*]: Removed/Left
+        Secondary --> [*]: Removed/Left
+        
+        note right of Primary
+            Primary Account
+            - Group owner/creator
+            - Full permissions
+            - Can manage members
+            - Can set permissions
+        end note
+        
+        note right of Secondary
+            Secondary Account
+            - Invited member
+            - Limited permissions by default
+            - Can be granted task creation
+            - Can be removed by Primary
+        end note
+    }
+    
+    %% Permission States (From Figma: Allow Secondary users to create tasks)
+    state Permission {
+        [*] --> NoTaskCreation: Default (Secondary)
+        NoTaskCreation --> HasTaskCreation: Permission Granted
+        HasTaskCreation --> NoTaskCreation: Permission Revoked
+        
+        note right of NoTaskCreation
+            No Task Creation
+            - Cannot create tasks
+            - Cannot assign tasks
+            - Can only view assigned tasks
+            - Default for Secondary users
+        end note
+        
+        note right of HasTaskCreation
+            Has Task Creation
+            - Can create tasks
+            - Can assign tasks to others
+            - Can edit own tasks
+            - Granted by Primary user
+        end note
+    }
+    
+    %% Group States (Simplified for Figma)
+    state Group {
+        [*] --> Active: Created
+        Active --> Archived: Owner Archives
+        Active --> Deleted: Owner Deletes
+        
+        Archived --> Active: Restore
+        Deleted --> [*]: Permanent Delete
+        
+        note right of Active
+            Active Group
+            - Members can join
+            - Tasks can be created
+            - All features enabled
+        end note
+        
+        note right of Archived
+            Archived Group
+            - Read-only access
+            - No new tasks
+            - Data preserved
+        end note
+    }
+    
+    %% Task Assignment States (From Figma)
+    state TaskAssignment {
+        [*] --> NotStarted: Task Created
+        NotStarted --> InProgress: Started by Assignee
+        NotStarted --> Completed: Completed Directly
+        InProgress --> Completed: Mark Complete
+        Completed --> [*]: Archived
+        
+        NotStarted --> Deleted: Deleted
+        InProgress --> Deleted: Deleted
+        Completed --> Deleted: Deleted (Soft)
+        
+        note right of NotStarted
+            Not Started
+            - Task pending
+            - Awaiting start
+            - Can be edited
+        end note
+        
+        note right of InProgress
+            In Progress
+            - Work started
+            - Subtasks being completed
+            - Progress tracked
+        end note
+        
+        note right of Completed
+            Completed
+            - All work done
+            - Subtasks 100%
+            - Read-only
+        end note
+    }
+    
+    %% Invitation States
+    state Invitation {
+        [*] --> Sent: Owner Sends
+        Sent --> Accepted: Member Accepts
+        Sent --> Declined: Member Declines
+        Sent --> Expired: Time Limit Exceeded
+        
+        Accepted --> Active: Member Added
+        Declined --> [*]: Invitation Declined
+        Expired --> [*]: Invitation Expired
+        
+        note right of Sent
+            Invitation Sent
+            - Email sent
+            - Awaiting response
+            - Expires in 7 days
+        end note
+    }
+    
+    %% State Transitions Between Entities
+    GroupMember --> MemberRole: Has Role
+    GroupMember --> Permission: Has Permissions
+    Group --> GroupMember: Has Members
+    Group --> TaskAssignment: Owns Tasks
+    Invitation --> GroupMember: Becomes When Accepted
+    
+    Note "Figma Flow:\n1. Create Member (Primary/Secondary)\n2. Set Permissions (Task Creation)\n3. Manage Team\n4. Track Tasks" as N1
+    Note "Support Mode:\nCalm, Encouraging, Logical\nSet during member creation" as N2

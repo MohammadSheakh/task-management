@@ -1,0 +1,168 @@
+---
+title: Group Module - State Machine Diagram
+description: State transitions for Group, GroupMember, and GroupInvitation entities
+date: 07-03-26
+---
+
+stateDiagram-v2
+    %% Group States
+    state Group {
+        [*] --> Draft: Create
+        Draft --> Active: Publish
+        Active --> Archived: Owner Archives
+        Active --> Deleted: Owner Deletes
+        Archived --> Active: Restore
+        Deleted --> [*]: Permanent Delete
+        
+        note right of Draft
+            Initial state
+            - Owner only
+            - Can edit settings
+            - Can invite members
+        end note
+        
+        note right of Active
+            Normal operation
+            - Members can join
+            - Tasks can be created
+            - Invitations active
+        end note
+        
+        note right of Archived
+            Read-only state
+            - No new tasks
+            - Members can view
+            - Data preserved
+        end note
+        
+        note right of Deleted
+            Soft deleted
+            - Hidden from lists
+            - Can restore within 30 days
+            - Data marked for cleanup
+        end note
+    }
+    
+    %% Group Member States
+    state GroupMember {
+        [*] --> Pending: Invitation Sent
+        Pending --> Active: Accepts Invitation
+        Pending --> Expired: Invitation Expires
+        Pending --> Cancelled: Owner Cancels
+        
+        Active --> Inactive: Becomes Inactive
+        Active --> Left: Member Leaves
+        Active --> Removed: Owner Removes
+        Active --> Banned: Admin Bans
+        
+        Inactive --> Active: Reactivate
+        Left --> [*]: Permanently Left
+        Removed --> [*]: Permanently Removed
+        Banned --> [*]: Permanently Banned
+        Expired --> [*]: Invitation Expired
+        Cancelled --> [*]: Invitation Cancelled
+        
+        note right of Pending
+            Invitation sent
+            - Awaiting response
+            - Expires in 7 days
+            - Can be resent
+        end note
+        
+        note right of Active
+            Full member
+            - Can participate
+            - Can create tasks
+            - Has permissions
+        end note
+        
+        note right of Left
+            Voluntary departure
+            - Can rejoin if invited
+            - Data preserved
+            - No access
+        end note
+        
+        note right of Banned
+            Forced removal
+            - Cannot rejoin
+            - All access revoked
+            - Permanent state
+        end note
+    }
+    
+    %% Group Invitation States
+    state GroupInvitation {
+        [*] --> Created: Owner Creates
+        Created --> Sent: Email Sent
+        Sent --> Viewed: Recipient Opens
+        Viewed --> Accepted: Recipient Accepts
+        Viewed --> Declined: Recipient Declines
+        Sent --> Expired: Time Limit Exceeded
+        Created --> Cancelled: Owner Cancels
+        
+        Accepted --> Processed: Member Added
+        Declined --> [*]: Invitation Declined
+        Expired --> [*]: Invitation Expired
+        Cancelled --> [*]: Invitation Cancelled
+        Processed --> [*]: Complete
+        
+        note right of Created
+            Invitation created
+            - Unique token generated
+            - Email queued
+            - Valid for 7 days
+        end note
+        
+        note right of Sent
+            Email delivered
+            - Awaiting action
+            - Can be resent
+            - Trackable
+        end note
+        
+        note right of Accepted
+            User accepted
+            - Being processed
+            - Member added
+            - Notification sent
+        end note
+    }
+    
+    %% State Transitions Between Entities
+    Group --> GroupMember: Has Many
+    Group --> GroupInvitation: Has Many
+    GroupInvitation --> GroupMember: Becomes When Accepted
+    
+    %% Permission States
+    state Permissions {
+        state MemberPermissions {
+            [*] --> Basic: Default
+            Basic --> Elevated: Promoted
+            Elevated --> Basic: Demoted
+            Elevated --> Owner: Becomes Owner
+            Basic --> [*]: Left/Removed
+            Elevated --> [*]: Left/Removed
+        }
+        
+        state OwnerPermissions {
+            [*] --> Full: Create Group
+            Full --> Transferred: Transfer Ownership
+            Transferred --> [*]: Left Group
+        }
+    }
+    
+    %% Task Assignment States
+    state TaskAssignment {
+        [*] --> Unassigned: Group Created
+        Unassigned --> Assigned: Task Assigned
+        Assigned --> InProgress: Member Starts
+        InProgress --> Completed: Task Done
+        Completed --> [*]: Archived
+        Assigned --> Reassigned: Change Assignee
+        InProgress --> Reassigned: Reassign
+    }
+    
+    Note "Group Lifecycle" as N1
+    Note "Member Lifecycle" as N2
+    Note "Invitation Lifecycle" as N3

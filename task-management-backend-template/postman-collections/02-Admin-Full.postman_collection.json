@@ -1,0 +1,590 @@
+{
+	"info": {
+		"_postman_id": "02-admin-collection",
+		"name": "02 - Admin (Admin Role)",
+		"description": "All endpoints accessible by authenticated users with admin role.\n\n**Authentication Required**: Yes (Admin Role)\n**Header**: Authorization: Bearer {{accessToken}}\n\n**Rate Limits**:\n- Admin endpoints: 200 requests / minute\n- User management: 100 / minute\n\n**Base URL**: {{baseUrl}}/v1",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "User Management",
+			"item": [
+				{
+					"name": "Get All Users",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/v1/users/paginate?page=1&limit=20",
+							"host": ["{{baseUrl}}"],
+							"path": ["v1", "users", "paginate"],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "20"
+								}
+							]
+						},
+						"description": "Get all users with pagination and statistics\n\n**Query Params**:\n- page: Page number\n- limit: Items per page\n- name: Search by name\n- email: Search by email\n- createdAt: Filter by date\n\n**Response**:\n- statistics: { totalUser, totalProviders, totalSubAdmin, totalAdmin }\n- docs: Array of users\n- totalPages, page, limit"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Students",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/v1/users/paginate/for-student?page=1&limit=20",
+							"host": ["{{baseUrl}}"],
+							"path": ["v1", "users", "paginate", "for-student"],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "20"
+								}
+							]
+						},
+						"description": "Get all students with pagination\n\n**Response**:\n- docs: Array of students\n- totalPages, page, limit"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Mentors",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/v1/users/paginate/for-mentor?page=1&limit=20",
+							"host": ["{{baseUrl}}"],
+							"path": ["v1", "users", "paginate", "for-mentor"],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "20"
+								}
+							]
+						},
+						"description": "Get all mentors with pagination\n\n**Response**:\n- docs: Array of mentors\n- totalPages, page, limit"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Sub-Admins",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/v1/users/paginate/for-sub-admin?page=1&limit=20",
+							"host": ["{{baseUrl}}"],
+							"path": ["v1", "users", "paginate", "for-sub-admin"],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "20"
+								}
+							]
+						},
+						"description": "Get all sub-admins with pagination\n\n**Response**:\n- docs: Array of sub-admins\n- totalPages, page, limit"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Sub-Admin",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"subadmin@example.com\",\n  \"password\": \"SecurePass123!\",\n  \"name\": \"Sub Admin Name\",\n  \"phoneNumber\": \"+1234567890\",\n  \"role\": \"subAdmin\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/v1/users/send-invitation-link-to-admin-email",
+							"host": ["{{baseUrl}}"],
+							"path": ["v1", "users", "send-invitation-link-to-admin-email"]
+						},
+						"description": "Create sub-admin and send invitation email\n\n**Request**:\n- email: Sub-admin email\n- password: Temporary password\n- name: Full name\n- phoneNumber: Phone number\n- role: subAdmin\n\n**Response**:\n- Created user object"
+					},
+					"response": []
+				},
+				{
+					"name": "Remove Sub-Admin",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/v1/users/remove-sub-admin/{{userId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["v1", "users", "remove-sub-admin", "{{userId}}"]
+						},
+						"description": "Remove sub-admin (soft delete)\n\n**Response**:\n- Updated user object"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Admin Analytics",
+			"item": [
+				{
+					"name": "Get Admin Dashboard",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/v1/analytics/admin/dashboard",
+							"host": ["{{baseUrl}}"],
+							"path": ["v1", "analytics", "admin", "dashboard"]
+						},
+						"description": "Get complete admin dashboard analytics\n\n**Cache TTL**: 10 minutes\n\n**Response**:\n- overview: { totalUsers, totalGroups, totalTasks, activeUsersToday, dauMauRatio }\n- userGrowth: { today, thisWeek, thisMonth, growthRate }\n- revenue: { mrr, arr, thisMonth, lastMonth, growthRate }\n- taskMetrics: { createdToday, completedToday, completionRate, averageTasksPerUser }\n- engagement: { dau, mau, dauMauRatio, retentionRate }\n- topGroups: Array\n- recentUsers: Array"
+					},
+					"response": []
+				},
+				{
+					"name": "Get User Growth",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/v1/analytics/admin/user-growth?range=thisMonth",
+							"host": ["{{baseUrl}}"],
+							"path": ["v1", "analytics", "admin", "user-growth"],
+							"query": [
+								{
+									"key": "range",
+									"value": "thisMonth",
+									"description": "thisWeek/thisMonth/thisYear"
+								}
+							]
+						},
+						"description": "Get user growth analytics\n\n**Cache TTL**: 15 minutes\n\n**Query Params**:\n- range: thisWeek/thisMonth/thisYear\n\n**Response**:\n- today, thisWeek, thisMonth\n- growthRate: { daily, weekly, monthly }\n- history: Array of daily growth data"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Revenue Analytics",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/v1/analytics/admin/revenue",
+							"host": ["{{baseUrl}}"],
+							"path": ["v1", "analytics", "admin", "revenue"]
+						},
+						"description": "Get revenue analytics\n\n**Cache TTL**: 15 minutes\n\n**Response**:\n- mrr: Monthly Recurring Revenue\n- arr: Annual Recurring Revenue\n- thisMonth, lastMonth\n- growthRate\n- bySubscriptionType: { individual, group }\n- history: Array of monthly revenue"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Task Metrics",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/v1/analytics/admin/task-metrics",
+							"host": ["{{baseUrl}}"],
+							"path": ["v1", "analytics", "admin", "task-metrics"]
+						},
+						"description": "Get platform-wide task metrics\n\n**Cache TTL**: 10 minutes\n\n**Response**:\n- createdToday, completedToday\n- completionRate\n- averageTasksPerUser\n- byStatus: { pending, inProgress, completed }\n- byTaskType: { personal, singleAssignment, collaborative }\n- trend: { direction, percentageChange, period }"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Engagement Metrics",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/v1/analytics/admin/engagement",
+							"host": ["{{baseUrl}}"],
+							"path": ["v1", "analytics", "admin", "engagement"]
+						},
+						"description": "Get user engagement metrics\n\n**Cache TTL**: 15 minutes\n\n**Response**:\n- dau: Daily Active Users\n- mau: Monthly Active Users\n- dauMauRatio: Stickiness ratio\n- averageSessionDuration\n- sessionsPerUser\n- retentionRate: { day1, day7, day30 }"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Payment & Transactions",
+			"item": [
+				{
+					"name": "Get All Transactions",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/v1/payment-transactions/paginate?page=1&limit=20",
+							"host": ["{{baseUrl}}"],
+							"path": ["v1", "payment-transactions", "paginate"],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "20"
+								}
+							]
+						},
+						"description": "Get all payment transactions with pagination\n\n**Query Params**:\n- userId: Filter by user\n- paymentStatus: pending/processing/completed/failed/cancelled\n- paymentGateway: stripe/paypal\n- from: Start date\n- to: End date\n\n**Response**:\n- docs: Array of transactions\n- totalPages, page, limit"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Earnings Overview",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/v1/payment-transactions/overview/admin",
+							"host": ["{{baseUrl}}"],
+							"path": ["v1", "payment-transactions", "overview", "admin"]
+						},
+						"description": "Get admin earnings overview\n\n**Response**:\n- totalRevenue\n- thisMonth, lastMonth\n- growthRate\n- byCurrency: { USD, EUR, BDT }"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Transaction By ID",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/v1/payment-transactions/{{transactionId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["v1", "payment-transactions", "{{transactionId}}"]
+						},
+						"description": "Get transaction details by ID\n\n**Response**:\n- Transaction object"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Subscription Management",
+			"item": [
+				{
+					"name": "Get All Subscription Plans",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/v1/subscription-plans/paginate?page=1&limit=20",
+							"host": ["{{baseUrl}}"],
+							"path": ["v1", "subscription-plans", "paginate"],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "20"
+								}
+							]
+						},
+						"description": "Get all active subscription plans\n\n**Response**:\n- docs: Array of plans\n- totalPages, page, limit"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Subscription Plan",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"subscriptionName\": \"Individual Subscription\",\n  \"subscriptionType\": \"standard\",\n  \"initialDuration\": \"month\",\n  \"renewalFrequency\": \"monthly\",\n  \"amount\": \"10.99\",\n  \"currency\": \"USD\",\n  \"features\": [\"Single-user account\", \"Create personal tasks\"],\n  \"fullAccessToInteractiveChat\": true,\n  \"canViewCycleInsights\": true\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/v1/subscription-plans",
+							"host": ["{{baseUrl}}"],
+							"path": ["v1", "subscription-plans"]
+						},
+						"description": "Create new subscription plan (creates Stripe product & price)\n\n**Request**:\n- subscriptionName: Plan name\n- subscriptionType: standard/standardPlus/vise\n- initialDuration: month/year\n- renewalFrequency: monthly/yearly\n- amount: Price (e.g., \"10.99\")\n- currency: USD/EUR/BDT\n- features: Array of features\n- fullAccessToInteractiveChat: Boolean\n- canViewCycleInsights: Boolean\n\n**Response**:\n- Created plan with stripe_product_id and stripe_price_id"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Subscription Plan",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"subscriptionName\": \"Updated Plan Name\",\n  \"amount\": \"15.99\",\n  \"features\": [\"Updated feature 1\", \"Updated feature 2\"]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/v1/subscription-plans/{{planId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["v1", "subscription-plans", "{{planId}}"]
+						},
+						"description": "Update subscription plan\n\n**Request**:\n- subscriptionName: Optional\n- amount: Optional\n- features: Optional\n\n**Response**:\n- Updated plan object"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Subscription Plan",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/v1/subscription-plans/{{planId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["v1", "subscription-plans", "{{planId}}"]
+						},
+						"description": "Soft delete subscription plan\n\n**Response**:\n- Deleted plan object"
+					},
+					"response": []
+				},
+				{
+					"name": "Get All User Subscriptions",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/v1/user-subscriptions/paginate?page=1&limit=20",
+							"host": ["{{baseUrl}}"],
+							"path": ["v1", "user-subscriptions", "paginate"],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "20"
+								}
+							]
+						},
+						"description": "Get all user subscriptions with pagination\n\n**Query Params**:\n- userId: Filter by user\n- status: active/cancelled/expired/trial/processing\n\n**Response**:\n- docs: Array of subscriptions\n- totalPages, page, limit"
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
-import { GenericController } from '../../../_generic-module/generic.controller';
+import { GenericController } from '../../_generic-module/generic.controller';
 import { TaskReminder } from './taskReminder.model';
 import { ITaskReminderDocument } from './taskReminder.interface';
 import { TaskReminderService } from './taskReminder.service';

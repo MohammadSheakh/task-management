@@ -12,7 +12,6 @@ import { config } from '../../config';
 import { TokenService } from '../token/token.service';
 import { TokenType } from '../token/token.interface';
 import { OtpType } from '../otp/otp.interface';
-import { WalletService } from '../wallet.module/wallet/wallet.service';
 import { TCurrency } from '../../enums/payment';
 //@ts-ignore
 import { OAuth2Client } from 'google-auth-library';
@@ -33,14 +32,15 @@ import { IUserDevices } from '../user.module/userDevices/userDevices.interface';
 import { UserRoleDataService } from '../user.module/userRoleData/userRoleData.service';
 import { IUser } from '../user.module/user/user.interface';
 import { ICreateUser, IGoogleLoginPayload } from './auth.interface';
-import { IMentorProfile } from '../mentor.module/mentorProfile/mentorProfile.interface';
-import { MentorProfile } from '../mentor.module/mentorProfile/mentorProfile.model';
 import { OAuthAccount } from '../user.module/oauthAccount/oauthAccount.model';
 import { TAuthProvider } from './auth.constants';
+import { redisClient } from '../../helpers/redis/redis';
+import { logger, errorLogger } from '../../shared/logger';
+import { AUTH_SESSION_CONFIG } from './auth.constants';
 const eventEmitterForUpdateUserProfile = new EventEmitter(); // functional way
 const eventEmitterForCreateWallet = new EventEmitter();
 
-let walletService = new WalletService();
+
 let userRoleDataService = new UserRoleDataService();
 
 eventEmitterForUpdateUserProfile.on('eventEmitterForUpdateUserProfile', async (valueFromRequest: any) => {
@@ -59,18 +59,6 @@ eventEmitterForCreateWallet.on('eventEmitterForCreateWallet', async (valueFromRe
   try {
       const { userId } = valueFromRequest;
       
-      const wallet =  await walletService.create({
-        userId: userId,
-        amount: 0, //  default 0
-        currency: TCurrency.bdt,
-      });
-
-      await User.findByIdAndUpdate(
-        userId,
-        { walletId: wallet._id },
-        { new: true }
-      )
-
     }catch (error) {
       console.error('Error occurred while handling token creation and deletion:', error);
     }
@@ -121,42 +109,6 @@ const createUser = async (userData: ICreateUser, userProfileId:string) => {
       OtpService.createVerificationEmailOtp(user.email)
   ]);
 
-  if(userData.role === TRole.mentor){
-    /*-─────────────────────────────────
-    | Mentor must have wallet
-    | TODO : use redis bullmq to create wallet in stead of event emitter .. 
-    └──────────────────────────────────*/
-  
-    // 📈⚙️ OPTIMIZATION: with event emmiter 
-    eventEmitterForCreateWallet.emit('eventEmitterForCreateWallet', { 
-      userId : user._id
-    });
-
-  
-    /*-─────────────────────────────────
-    |  TODO : MUST
-    | Lets send notification to admin that new Provider registered
-    └──────────────────────────────────*/
-    await enqueueWebNotification(
-      `A ${userData.role} registered successfully . verify document to activate account`,
-      null, // senderId
-      null, // receiverId 
-      TRole.admin, // receiverRole
-      TNotificationType.newUser, // type
-      /**********
-       * In UI there is no details page for specialist's schedule
-       * **** */
-      // '', // linkFor
-      // existingWorkoutClass._id // linkId
-    );
-
-    //--------- Lets create UserRole Data 
-    await userRoleDataService.create({
-      userId: user._id,
-    })
-    
-    return { user, verificationToken };
-  }
 
   // eventEmitterForOTPCreateAndSendMail.emit('eventEmitterForOTPCreateAndSendMail', { email: user.email });
 
@@ -224,45 +176,6 @@ const createUserV2 = async (userData: ICreateUser, userProfileId:string) => {
       OtpService.createVerificationEmailOtp(user.email)
   ]);
 
-  if(userData.role === TRole.mentor){
-    /*-─────────────────────────────────
-    | Mentor must have wallet
-    | TODO : use redis bullmq to create wallet in stead of event emitter .. 
-    └──────────────────────────────────*/
-  
-    // 📈⚙️ OPTIMIZATION: with event emmiter 
-    eventEmitterForCreateWallet.emit('eventEmitterForCreateWallet', { 
-      userId : user._id
-    });
-
-    const createMentorProfile : IMentorProfile = await MentorProfile.create({
-      userId : user._id
-    });
-
-    /*-─────────────────────────────────
-    |  TODO : MUST
-    | Lets send notification to admin that new Provider registered
-    └──────────────────────────────────*/
-    await enqueueWebNotification(
-      `A ${userData.role} registered successfully `,
-      null, // senderId
-      null, // receiverId 
-      TRole.admin, // receiverRole
-      TNotificationType.newUser, // type
-      /**********
-       * In UI there is no details page for specialist's schedule
-       * **** */
-      // '', // linkFor
-      // existingWorkoutClass._id // linkId
-    );
-
-    //--------- Lets create UserRole Data 
-    await userRoleDataService.create({
-      userId: user._id,
-    })
-    
-    return { user, verificationToken };
-  }
 
   // eventEmitterForOTPCreateAndSendMail.emit('eventEmitterForOTPCreateAndSendMail', { email: user.email });
 
@@ -392,7 +305,7 @@ const login = async (email: string,
     - access token and refresh token
 
 -------------------*/
-const loginV2 = async (email: string, 
+const loginV2 = async (email: string,
   reqpassword: string,
   fcmToken? : string,
   deviceInfo?: { deviceType?: string, deviceName?: string }
@@ -408,55 +321,11 @@ const loginV2 = async (email: string,
 
   validateUserStatus(user);
 
-  // if (!user.isEmailVerified) {
-  //   //create verification email token
-  //   const verificationToken = await TokenService.createVerifyEmailToken(user);
-  //   //create verification email otp
-  //   await OtpService.createVerificationEmailOtp(user.email);
-  //   return { verificationToken };
-
-  //   throw new ApiError(
-  //     StatusCodes.BAD_REQUEST,
-  //     'User not verified, Please verify your email, Check your email.'
-  //   );
-  // }
-
-  // if (user.lockUntil && user.lockUntil > new Date()) {
-  //   throw new ApiError(
-  //     StatusCodes.TOO_MANY_REQUESTS,
-  //     `Account is locked. Try again after ${config.auth.lockTime} minutes`,
-  //   );
-  // }
-
   const isPasswordValid = await bcryptjs.compare(reqpassword, user.password);
 
   if (!isPasswordValid) {
     throw new ApiError(StatusCodes.UNAUTHORIZED, 'Invalid credentials');
   }
-
-  /*---------------------------------------
-  if (!isPasswordValid) {
-    user.failedLoginAttempts = (user.failedLoginAttempts || 0) + 1;
-    if (user.failedLoginAttempts >= config.auth.maxLoginAttempts) {
-      user.lockUntil = moment().add(config.auth.lockTime, 'minutes').toDate();
-      await user.save();
-      throw new ApiError(
-        423,
-        `Account locked for ${config.auth.lockTime} minutes due to too many failed attempts`,
-      );
-    }
-
-    await user.save();
-    throw new ApiError(StatusCodes.UNAUTHORIZED, 'Invalid credentials');
-  }
-
-  if (user.failedLoginAttempts > 0) {
-    user.failedLoginAttempts = 0;
-    user.lockUntil = undefined;
-    await user.save();
-  }
-
-  -------------------------------------------*/
 
   const tokens = await TokenService.accessAndRefreshToken(user);
 
@@ -484,6 +353,33 @@ const loginV2 = async (email: string,
       device.lastActive = new Date();
       await device.save();
     }
+  }
+
+  // 🔒 REDIS SESSION CACHING
+  // Cache user session for faster subsequent requests
+  try {
+    const sessionKey = `session:${user._id}:${fcmToken || 'web'}`;
+    const sessionData = {
+      userId: user._id,
+      email: user.email,
+      role: user.role,
+      fcmToken,
+      deviceType: deviceInfo?.deviceType || 'web',
+      deviceName: deviceInfo?.deviceName || 'Unknown Device',
+      loginAt: new Date(),
+    };
+    
+    // Cache session for 7 days (matches refresh token expiry)
+    await redisClient.setEx(
+      sessionKey,
+      AUTH_SESSION_CONFIG.SESSION_TTL,
+      JSON.stringify(sessionData)
+    );
+    
+    logger.info(`Session cached for user ${user._id} (${sessionKey})`);
+  } catch (error) {
+    errorLogger.error('Failed to cache session:', error);
+    // Don't throw - login should succeed even if caching fails
   }
 
   const { password, ...userWithoutPassword } = user.toObject();
@@ -701,30 +597,6 @@ const googleLogin = async ({ idToken, role, acceptTOC }: IGoogleLoginPayload) =>
     isVerified: true,
   });
 
-  // Handle mentor-specific logic (same as createUserV2)
-  if (role === TRole.mentor) {
-    eventEmitterForCreateWallet.emit('eventEmitterForCreateWallet', { userId: newUser._id });
-    await MentorProfile.create({ userId: newUser._id });
-    await userRoleDataService.create({ userId: newUser._id });
-    
-    /*-─────────────────────────────────
-    |  TODO : MUST
-    | Lets send notification to admin that new Provider registered
-    └──────────────────────────────────*/
-    await enqueueWebNotification(
-      `A ${role} registered via Google`,
-      null, // senderId
-      null, // receiverId 
-      TRole.admin, // receiverRole
-      TNotificationType.newUser, // type
-      /**********
-       * In UI there is no details page for specialist's schedule
-       * **** */
-      // '', // linkFor
-      // existingWorkoutClass._id // linkId
-    );
-  }
-
   const tokens = TokenService.accessAndRefreshToken(newUser);
   return { user: newUser, ...tokens, isNewUser: true };
 };
@@ -832,33 +704,8 @@ const appleLogin = async ({ idToken, role, acceptTOC }: IGoogleLoginPayload) => 
     isVerified: true,
   });
 
-  // Handle mentor-specific logic (same as createUserV2)
-  if (role === TRole.mentor) {
-    eventEmitterForCreateWallet.emit('eventEmitterForCreateWallet', { userId: newUser._id });
-    await MentorProfile.create({ userId: newUser._id });
-    await userRoleDataService.create({ userId: newUser._id });
-    /*-─────────────────────────────────
-    |  TODO : MUST
-    | Lets send notification to admin that new Provider registered
-    └──────────────────────────────────*/
-    await enqueueWebNotification(
-      `A ${role} registered via Google`,
-      null, // senderId
-      null, // receiverId 
-      TRole.admin, // receiverRole
-      TNotificationType.newUser, // type
-      /**********
-       * In UI there is no details page for specialist's schedule
-       * **** */
-      // '', // linkFor
-      // existingWorkoutClass._id // linkId
-    );
-  }
-
   const tokens = TokenService.accessAndRefreshToken(newUser);
   return { user: newUser, ...tokens, isNewUser: true };
-
-
 };
 
 export const AuthService = {

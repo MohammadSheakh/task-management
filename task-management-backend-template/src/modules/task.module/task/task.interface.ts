@@ -1,6 +1,26 @@
-import { Model, Types } from 'mongoose';
+import { Model, Types, Document } from 'mongoose';
 import { PaginateOptions, PaginateResult } from '../../../types/paginate';
 import { TTaskStatus, TTaskType, TTaskPriority } from './task.constant';
+
+/**
+ * SubTask Interface (Embedded)
+ * Matches Flutter model:
+ * ```dart
+ * class SubTask {
+ *   final String title;
+ *   final bool isCompleted;
+ *   final String? duration;
+ * }
+ * ```
+ */
+export interface ISubTask {
+  _id?: Types.ObjectId;
+  title: string;
+  isCompleted: boolean;
+  duration?: string;
+  completedAt?: Date;
+  order: number;
+}
 
 /**
  * Task Interface
@@ -48,6 +68,9 @@ export interface ITask {
   /** Number of completed subtasks */
   completedSubtasks?: number;
 
+  /** Subtasks list (embedded) */
+  subtasks?: ISubTask[];
+
   // ─── Timestamps ────────────────────────────────────────────────────
   /** When the task was created */
   createdAt?: Date;
@@ -68,6 +91,11 @@ export interface ITask {
   /** Last update timestamp */
   updatedAt?: Date;
 }
+
+/**
+ * Task Document Interface
+ */
+export interface ITaskDocument extends ITask, Document {}
 
 /**
  * Task Model Interface

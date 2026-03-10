@@ -13,6 +13,41 @@ export type TGroupMemberRole = 'owner' | 'admin' | 'member';
 export type TGroupMemberStatus = 'active' | 'inactive' | 'blocked';
 
 /**
+ * Group Member Permissions
+ * Defines what actions a member can perform
+ * @see Figma: permission-flow.png
+ */
+export interface IGroupMemberPermissions {
+  /**
+   * Can create tasks for the group
+   * Default: false for Secondary users
+   */
+  canCreateTasks: boolean;
+
+  /**
+   * Can invite new members
+   * Default: false
+   */
+  canInviteMembers: boolean;
+
+  /**
+   * Can remove other members
+   * Default: false
+   */
+  canRemoveMembers: boolean;
+
+  /**
+   * User who granted these permissions
+   */
+  grantedBy?: Types.ObjectId;
+
+  /**
+   * When permissions were granted
+   */
+  grantedAt?: Date;
+}
+
+/**
  * Group Member Interface
  * Defines the structure of a GroupMember document
  *
@@ -49,6 +84,12 @@ export interface IGroupMember {
    * Optional note or reason for joining/leaving
    */
   note?: string;
+
+  /**
+   * Member permissions (task creation, invite, etc.)
+   * @see Figma: permission-flow.png
+   */
+  permissions?: IGroupMemberPermissions;
 
   /**
    * Custom metadata for extensibility

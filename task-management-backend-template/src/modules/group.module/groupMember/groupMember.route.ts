@@ -8,6 +8,8 @@ import { TRole } from '../../../middlewares/roles';
 import { setQueryOptions } from '../../../middlewares/setQueryOptions';
 import rateLimit from 'express-rate-limit';
 import { RATE_LIMITS } from '../group/group.constant';
+import validateRequest from '../../../shared/validateRequest';
+import * as validation from './groupMember.validation';
 
 const router = express.Router();
 
@@ -120,6 +122,63 @@ router.route('/:groupId/check/:userId').get(
   auth(TRole.user),
   membershipLimiter,
   controller.checkMembership
+);
+
+// ────────────────────────────────────────────────────────────────────────
+// Group Permissions Routes
+// ────────────────────────────────────────────────────────────────────────
+
+//-------------------------------------------
+// Primary | GroupMember #09 | Get group permissions
+//-------------------------------------------
+router.route('/:id/permissions').get(
+  auth(TRole.user),
+  membershipLimiter,
+  controller.getGroupPermissions
+);
+
+//-------------------------------------------
+// Primary | GroupMember #10 | Update group permissions
+//-------------------------------------------
+router.route('/:id/permissions').put(
+  auth(TRole.user),
+  membershipLimiter,
+  validateRequest(validation.updateGroupPermissionsValidationSchema),
+  controller.updateGroupPermissions
+);
+
+//-------------------------------------------
+// Primary | GroupMember #11 | Toggle task creation permission
+//-------------------------------------------
+router.route('/:id/permissions/toggle').post(
+  auth(TRole.user),
+  membershipLimiter,
+  validateRequest(validation.toggleTaskCreationPermissionValidationSchema),
+  controller.toggleTaskCreationPermission
+);
+
+// ────────────────────────────────────────────────────────────────────────
+// Figma-Aligned Routes: Direct Member Creation & Profile Management
+// ────────────────────────────────────────────────────────────────────────
+
+//-------------------------------------------
+// Primary | GroupMember #12 | Create member account (direct creation)
+//-------------------------------------------
+router.route('/:id/members/create').post(
+  auth(TRole.user),
+  membershipLimiter,
+  validateRequest(validation.createMemberAccountValidationSchema),
+  controller.createMemberAccount
+);
+
+//-------------------------------------------
+// Primary | GroupMember #13 | Update member profile
+//-------------------------------------------
+router.route('/:id/members/:userId/profile').patch(
+  auth(TRole.user),
+  membershipLimiter,
+  validateRequest(validation.updateMemberProfileValidationSchema),
+  controller.updateMemberProfile
 );
 
 export const GroupMemberRoute = router;

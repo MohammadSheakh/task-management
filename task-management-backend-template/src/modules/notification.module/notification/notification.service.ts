@@ -2,13 +2,13 @@ import { StatusCodes } from 'http-status-codes';
 import { Types } from 'mongoose';
 import { Notification } from './notification.model';
 import { INotification, INotificationDocument, INotificationQueryOptions, IBulkNotificationPayload } from './notification.interface';
-import { GenericService } from '../../../_generic-module/generic.services';
 import ApiError from '../../../errors/ApiError';
 import { redisClient } from '../../../helpers/redis/redis';
-import { NOTIFICATION_STATUS, NOTIFICATION_PRIORITY, NOTIFICATION_CHANNEL, NOTIFICATION_CACHE_CONFIG, QUEUE_CONFIG } from './notification.constant';
+import { NOTIFICATION_STATUS, NOTIFICATION_PRIORITY, NOTIFICATION_CHANNEL, NOTIFICATION_CACHE_CONFIG, QUEUE_CONFIG, ACTIVITY_TYPE, TActivityType } from './notification.constant';
 import { errorLogger, logger } from '../../../shared/logger';
 import { notificationQueue } from '../../../helpers/bullmq/bullmq';
 import PaginationService from '../../../common/service/paginationService';
+import { GenericService } from '../../_generic-module/generic.services';
 
 /**
  * Notification Service
@@ -511,5 +511,147 @@ export class NotificationService extends GenericService<typeof Notification, INo
    */
   async getPendingScheduledNotifications(): Promise<INotificationDocument[]> {
     return await Notification.getPendingScheduledNotifications();
+  }
+
+  // ────────────────────────────────────────────────────────────────────────
+  // Figma-Aligned Methods: Live Activity Feed
+  // ────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Get Live Activity Feed for Group
+   * Figma: dashboard-flow-01.png (Live Activity section)
+   *
+   * Returns recent activities from group members including task completions,
+   * task starts, subtask completions, and new member joins.
+   *
+   * @param groupId - Group ID
+   * @param limit - Number of activities to return (default: 10)
+   * @returns Array of recent activities
+   */
+  async getLiveActivityFeed(groupId: string, limit: number = 10) {
+    const groupObjectId = new Types.ObjectId(groupId);
+
+    // Get recent notifications for all activity types
+    const notifications = await this.model.find({
+      'data.groupId': groupObjectId.toString(),
+      type: { 
+        $in: [
+          ACTIVITY_TYPE.TASK_CREATED,
+          ACTIVITY_TYPE.TASK_STARTED,
+          ACTIVITY_TYPE.TASK_UPDATED,
+          ACTIVITY_TYPE.TASK_COMPLETED,
+          ACTIVITY_TYPE.TASK_DELETED,
+          ACTIVITY_TYPE.SUBTASK_COMPLETED,
+          ACTIVITY_TYPE.TASK_ASSIGNED,
+          ACTIVITY_TYPE.MEMBER_JOINED,
+        ]
+      },
+      isDeleted: false,
+    })
+      .populate('receiverId', 'name profileImage')
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .lean();
+
+    // Transform notifications into activity feed format
+    const activities = notifications.map(notification => {
+      const actor = notification.receiverId as any;
+
+      return {
+        _id: notification._id.toString(),
+        type: notification.type,
+        actor: {
+          _id: actor?._id.toString(),
+          name: actor?.name || 'Unknown User',
+          profileImage: actor?.profileImage?.imageUrl || '/uploads/users/user.png',
+        },
+        task: notification.data?.taskId ? {
+          _id: notification.data.taskId,
+          title: notification.data?.taskTitle || 'Task',
+        } : undefined,
+        timestamp: notification.createdAt,
+        message: this.generateActivityMessage(notification),
+      };
+    });
+
+    return activities;
+  }
+
+  /**
+   * Generate activity message based on notification type
+   */
+  private generateActivityMessage(notification: any): string {
+    const actorName = (notification.receiverId as any)?.name || 'Someone';
+    const taskTitle = notification.data?.taskTitle || 'a task';
+
+    switch (notification.type) {
+      case ACTIVITY_TYPE.TASK_CREATED:
+        return `${actorName} created '${taskTitle}'`;
+      case ACTIVITY_TYPE.TASK_STARTED:
+        return `${actorName} started '${taskTitle}'`;
+      case ACTIVITY_TYPE.TASK_UPDATED:
+        return `${actorName} updated '${taskTitle}'`;
+      case ACTIVITY_TYPE.TASK_COMPLETED:
+        return `${actorName} completed '${taskTitle}'`;
+      case ACTIVITY_TYPE.TASK_DELETED:
+        return `${actorName} deleted '${taskTitle}'`;
+      case ACTIVITY_TYPE.SUBTASK_COMPLETED:
+        return `${actorName} completed a subtask in '${taskTitle}'`;
+      case ACTIVITY_TYPE.TASK_ASSIGNED:
+        return `${actorName} was assigned '${taskTitle}'`;
+      case ACTIVITY_TYPE.MEMBER_JOINED:
+        return `${actorName} joined the group`;
+      case ACTIVITY_TYPE.MEMBER_LEFT:
+        return `${actorName} left the group`;
+      case ACTIVITY_TYPE.COMMENT_ADDED:
+        return `${actorName} added a comment`;
+      case ACTIVITY_TYPE.ATTACHMENT_ADDED:
+        return `${actorName} added an attachment`;
+      default:
+        return `${actorName} performed an action`;
+    }
+  }
+
+  /**
+   * Record activity for group member
+   * Creates a notification entry for live activity feed
+   *
+   * @param groupId - Group ID
+   * @param userId - User performing the action
+   * @param activityType - Type of activity
+   * @param taskData - Optional task information
+   */
+  async recordGroupActivity(
+    groupId: string,
+    userId: string,
+    activityType: TActivityType,
+    taskData?: {
+      taskId: string;
+      taskTitle: string;
+    }
+  ) {
+    const user = await User.findById(userId).select('name profileImage');
+
+    await this.model.create({
+      receiverId: new Types.ObjectId(userId),
+      title: activityType.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()),
+      type: activityType,
+      priority: NOTIFICATION_PRIORITY.NORMAL,
+      channels: [NOTIFICATION_CHANNEL.IN_APP],
+      linkFor: 'task',
+      linkId: taskData ? new Types.ObjectId(taskData.taskId) : undefined,
+      referenceFor: 'task',
+      referenceId: taskData ? new Types.ObjectId(taskData.taskId) : undefined,
+      data: {
+        groupId,
+        taskId: taskData?.taskId,
+        taskTitle: taskData?.taskTitle,
+      },
+      isDeleted: false,
+    });
+
+    // Invalidate activity feed cache
+    const cacheKey = `activity-feed:${groupId}:10`;
+    await redisClient.del(cacheKey);
   }
 }

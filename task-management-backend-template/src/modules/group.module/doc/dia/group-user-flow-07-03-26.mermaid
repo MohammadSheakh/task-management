@@ -1,0 +1,106 @@
+---
+title: Group Module - User Flow Diagram
+description: Complete user flow for group management features
+date: 07-03-26
+---
+
+flowchart TD
+    Start([User Logs In]) --> CheckGroups{Has Groups?}
+    
+    %% Create New Group Flow
+    CheckGroups -->|No| CreateGroup[Create New Group]
+    CreateGroup --> EnterDetails[Enter Group Details<br/>Name, Description,<br/>Max Members]
+    EnterDetails --> SetVisibility[Set Visibility<br/>Private/Public]
+    SetVisibility --> SubmitGroup[Submit Group]
+    SubmitGroup --> GroupCreated[Group Created ✅]
+    GroupCreated --> OwnerRole[User Becomes Owner]
+    OwnerRole --> InviteMembers[Invite Members]
+    
+    %% Existing Groups Flow
+    CheckGroups -->|Yes| ViewGroups[View My Groups]
+    ViewGroups --> SelectGroup{Select Action}
+    
+    %% View Group Details
+    SelectGroup -->|View| ViewDetails[View Group Details<br/>Members, Tasks,<br/>Statistics]
+    ViewDetails --> Dashboard[Group Dashboard]
+    
+    %% Invite Members
+    SelectGroup -->|Invite| InviteFlow[Invite Members]
+    InviteFlow --> ChooseMethod{Invite Method}
+    ChooseMethod -->|Email| SendEmailInvite[Send Email Invitation]
+    ChooseMethod -->|Link| GenerateLink[Generate Invite Link]
+    ChooseMethod -->|Direct| AddDirectly[Add Directly]
+    SendEmailInvite --> InviteSent[Invite Sent ✅]
+    GenerateLink --> LinkShared[Link Shared ✅]
+    AddDirectly --> MemberAdded[Member Added ✅]
+    
+    %% Member Actions
+    SelectGroup -->|Manage Members| ManageMembers[Manage Members]
+    ManageMembers --> MemberAction{Select Action}
+    MemberAction -->|Promote| PromoteMember[Promote to Admin]
+    MemberAction -->|Remove| RemoveMember[Remove Member]
+    MemberAction -->|Change Role| ChangeRole[Change Role]
+    PromoteMember --> RoleUpdated[Role Updated ✅]
+    RemoveMember --> MemberRemoved[Member Removed ✅]
+    ChangeRole --> RoleChanged[Role Changed ✅]
+    
+    %% Group Settings
+    SelectGroup -->|Settings| GroupSettings[Group Settings]
+    GroupSettings --> SettingAction{Update Setting}
+    SettingAction -->|Name| UpdateName[Update Group Name]
+    SettingAction -->|Description| UpdateDesc[Update Description]
+    SettingAction -->|Visibility| UpdateVisibility[Update Visibility]
+    SettingAction -->|Max Members| UpdateMax[Update Max Members]
+    UpdateName --> SettingsSaved[Settings Saved ✅]
+    UpdateDesc --> SettingsSaved
+    UpdateVisibility --> SettingsSaved
+    UpdateMax --> SettingsSaved
+    
+    %% Leave Group
+    SelectGroup -->|Leave| LeaveGroup[Leave Group]
+    LeaveGroup --> ConfirmLeave{Confirm?}
+    ConfirmLeave -->|Yes| ProcessLeave[Process Leave]
+    ProcessLeave --> CheckOwner{Is Owner?}
+    CheckOwner -->|Yes| TransferOwnership[Transfer Ownership<br/>or Delete Group]
+    CheckOwner -->|No| MemberLeft[Member Left ✅]
+    TransferOwnership --> NewOwner[New Owner Assigned]
+    NewOwner --> MemberLeft
+    ConfirmLeave -->|No| CancelLeave[Cancel]
+    
+    %% Delete Group
+    SelectGroup -->|Delete| DeleteGroup[Delete Group]
+    DeleteGroup --> CheckPermission{Is Owner?}
+    CheckPermission -->|No| PermissionDenied[Permission Denied ❌]
+    CheckPermission -->|Yes| ConfirmDelete{Confirm Delete?}
+    ConfirmDelete -->|Yes| ProcessDelete[Delete Group<br/>Archive Data]
+    ProcessDelete --> GroupDeleted[Group Deleted ✅]
+    ConfirmDelete -->|No| CancelDelete[Cancel]
+    
+    %% Task Integration
+    Dashboard --> TaskAction{Task Action}
+    TaskAction -->|Create| CreateTask[Create Group Task]
+    TaskAction -->|View| ViewTasks[View Group Tasks]
+    TaskAction -->|Assign| AssignTask[Assign to Members]
+    CreateTask --> TaskCreated[Task Created ✅]
+    ViewTasks --> TaskList[Task List Displayed]
+    AssignTask --> TaskAssigned[Task Assigned ✅]
+    
+    %% Notifications
+    InviteSent --> Notification[Send Notification]
+    MemberAdded --> Notification
+    RoleUpdated --> Notification
+    SettingsSaved --> Notification
+    Notification --> NotifyUsers[Notify Affected Users]
+    
+    %% Styling
+    style Start fill:#4CAF50,color:#fff
+    style GroupCreated fill:#4CAF50,color:#fff
+    style InviteSent fill:#4CAF50,color:#fff
+    style MemberAdded fill:#4CAF50,color:#fff
+    style RoleUpdated fill:#4CAF50,color:#fff
+    style SettingsSaved fill:#4CAF50,color:#fff
+    style MemberLeft fill:#4CAF50,color:#fff
+    style GroupDeleted fill:#F44336,color:#fff
+    style PermissionDenied fill:#FF9800,color:#fff
+    style TaskCreated fill:#4CAF50,color:#fff
+    style TaskAssigned fill:#4CAF50,color:#fff

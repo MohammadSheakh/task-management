@@ -1,0 +1,337 @@
+//@ts-ignore
+import { Request, Response } from 'express';
+import catchAsync from '../../../shared/catchAsync';
+import { GenericController } from '../../_generic-module/generic.controller';
+import { IConfirmPayment, ISubscriptionPlan } from './subscriptionPlan.interface';
+import { SubscriptionPlanService } from './subscriptionPlan.service';
+import sendResponse from '../../../shared/sendResponse';
+//@ts-ignore
+import { StatusCodes } from 'http-status-codes';
+//@ts-ignore
+import Stripe from 'stripe';
+import ApiError from '../../../errors/ApiError';
+import { TInitialDuration, TRenewalFrequency } from './subscriptionPlan.constant';
+import { User } from '../../user/user.model';
+import { UserService } from '../../user/user.service';
+//@ts-ignore
+import mongoose from 'mongoose';
+import { PaymentTransactionService } from '../../payment.module/paymentTransaction/paymentTransaction.service';
+import { SubscriptionPlan } from './subscriptionPlan.model';
+
+import { TCurrency } from '../../../enums/payment';
+import stripe from "../../../config/stripe.config";
+import { IUser } from '../../token/token.interface';
+import { TSubscription } from '../../../enums/subscription';
+import { TTransactionFor } from '../../payment.module/paymentTransaction/paymentTransaction.constant';
+import { IUserSubscription } from '../userSubscription/userSubscription.interface';
+import { UserSubscriptionStatusType } from '../userSubscription/userSubscription.constant';
+import { UserSubscription } from '../userSubscription/userSubscription.model';
+import { config } from '../../../config';
+import { enqueueWebNotification } from '../../../services/notification.service';
+import { TRole } from '../../../middlewares/roles';
+import { TNotificationType } from '../../notification/notification.constants';
+
+const subscriptionPlanService = new SubscriptionPlanService();
+const userService = new UserService();
+
+const paymentTransactionService = new PaymentTransactionService();
+
+export class SubscriptionController extends GenericController<
+  typeof SubscriptionPlan,
+  ISubscriptionPlan
+> {
+  private stripe: Stripe;
+
+  constructor() {
+    super(new SubscriptionPlanService(), 'Subscription Plan');
+    // Initialize Stripe with secret key (from your Stripe Dashboard) // https://dashboard.stripe.com/test/dashboard
+    this.stripe = stripe;
+  }
+
+  purchaseSubscriptionForSuplify = catchAsync(async (req: Request, res: Response) => {
+    // TODO : in middleware we have to validate this subscriptionPlanId
+
+    const { subscriptionPlanId } = req.params;
+    
+    if (!subscriptionPlanId) {
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        'Subscription Plan ID is required in params' // TODO :  do this validation in middleware
+      );
+    }
+
+    const checkoutUrl = await new SubscriptionPlanService()
+    .purchaseSubscriptionForSuplify(
+      subscriptionPlanId,
+      (req.user as IUser)//.userId
+    );
+
+
+    // 🔗 Send Checkout URL to frontend
+    sendResponse(res, {
+        code: StatusCodes.OK,
+        data: checkoutUrl,
+        message: `Redirect to Checkout`,
+        success: true,
+    });
+  });
+
+
+  //-----------------------------------------
+  // Cancel subscription 
+  //-----------------------------------------
+  // POST /api/subscription/cancel
+  cancelSubscription = catchAsync(async (req: Request, res: Response) => {
+    const user = req.user as IUser;
+    
+    const isCancelling = await UserSubscription.exists(
+      { 
+        // _id: userSub._id, 
+        userId: user.userId,
+        status: UserSubscriptionStatusType.cancelling
+      }
+    );
+
+    if (isCancelling) {
+        throw new ApiError(StatusCodes.BAD_REQUEST, 'You already cancel your subscription');
+    }
+
+    // ISSUE : lets say user er duita subscription ek shathe purchase kora ase .. specific konta cancel hobe .. 
+    // sheta bola hoy nai 
+    const userSub:IUserSubscription = await UserSubscription.findOne({
+       userId: user.userId,
+       status: UserSubscriptionStatusType.active 
+    });
+
+    if (!userSub || !userSub.stripe_subscription_id) {
+        throw new ApiError(StatusCodes.NOT_FOUND, 'No active subscription found');
+    }
+
+    const canceledSub = await stripe.subscriptions.update(userSub.stripe_subscription_id, {
+        cancel_at_period_end: true,
+    });
+
+    if (!canceledSub) {
+        throw new ApiError(StatusCodes.NOT_FOUND, 'Failed to cancel subscription');
+    }
+
+    // it will cancel the subscription at the end of the billing cycle
+    await UserSubscription.findByIdAndUpdate(userSub._id, {
+      $set: { 
+        cancelledAtPeriodEnd: true, 
+        status: UserSubscriptionStatusType.cancelling 
+      },
+    });
+
+    // TODO : MUST : Send Notification to admin that .. a person cancel subscription
+
+    await enqueueWebNotification(
+      // TODO : MUST : subscription plan name can not be shown from user.subscriptionPlan field .. we have to fetch current subscription status .. not from JWT token
+      `A User ${user.userId} ${user.subscriptionPlan} Cancel his subscription ${userSub.subscriptionPlanId} at ${new Date()}.`,
+      user.userId, // senderId
+      null, // receiverId
+      TRole.admin, // receiverRole
+      TNotificationType.payment, // type
+      null, // linkFor
+      null // linkId
+    );
+
+    sendResponse(res, {
+      code: StatusCodes.OK,
+      success: true,
+      message: 'Subscription will cancel at the end of the billing cycle',
+      data: canceledSub,
+    });
+  });
+
+
+  /*-───────────────────────────────── ❌
+  | as per clients requirement .. client wants to cancel a persons subscription from the admin end ..
+  | and assign him vise subscription .. 
+
+  | ===== we move these logic to service layer .. and call these logic from >>requestForViseSubscriptionToAdmin.controller<<
+  └──────────────────────────────────*/
+  cancelPatientsSubscriptionAndAssignViceSubscription = catchAsync(async (req : Request, res : Response) => {
+    const {userId} = req.query.personId;
+    
+    const isCancelling = await UserSubscription.exists(
+      { 
+        // _id: userSub._id, 
+        userId: userId,
+        status: UserSubscriptionStatusType.cancelling
+      }
+    );
+
+    // if (isCancelling) {
+    //     throw new ApiError(StatusCodes.BAD_REQUEST, 'You already cancel your subscription');
+    // }
+
+    const userSub:IUserSubscription = await UserSubscription.findOne({
+       userId: userId,
+       status: UserSubscriptionStatusType.active 
+    });
+
+    if (!userSub || !userSub.stripe_subscription_id) {
+        throw new ApiError(StatusCodes.NOT_FOUND, 'No active subscription found');
+    }
+
+    const canceledSub = await stripe.subscriptions.update(userSub.stripe_subscription_id, {
+        cancel_at_period_end: true,
+    });
+
+    if (!canceledSub) {
+        throw new ApiError(StatusCodes.NOT_FOUND, 'Failed to cancel subscription');
+    }
+
+    // it will cancel the subscription at the end of the billing cycle
+    await UserSubscription.findByIdAndUpdate(userSub._id, {
+      $set: { 
+        cancelledAtPeriodEnd: true, 
+        status: UserSubscriptionStatusType.cancelling 
+      },
+    });
+
+    //  Send Notification to patient that .. admin cancel your current subscription and assign vice subscription to you
+    await enqueueWebNotification(
+      `Admin cancel your current subscription ${user.subscriptionPlan} and assign vice subscription to you.`,
+      user.userId, // senderId
+      null, // receiverId
+      TRole.admin, // receiverRole
+      TNotificationType.payment, // type
+      null, // linkFor
+      null // linkId
+    );
+
+    sendResponse(res, {
+      code: StatusCodes.OK,
+      success: true,
+      message: 'Subscription will cancel at the end of the billing cycle And Vice Subscription is successfully assigned.',
+      data: canceledSub,
+    });
+  })
+
+  // ⚡⚡ For Fertie Project to suplify project
+  /*
+   * As Admin can create subscription plan ...
+   * // TODO : MUST : this should move to service layer .. 
+   * Lets Create 3 Subscription Plan  
+   *
+  */  
+  create = catchAsync(async (req: Request, res: Response) => {
+
+    //---------------------------------
+    //> make is active false of already existing subscription plan .. 
+    //---------------------------------
+
+    const existingPlan = await SubscriptionPlan.find({
+      isActive: true,
+      subscriptionType : req.body.subscriptionType
+    });
+
+    existingPlan.forEach(async (plan:ISubscriptionPlan) => {
+      plan.isActive = false;
+      await plan.save();
+    });
+
+    const data : ISubscriptionPlan = req.body;
+    
+    data.subscriptionName = req.body.subscriptionName;
+    data.amount = req.body.amount;
+    data.subscriptionType = req.body.subscriptionType;
+    data.initialDuration = TInitialDuration.month;
+    data.renewalFrequncy = TRenewalFrequency.monthly;
+    data.currency = TCurrency.usd;
+  
+    // now we have to create stripe product and price 
+    // and then we have to save the productId and priceId in our database
+    const product = await this.stripe.products.create({
+      name: data.subscriptionType,
+      description: `Subscription plan for ${data.subscriptionType}`,
+    });
+
+    const price = await this.stripe.prices.create({
+      unit_amount: Math.round(parseFloat(data?.amount) * 100), // Amount in cents
+      currency: data.currency,
+      // -- as i dont want to make this recurring ... 
+      recurring: {
+        interval: 'month', // or 'year' for yearly subscriptions
+        interval_count: 1, // every 1 month
+      },
+      product: product.id,
+    });
+    data.stripe_product_id = product.id;
+    data.stripe_price_id = price.id;
+    data.isActive = true;
+
+    const result = await this.service.create(data);
+
+    sendResponse(res, {
+      code: StatusCodes.OK,
+      data: result,
+      message: `${this.modelName} created successfully`,
+      success: true,
+    });
+  }
+  );
+
+  /*
+    if admin wants to update a subscription plan , 
+    then we have to create new stripe product and price and update the productId and priceId in our database
+
+    lets see how it goes .. we can modify it later if needed
+  */  
+
+    /*
+  updateById = catchAsync(async (req: Request, res: Response) => {
+    const data : ISubscriptionPlan = req.body;
+    
+    data.subscriptionName = req.body.subscriptionName;
+    data.amount = req.body.amount;
+    data.subscriptionType = TSubscription.premium;
+    data.initialDuration = TInitialDuration.month;
+    data.renewalFrequncy = TRenewalFrequency.monthly;
+    data.currency = TCurrency.usd;
+    data.features = req.body.features;
+
+    if(!data.amount){
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        `amount is required`
+      );
+    }
+
+    // now we have to create stripe product and price 
+    // and then we have to save the productId and priceId in our database
+    const product = await this.stripe.products.create({
+      name: data.subscriptionType,
+      description: `Subscription plan for ${data.subscriptionType}`,
+    });
+
+    const price = await this.stripe.prices.create({
+      unit_amount: data?.amount * 100, // Amount in cents
+      currency: data.currency,
+      recurring: {
+        interval: 'month', // or 'year' for yearly subscriptions
+        interval_count: 1, // Number of intervals (e.g., 1 month)
+      },
+      product: product.id,
+    });
+    
+    data.stripe_product_id = product.id;
+    data.stripe_price_id = price.id;
+
+    const result = await this.service.updateById(req.params.id, data);
+
+    sendResponse(res, {
+      code: StatusCodes.OK,
+      data: result,
+      message: `${this.modelName} updated successfully`,
+      success: true,
+    });
+  });
+  */
+
+
+
+  // add more methods here if needed or override the existing ones
+}

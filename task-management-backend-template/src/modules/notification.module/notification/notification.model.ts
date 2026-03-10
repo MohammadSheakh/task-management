@@ -256,20 +256,6 @@ notificationSchema.methods.markAsRead = async function (): Promise<void> {
   await this.save();
 };
 
-/**
- * Check if notification is unread
- */
-notificationSchema.methods.isUnread = function (): boolean {
-  return this.status !== NOTIFICATION_STATUS.READ && !this.readAt;
-};
-
-/**
- * Check if notification is scheduled
- */
-notificationSchema.methods.isScheduled = function (): boolean {
-  return !!this.scheduledFor && this.scheduledFor > new Date();
-};
-
 // ─── Static Methods ──────────────────────────────────────────────────
 /**
  * Get unread count for a user
@@ -400,6 +386,6 @@ notificationSchema.set('toObject', {
 
 // ─── Export Model ────────────────────────────────────────────────────
 export const Notification = model<INotificationDocument, INotificationModel>(
-  'Notification',
+  'notificationFixed',
   notificationSchema
 );

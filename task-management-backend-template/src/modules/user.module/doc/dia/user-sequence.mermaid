@@ -1,0 +1,54 @@
+sequenceDiagram
+    participant U as User
+    participant FE as Frontend
+    participant API as API Gateway
+    participant Auth as Auth Controller
+    participant UserSvc as User Service
+    participant Cache as Redis Cache
+    participant DB as MongoDB
+    participant Email as Email Service
+
+    U->>FE: Open App
+    FE->>API: GET /user/profile
+    API->>Cache: Get user:userId:profile
+
+    alt Cache Hit
+        Cache-->>API: Return cached profile
+        API-->>FE: Return profile data
+        FE-->>U: Display profile
+    else Cache Miss
+        Cache-->>API: Miss
+        API->>UserSvc: getUserById
+        UserSvc->>DB: FindOne with .lean
+        DB-->>UserSvc: User document
+        UserSvc->>Cache: Set user:userId:profile TTL=15min
+        Cache-->>UserSvc: OK
+        UserSvc-->>API: Return user data
+        API-->>FE: Return profile data
+        FE-->>U: Display profile
+    end
+
+    U->>FE: Update Profile
+    FE->>API: PUT /user/profile
+    API->>Auth: authenticate
+    Auth->>Cache: Get session:userId
+    Cache-->>Auth: Valid session
+    Auth-->>API: Authenticated
+
+    API->>UserSvc: updateUser
+    UserSvc->>DB: FindOneAndUpdate
+    DB-->>UserSvc: Updated user
+    UserSvc->>Cache: Del user:userId:profile
+    Cache-->>UserSvc: OK
+    UserSvc-->>API: Return updated user
+    API-->>FE: Return success
+    FE-->>U: Show updated profile
+
+    U->>FE: Logout
+    FE->>API: POST /auth/logout
+    API->>UserSvc: invalidateSession
+    UserSvc->>Cache: Del session:userId:*
+    Cache-->>UserSvc: OK
+    UserSvc-->>API: Logout success
+    API-->>FE: Return success
+    FE-->>U: Show login screen

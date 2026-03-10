@@ -1,0 +1,100 @@
+flowchart TD
+    subgraph PrimaryUser["👤 Primary User (Parent/Teacher)"]
+        Start([Start]) --> ViewDashboard[View Team Dashboard]
+        ViewDashboard --> ViewTeamMembers[View Team Members]
+        ViewTeamMembers --> CreateMember[Create Member/Child]
+        CreateMember --> FillMemberDetails[Fill Member Details]
+        FillMemberDetails --> SetSupportMode[Set Support Mode]
+        SetSupportMode --> CreateAccount[Create Account]
+        
+        ViewTeamMembers --> EditMember[Edit Member]
+        EditMember --> UpdateProfile[Update Profile]
+        
+        ViewTeamMembers --> ViewMemberTasks[View Member's Tasks]
+        
+        ViewDashboard --> TaskManagement[Task Management]
+        TaskManagement --> CreateTask[Create Task]
+        CreateTask --> TaskType{Task Type?}
+        TaskType -->|Single Assignment| AssignOne[Assign to One Member]
+        TaskType -->|Collaborative| AssignMultiple[Assign to Multiple Members]
+        TaskType -->|Personal| AssignSelf[Assign to Self]
+        
+        ViewDashboard --> ViewLiveActivity[View Live Activity Feed]
+        
+        ViewDashboard --> ManagePermissions[Manage Permissions]
+        ManagePermissions --> ToggleSecondaryTasks[Toggle: Allow Secondary to Create Tasks]
+        ToggleSecondaryTasks --> GrantIndividualPermission[Grant/Revoke Individual Permissions]
+    end
+
+    subgraph SecondaryUser["👥 Secondary User (Child/Member)"]
+        Onboard["Onboarding: Choose Support Style"] --> SelectMode[Select: Calm/Encouraging/Logical]
+        SelectMode --> Home[View Home Screen]
+        Home --> ViewDailyProgress[View Daily Progress]
+        ViewDailyProgress --> ViewTasks[View Assigned Tasks]
+        ViewTasks --> StartTask[Start Task]
+        StartTask --> WorkOnTask[Work on Task]
+        WorkOnTask --> AddSubtask[Add Subtasks]
+        AddSubtask --> CompleteSubtask[Complete Subtasks]
+        CompleteSubtask --> MarkTaskComplete[Mark Task Complete]
+        
+        Home --> CheckPermission{Has Task Permission?}
+        CheckPermission -->|Yes| CreateOwnTask[Create Task for Others]
+        CheckPermission -->|No| CreatePersonalOnly[Create Personal Task for Self Only]
+        
+        ViewTasks --> ViewStatus[View Status Section]
+        ViewStatus --> FilterByStatus[Filter: Pending/In Progress/Completed]
+        FilterByStatus --> ViewTaskDetails[View Task Details]
+        ViewTaskDetails --> TrackSubtaskProgress[Track Subtask Progress]
+        
+        SecondaryUser --> ViewProfile[View Profile]
+        ViewProfile --> EditPersonalInfo[Edit Personal Information]
+        EditPersonalInfo --> ChangeSupportMode[Change Support Mode]
+        ChangeSupportMode --> SetNotificationStyle[Set Notification Style]
+        SetNotificationStyle --> SavePreference[Save Preference]
+    end
+
+    subgraph System["⚙️ System"]
+        CreateMember --> ValidateMemberData[Validate Member Data]
+        ValidateMemberData --> CreateMemberAccount[Create Member Account]
+        CreateMemberAccount --> SaveToDB[Save to Database]
+        SaveToDB --> AddToGroup[Add to Group as Secondary User]
+        AddToGroup --> UpdateMemberCount[Update Member Count]
+        UpdateMemberCount --> CacheInvalidation[Invalidate Cache]
+        
+        CreateTask --> ValidateTaskData[Validate Task Data]
+        ValidateTaskData --> SaveTask[Save Task to Database]
+        SaveTask --> TriggerNotification[Trigger Notification]
+        TriggerNotification --> NotifyAssignees[Notify Assignees]
+        
+        MarkTaskComplete --> UpdateTaskStatus[Update Task Status]
+        UpdateTaskStatus --> UpdateProgress[Update Progress Bar]
+        UpdateProgress --> AddToLiveActivity[Add to Live Activity Feed]
+        AddToLiveActivity --> NotifyPrimaryUser[Notify Primary User]
+        
+        ToggleSecondaryTasks --> UpdatePermissionDB[Update Permission in DB]
+        GrantIndividualPermission --> UpdateIndividualPerm[Update Individual Permissions]
+        
+        CreateOwnTask --> CheckPermissionDB[Check Permission in DB]
+        CheckPermissionDB -->|Has Permission| AllowTaskCreation[Allow Task Creation]
+        CheckPermissionDB -->|No Permission| RestrictToSelf[Restrict to Self Only]
+        
+        NotifyPrimaryUser --> ShowInDashboard[Show in Dashboard]
+        ShowInDashboard --> UpdateLiveActivity[Update Live Activity Feed]
+    end
+
+    AssignOne --> SaveTask
+    AssignMultiple --> SaveTask
+    AssignSelf --> SaveTask
+    
+    CreatePersonalOnly --> ValidatePersonalTask[Validate: Self Assignment Only]
+    ValidatePersonalTask --> SaveTask
+    
+    AllowTaskCreation --> TaskType
+    
+    NotifyAssignees -.->|Push Notification| SecondaryUser
+    NotifyPrimaryUser -.->|Real-time Update| PrimaryUser
+
+    %% Styling - Matching task-swimlane style
+    style PrimaryUser fill:#E3F2FD,stroke:#1976D2,stroke-width:3px
+    style SecondaryUser fill:#E8F5E9,stroke:#388E3C,stroke-width:3px
+    style System fill:#FFF3E0,stroke:#F57C00,stroke-width:3px

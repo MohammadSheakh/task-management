@@ -13,7 +13,7 @@ export type TProfileImage = {
 export interface IUser extends Document {
   _userId: undefined | Types.ObjectId;
   _id:  undefined; // Types.ObjectId |
-  profileId : Types.ObjectId | undefined; 
+  profileId : Types.ObjectId | undefined;
   name: string;
   email: string;
   role: Role;
@@ -27,7 +27,21 @@ export interface IUser extends Document {
   lockUntil: Date | undefined;
 
 
-  walletId?: Types.ObjectId;
+  //---------- This project have no wallet feature
+  // walletId?: Types.ObjectId;
+
+  /**
+   * ID of the user who created this account
+   * For children accounts: references the parent business user
+   * For individual/business users: null (self-registered)
+   */
+  accountCreatorId?: Types.ObjectId | null;
+
+  /**
+   * Is this user a business user who can have children?
+   * Set to true when user purchases business subscription
+   */
+  isBusinessUser?: boolean;
 
   isDeleted: boolean;
   deletedAt: Date | null;

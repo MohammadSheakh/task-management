@@ -3,8 +3,8 @@ import { StatusCodes } from 'http-status-codes';
 import { GenericController } from '../../_generic-module/generic.controller';
 import { SubTask } from './subTask.model';
 import { ISubTask } from './subTask.interface';
-import { SubTaskService } from './subTask.service';
 import ApiError from '../../../errors/ApiError';
+import { SubTaskService } from './subtask.service';
 
 /**
  * SubTask Controller

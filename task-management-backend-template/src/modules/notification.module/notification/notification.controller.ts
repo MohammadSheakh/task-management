@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
-import { GenericController } from '../../../_generic-module/generic.controller';
+import { GenericController } from '../../_generic-module/generic.controller';
 import { Notification } from './notification.model';
 import { INotificationDocument } from './notification.interface';
 import { NotificationService } from './notification.service';
@@ -260,6 +260,37 @@ export class NotificationController extends GenericController<typeof Notificatio
       code: StatusCodes.CREATED,
       data: result,
       message: 'Reminder scheduled successfully',
+      success: true,
+    });
+  };
+
+  // ────────────────────────────────────────────────────────────────────────
+  // Figma-Aligned Controllers: Live Activity Feed
+  // ────────────────────────────────────────────────────────────────────────
+
+  /** ----------------------------------------------
+   * @role User (Primary/Secondary)
+   * @Section Dashboard
+   * @module Notification
+   * @figmaIndex 01
+   * @desc Get live activity feed for group (Figma: dashboard-flow-01.png)
+   *----------------------------------------------*/
+  getLiveActivityFeed = async (req: Request, res: Response) => {
+    const groupId = req.params.groupId;
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      throw new ApiError(StatusCodes.UNAUTHORIZED, 'User not authenticated');
+    }
+
+    const limit = parseInt(req.query.limit as string) || 10;
+
+    const result = await this.notificationService.getLiveActivityFeed(groupId, limit);
+
+    (res as any).sendResponse({
+      code: StatusCodes.OK,
+      data: result,
+      message: 'Live activity feed retrieved successfully',
       success: true,
     });
   };

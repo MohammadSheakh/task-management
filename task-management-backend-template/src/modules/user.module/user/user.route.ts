@@ -235,6 +235,41 @@ router.route('/profile-picture').put(
   controller.updateProfileImageSeparately
 )
 
+/*-─────────────────────────────────
+|  User | Profile | 06-03 | Get support mode preference
+|  @module UserProfile
+|  @figmaIndex 06-03
+|  @desc Get user's support mode (calm/encouraging/logical)
+└──────────────────────────────────*/
+router.route('/support-mode').get(
+  auth(TRole.common),
+  controller.getSupportMode
+);
+
+/*-─────────────────────────────────
+|  User | Profile | 06-03 | Update support mode preference
+|  @module UserProfile
+|  @figmaIndex 06-03
+|  @desc Update user's support mode (calm/encouraging/logical)
+└──────────────────────────────────*/
+router.route('/support-mode').put(
+  auth(TRole.common),
+  validateRequest(validation.updateSupportModeValidationSchema),
+  controller.updateSupportMode
+);
+
+/*-─────────────────────────────────
+|  User | Profile | 06-03 | Update notification style preference
+|  @module UserProfile
+|  @figmaIndex 06-03
+|  @desc Update user's notification style (gentle/firm/xyz)
+└──────────────────────────────────*/
+router.route('/notification-style').put(
+  auth(TRole.common),
+  validateRequest(validation.updateNotificationStyleValidationSchema),
+  controller.updateNotificationStyle
+);
+
 router.route('/update/:id').put(
   //auth('common'),
   // validateRequest(validation.createHelpMessageValidationSchema),
@@ -253,7 +288,7 @@ router.route('/delete/:id').delete(
 ); // FIXME : change to admin
 
 /*-─────────────────────────────────
-|  As per toky vai's requirement.. 
+|  As per toky vai's requirement..
 └──────────────────────────────────*/
 router.route('/softDelete/:id').put(
   auth(TRole.commonUser),
