@@ -6,6 +6,8 @@ erDiagram
     TASK ||--o{ TASK_REMINDER : "has reminders"
     TASK ||--o{ NOTIFICATION : "triggers"
     TASK ||--o{ ATTACHMENT : "has attachments"
+    USER ||--o{ TASK : "tracks start time for preferred time"
+    USER ||--o| TASK : "provides suggestion for scheduledTime"
 
     TASK {
         ObjectId _id PK
@@ -13,19 +15,15 @@ erDiagram
         String description
         ObjectId groupId FK "Reference to group"
         ObjectId createdById FK "Task creator"
-        ObjectId assigneeId FK "Assigned user"
-        String status "pending|in_progress|under_review|completed|cancelled"
-        String priority "low|medium|high|urgent"
+        ObjectId ownerUserId FK "Task owner"
+        String taskType "personal|singleAssignment|collaborative"
+        ObjectId[] assignedUserIds FK "Assigned users"
+        String status "pending|inProgress|completed"
+        String priority "low|medium|high"
+        DateTime startTime "When task was actually started"
+        String scheduledTime "When task was scheduled for (suggested)"
+        DateTime completedTime "When completed"
         DateTime dueDate "Task deadline"
-        DateTime completionDate "When completed"
-        String[] tags "Search tags"
-        Mixed customFields "Extensibility"
-        Int progress "0-100 percentage"
-        Boolean isRecurring "Recurring task flag"
-        String recurrencePattern "daily|weekly|monthly"
-        ObjectId parentTaskId FK "For subtasks"
-        Int subTaskCount "Cached count"
-        Mixed metadata "Additional data"
         Boolean isDeleted "Soft delete"
         DateTime createdAt "Creation timestamp"
         DateTime updatedAt "Update timestamp"
@@ -35,22 +33,20 @@ erDiagram
         ObjectId _id PK
         ObjectId taskId FK "Parent task"
         String title
-        String description
-        String status "pending|in_progress|completed"
-        ObjectId assigneeId FK
-        DateTime dueDate
+        Boolean isCompleted
+        String duration
+        DateTime completedAt
         Int order "Display order"
-        Boolean isDeleted
-        DateTime createdAt
-        DateTime updatedAt
     }
 
     USER {
         ObjectId _id PK
         String name
         String email
-        String role
+        String role "child|business|admin"
         String profileImage
+        String preferredTime "Auto-calculated HH:mm format"
+        Boolean isDeleted
     }
 
     GROUP {
@@ -90,11 +86,9 @@ erDiagram
     }
 
     %% Indexes
-    %% createdById_1_isDeleted_1
-    %% assigneeId_1_status_1_isDeleted_1
+    %% createdById_1_status_1_isDeleted_1_startTime_-1
+    %% ownerUserId_1_status_1_isDeleted_1_startTime_-1
+    %% assignedUserIds_1_status_1_isDeleted_1
     %% groupId_1_status_1_isDeleted_1
-    %% dueDate_1_status_1_isDeleted_1
-    %% status_1_isDeleted_1_createdAt_-1
-    %% parentTaskId_1_isDeleted_1_order_1
-    %% tags_1_isDeleted_1
-    %% text index: title, description
+    %% startTime_1_isDeleted_1
+    %% preferredTime_1_isDeleted_1 (User collection)

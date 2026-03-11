@@ -75,7 +75,10 @@ export interface ITask {
   /** When the task was created */
   createdAt?: Date;
 
-  /** When the task is scheduled to start */
+  /** When the task is scheduled to start (parent sets this) */
+  scheduledTime?: string;
+
+  /** When the task was actually started by user (used for preferred time calculation) */
   startTime: Date;
 
   /** When the task was actually completed */

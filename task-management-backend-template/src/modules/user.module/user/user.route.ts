@@ -270,6 +270,34 @@ router.route('/notification-style').put(
   controller.updateNotificationStyle
 );
 
+/*-─────────────────────────────────
+|  Child | Business | User | Profile | profile-permission-account-interface.png | Get preferred working time
+|  @module User
+|  @figmaIndex profile-permission-account-interface.png
+|  @desc Get user's preferred time for working on tasks (HH:mm format)
+|  @auth All authenticated users (child, business)
+|  @rateLimit 100 requests per minute
+└──────────────────────────────────*/
+router.route('/preferred-time').get(
+  auth(TRole.commonUser),
+  controller.getPreferredTime
+);
+
+/*-─────────────────────────────────
+|  Child | Business | User | Profile | profile-permission-account-interface.png | Update preferred working time
+|  @module User
+|  @figmaIndex profile-permission-account-interface.png
+|  @desc Update user's preferred time for working on tasks (HH:mm 24-hour format)
+|  @auth All authenticated users (child, business)
+|  @rateLimit 20 requests per hour (prevent frequent changes)
+|  @validation HH:mm format (24-hour), range: 05:00-23:00
+└──────────────────────────────────*/
+router.route('/preferred-time').put(
+  auth(TRole.commonUser),
+  validateRequest(validation.updatePreferredTimeValidationSchema),
+  controller.updatePreferredTime
+);
+
 router.route('/update/:id').put(
   //auth('common'),
   // validateRequest(validation.createHelpMessageValidationSchema),

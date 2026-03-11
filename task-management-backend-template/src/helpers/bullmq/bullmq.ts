@@ -448,6 +448,78 @@ export const startNotifyParticipantsWorker = () => {
 
       return { notified: participantIds.filter(id => id !== senderId) };
     },
+
+    { connection: redisPubClient.options }
+  );
+
+  worker.on('completed', (job) =>
+    logger.info(`✅ Chat notification job ${job.id} completed`)
+  );
+  worker.on('failed', (job, err) =>
+    errorLogger.error(`❌ Chat notification job ${job?.id} failed`, err)
+  );
+};
+
+/*-─────────────────────────────────
+|  Preferred Time Calculation Queue
+└──────────────────────────────────*/
+export const preferredTimeQueue = new Queue('preferredTimeQueue', {
+  connection: redisPubClient.options,
+  defaultJobOptions: {
+    attempts: 3,
+    backoff: {
+      type: 'exponential',
+      delay: 2000,
+    },
+    removeOnComplete: { count: 100 },
+    removeOnFail: { count: 500 },
+  },
+});
+
+interface IPreferredTimeJob {
+  userId: string;
+}
+
+export const startPreferredTimeWorker = () => {
+  const worker = new Worker(
+    'preferredTimeQueue',
+    async (job: IPreferredTimeJob) => {
+      const { userId } = job;
+      logger.info(`⏰ Processing preferred time calculation for user ${userId}`);
+
+      try {
+        // Import TaskService dynamically to avoid circular dependency
+        const { TaskService } = await import('../../modules/task.module/task/task.service');
+        const taskService = new TaskService();
+
+        const preferredTime = await taskService.calculateAndUpdatePreferredTime(
+          new mongoose.Types.ObjectId(userId)
+        );
+
+        if (preferredTime) {
+          logger.info(`✅ Preferred time updated for user ${userId}: ${preferredTime}`);
+        } else {
+          logger.info(`⚠️ Insufficient data for preferred time calculation (user: ${userId})`);
+        }
+
+        return { success: true, preferredTime };
+
+      } catch (error) {
+        errorLogger.error(`❌ Preferred time calculation failed for user ${userId}:`, error);
+        throw error;
+      }
+    },
+    { connection: redisPubClient.options }
+  );
+
+  worker.on('completed', (job) =>
+    logger.info(`✅ Preferred time job ${job.id} completed`)
+  );
+  worker.on('failed', (job, err) =>
+    errorLogger.error(`❌ Preferred time job ${job?.id} failed`, err)
+  );
+};
+
     { connection: redisPubClient.options }
   );
 

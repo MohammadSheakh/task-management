@@ -8,6 +8,7 @@ import { TRole } from '../../../middlewares/roles';
 import ApiError from '../../../errors/ApiError';
 import { GroupMember } from '../../group.module/groupMember/groupMember.model';
 import { SubTaskService } from '../subTask/subTask.service';
+import { logger, errorLogger } from '../../../shared/logger';
 
 
 /**
@@ -182,6 +183,29 @@ export class TaskController extends GenericController<typeof Task, ITask> {
     }
 
     const result = await this.taskService.updateTaskStatus(taskId, status, userId);
+
+    // ⏰ Trigger preferred time calculation if task is completed
+    if (status === 'completed') {
+      try {
+        // Import dynamically to avoid circular dependency
+        const { preferredTimeQueue } = await import('../../../helpers/bullmq/bullmq');
+        
+        // Add job to queue (async, don't wait)
+        preferredTimeQueue.add('calculatePreferredTime', {
+          userId: userId.toString()
+        }, {
+          jobId: `preferred-time:${userId}:${Date.now()}`,
+          removeOnComplete: true,
+          removeOnFail: true,
+        });
+        
+        // Don't wait for completion - fire and forget
+        logger.info(`⏰ Queued preferred time calculation for user ${userId}`);
+      } catch (error) {
+        errorLogger.error('Failed to queue preferred time calculation:', error);
+        // Don't fail the request - preferred time calculation is non-critical
+      }
+    }
 
     (res as any).sendResponse({
       code: StatusCodes.OK,
@@ -423,6 +447,51 @@ export class TaskController extends GenericController<typeof Task, ITask> {
       code: StatusCodes.OK,
       data: result,
       message: 'Daily progress retrieved successfully',
+      success: true,
+    });
+  };
+
+  // ────────────────────────────────────────────────────────────────────────
+  // Preferred Time Suggestion for Task Scheduling
+  // ────────────────────────────────────────────────────────────────────────
+
+  /** ----------------------------------------------
+   * @role Child | Business | User
+   * @Section Task Creation
+   * @module Task
+   * @figmaIndex create-task-flow.png
+   * @desc Get preferred time suggestion for task scheduling
+   * @query assignedUserId - Optional: Get suggestion for assignee (parent creating for child)
+   *----------------------------------------------*/
+  getPreferredTimeSuggestion = async (req: Request, res: Response) => {
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      throw new ApiError(StatusCodes.UNAUTHORIZED, 'User not authenticated');
+    }
+
+    const assignedUserId = req.query.assignedUserId as string;
+
+    const assignedUserIds = assignedUserId
+      ? [new Types.ObjectId(assignedUserId)]
+      : undefined;
+
+    const result = await this.taskService.getPreferredTimeSuggestion(
+      new Types.ObjectId(userId),
+      assignedUserIds
+    );
+
+    if (!result) {
+      throw new ApiError(
+        StatusCodes.NOT_FOUND,
+        'Unable to calculate preferred time suggestion'
+      );
+    }
+
+    (res as any).sendResponse({
+      code: StatusCodes.OK,
+      data: result,
+      message: 'Preferred time suggestion retrieved successfully',
       success: true,
     });
   };

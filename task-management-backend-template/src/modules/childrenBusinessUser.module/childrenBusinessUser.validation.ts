@@ -112,6 +112,20 @@ export const getChildrenValidationSchema = z.object({
   }),
 });
 
+/**
+ * Validation schema for updating child permissions
+ * Figma: dashboard-flow-03.png (Permissions section)
+ * Secondary User designation
+ */
+export const updateChildPermissionsValidationSchema = z.object({
+  body: z.object({
+    isSecondaryUser: z.boolean(),
+  }),
+  params: z.object({
+    childId: z.string().uuid('Invalid child ID format'),
+  }),
+});
+
 /*-─────────────────────────────────
 |  Export all validation schemas
 └──────────────────────────────────*/
@@ -120,4 +134,5 @@ export const childrenBusinessUserValidation = {
   updateChildValidationSchema,
   removeChildValidationSchema,
   getChildrenValidationSchema,
+  updateChildPermissionsValidationSchema,
 };

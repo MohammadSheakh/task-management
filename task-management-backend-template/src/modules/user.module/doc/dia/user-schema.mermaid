@@ -7,17 +7,20 @@ erDiagram
     User ||--o{ Group : "belongs to"
     User ||--o{ Notification : "receives"
     User ||--o{ OAuthAccount : "links"
+    User ||--o{ Task : "tracks start time for preferred time"
+    User ||--o| Task : "provides suggestion for scheduledTime"
 
     User {
         ObjectId _id PK
         ObjectId profileId FK
         String name
         String email UK
-        String role
+        String role "child|business|admin"
         String password
         Object profileImage
         Boolean isEmailVerified
         String phoneNumber
+        String preferredTime "Auto-calculated HH:mm format"
         Object calendly
         String authProvider
         Date lastPasswordChange
@@ -38,8 +41,8 @@ erDiagram
         String location
         Date dob
         Mixed gender
-        String supportMode
-        String notificationStyle
+        String supportMode "calm|encouraging|logical"
+        String notificationStyle "gentle|firm|xyz"
         Boolean isDeleted
     }
 
@@ -91,3 +94,8 @@ erDiagram
         Date createdAt
         Date updatedAt
     }
+
+    %% Indexes
+    %% preferredTime_1_isDeleted_1 (for scheduling queries)
+    %% email_1_isDeleted_1
+    %% role_1_isDeleted_1

@@ -9,7 +9,7 @@ import { TRole } from '../../../middlewares/roles';
 import { setQueryOptions } from '../../../middlewares/setQueryOptions';
 import { getLoggedInUserAndSetReferenceToUser } from '../../../middlewares/getLoggedInUserAndSetReferenceToUser';
 import * as validation from './task.validation';
-import { verifyTaskAccess, verifyTaskOwnership, validateTaskTypeConsistency, validateStatusTransition, checkDailyTaskLimit } from './task.middleware';
+import { verifyTaskAccess, verifyTaskOwnership, validateTaskTypeConsistency, validateStatusTransition, checkDailyTaskLimit, checkSecondaryUserPermission } from './task.middleware';
 
 import { SubTaskRoute } from '../subTask/subTask.route';
 
@@ -64,15 +64,17 @@ const paginationOptions: Array<'sortBy' | 'page' | 'limit' | 'populate'> = [
 const controller = new TaskController();
 
 /*-─────────────────────────────────
-|  Child | Business | Task | edit-update-task-flow.png | Create a new task
+|  Child (Secondary) | Business | Task | edit-update-task-flow.png | Create a new task
 |  @desc Create personal, single assignment, or collaborative task
-|  @auth All authenticated users (child, business)
+|  @auth Business users always allowed
+|  @auth Child users need Secondary User permission
 |  @rateLimit 20 requests per hour (prevents spam)
-|  @permission Child users need explicit permission for group/collaborative tasks
+|  @permission Only Secondary User children can create tasks
 └──────────────────────────────────*/
 router.route('/').post(
   auth(TRole.commonUser),
   createTaskLimiter,
+  checkSecondaryUserPermission,  // ⬅️ NEW: Check Secondary User status
   validateRequest(validation.createTaskValidationSchema),
   validateTaskTypeConsistency,
   checkDailyTaskLimit,
@@ -255,6 +257,18 @@ router.use('/:id', SubTaskRoute);
 router.route('/daily-progress').get(
   auth(TRole.commonUser),
   controller.getDailyProgress
+);
+
+/*-─────────────────────────────────
+|  Child | Business | User | Task | create-task-flow.png | Get preferred time suggestion
+|  @desc Get AI-powered time suggestion for task scheduling based on user's task history
+|  @auth All authenticated users (child, business)
+|  @query assignedUserId - Optional: Get suggestion for assignee (parent creating for child)
+|  @returns Suggested time with confidence level and explanation
+└──────────────────────────────────*/
+router.route('/suggest-preferred-time').get(
+  auth(TRole.commonUser),
+  controller.getPreferredTimeSuggestion
 );
 
 export const TaskRoute = router;

@@ -123,4 +123,33 @@ router.get(
   controller.getStatistics
 );
 
+/*-─────────────────────────────────
+|  Business | ChildrenBusinessUser | dashboard-flow-03.png | Set Secondary User
+|  @desc Designate a child as Secondary User (Task Manager)
+|        Only ONE child per business user can be Secondary User
+|        Secondary User can create tasks and assign to family members
+|  @auth Business user (parent/teacher) only
+|  @rateLimit 20 requests per hour (prevent frequent changes)
+└──────────────────────────────────*/
+router.put(
+  '/children/:childId/secondary-user',
+  auth(TRole.business),
+  childrenLimiter,
+  validateRequest(validation.updateChildPermissionsValidationSchema),
+  controller.setSecondaryUser
+);
+
+/*-─────────────────────────────────
+|  Business | ChildrenBusinessUser | dashboard-flow-03.png | Get Secondary User
+|  @desc Get the current Secondary User (Task Manager) for this business user
+|  @auth Business user (parent/teacher) only
+|  @rateLimit 100 requests per minute
+└──────────────────────────────────*/
+router.get(
+  '/secondary-user',
+  auth(TRole.business),
+  childrenLimiter,
+  controller.getSecondaryUser
+);
+
 export const ChildrenBusinessUserRoute = router;

@@ -460,4 +460,118 @@ export class ChildrenBusinessUserService extends GenericService<typeof ChildrenB
 
     await this.invalidateCache(businessUserId, childUserId);
   }
+
+  // ────────────────────────────────────────────────────────────────────────
+  // Secondary User Management
+  // Figma: dashboard-flow-03.png (Permissions section)
+  // Only ONE child per business user can be Secondary User
+  // ────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Set/Unset child as Secondary User
+   * Only ONE child per business user can be Secondary User
+   * 
+   * @param businessUserId - Parent/Teacher business user ID
+   * @param childUserId - Child user ID
+   * @param isSecondaryUser - true to set, false to unset
+   * @returns Updated secondary user status
+   */
+  async setSecondaryUser(
+    businessUserId: string,
+    childUserId: string,
+    isSecondaryUser: boolean
+  ): Promise<{
+    childUserId: string;
+    isSecondaryUser: boolean;
+    updatedAt: Date;
+  }> {
+    // If setting as secondary user, ensure no other child is already secondary
+    if (isSecondaryUser) {
+      const existingSecondary = await this.model.findOne({
+        parentBusinessUserId: new Types.ObjectId(businessUserId),
+        isSecondaryUser: true,
+        childUserId: { $ne: new Types.ObjectId(childUserId) },
+        isDeleted: false,
+      });
+
+      if (existingSecondary) {
+        throw new ApiError(
+          StatusCodes.BAD_REQUEST,
+          'Another child is already the Secondary User. Please remove them first.'
+        );
+      }
+    }
+
+    const result = await this.model.findOneAndUpdate(
+      {
+        parentBusinessUserId: new Types.ObjectId(businessUserId),
+        childUserId: new Types.ObjectId(childUserId),
+        isDeleted: false,
+      },
+      { isSecondaryUser },
+      { new: true, runValidators: true }
+    ).select('isSecondaryUser updatedAt');
+
+    if (!result) {
+      throw new ApiError(
+        StatusCodes.NOT_FOUND,
+        'Child account not found or not associated with this business user'
+      );
+    }
+
+    // Invalidate cache
+    await this.invalidateCache(businessUserId, childUserId);
+
+    logger.info(`Set child ${childUserId} as Secondary User: ${isSecondaryUser}`);
+
+    return {
+      childUserId,
+      isSecondaryUser,
+      updatedAt: result.updatedAt,
+    };
+  }
+
+  /**
+   * Get Secondary User for a business user
+   * 
+   * @param businessUserId - Business user ID
+   * @returns Secondary user info or null if none
+   */
+  async getSecondaryUser(businessUserId: string): Promise<{
+    childUserId: string | null;
+    isSecondaryUser: boolean;
+  } | null> {
+    const relationship = await this.model.findOne({
+      parentBusinessUserId: new Types.ObjectId(businessUserId),
+      isSecondaryUser: true,
+      isDeleted: false,
+      status: CHILDREN_BUSINESS_USER_STATUS.ACTIVE,
+    }).select('childUserId').lean();
+
+    if (!relationship) {
+      return null;
+    }
+
+    return {
+      childUserId: relationship.childUserId.toString(),
+      isSecondaryUser: true,
+    };
+  }
+
+  /**
+   * Check if a child is Secondary User
+   * 
+   * @param childUserId - Child user ID
+   * @returns true if child is Secondary User
+   */
+  async isChildSecondaryUser(childUserId: string): Promise<boolean> {
+    const relationship = await this.model.exists({
+      childUserId: new Types.ObjectId(childUserId),
+      isSecondaryUser: true,
+      isDeleted: false,
+      status: CHILDREN_BUSINESS_USER_STATUS.ACTIVE,
+    });
+
+    return !!relationship;
+  }
 }

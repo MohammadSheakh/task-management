@@ -43,6 +43,14 @@ export interface IUser extends Document {
    */
   isBusinessUser?: boolean;
 
+  /**
+   * User's preferred working time for tasks
+   * Format: "HH:mm" (24-hour format, e.g., "08:30" for 8:30 AM)
+   * Used for optimal task scheduling and notifications
+   * Default: "07:00" (7:00 AM)
+   */
+  preferredTime?: string;
+
   isDeleted: boolean;
   deletedAt: Date | null;
 

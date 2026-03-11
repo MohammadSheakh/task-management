@@ -126,8 +126,22 @@ const userSchema = new Schema<IUser, UserModal>(
     accountCreatorId : {
       type: Types.ObjectId,
       ref: 'User',
-      required: false, // user and admin dont need any wallet .. only provider need wallet 
+      required: false, // user and admin dont need any wallet .. only provider need wallet
       default: null,
+    },
+
+    /*-─────────────────────────────────
+    |  Preferred Time for Task Working
+    |  Format: "HH:mm" (24-hour format, e.g., "08:30")
+    |  Default: "07:00" (7:00 AM)
+    └──────────────────────────────────*/
+    preferredTime: {
+      type: String,
+      default: "07:00",
+      match: [
+        /^([01]\d|2[0-3]):([0-5]\d)$/,
+        'Preferred time must be in HH:mm format (24-hour)',
+      ],
     },
 
     isDeleted: {
@@ -213,6 +227,9 @@ userSchema.index({ walletId: 1, isDeleted: 1 });
 
 // Index for Calendly integration
 userSchema.index({ 'calendly.userId': 1 }, { sparse: true });
+
+// Index for preferred time queries (task scheduling optimization)
+userSchema.index({ preferredTime: 1, isDeleted: 1 });
 
 // Text index for search (if needed in future)
 // userSchema.index({ name: 'text', email: 'text' });

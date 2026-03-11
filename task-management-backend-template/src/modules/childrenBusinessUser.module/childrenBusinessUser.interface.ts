@@ -11,8 +11,14 @@ export type TChildrenBusinessUserStatus = 'active' | 'inactive' | 'removed';
  * Children Business User Interface
  * Defines the relationship between a business user (parent) and child account
  *
- * @version 1.0.0
+ * @version 2.0.0
  * @author Senior Engineering Team
+ * 
+ * @note Only ONE child per business user can be the Secondary User
+ * Secondary User has special privileges:
+ * - Can create tasks for the family
+ * - Can assign tasks to parent/teacher and other children
+ * - Acts as a "Task Manager" for the family
  */
 export interface IChildrenBusinessUser {
   parentBusinessUserId: Types.ObjectId;
@@ -20,6 +26,10 @@ export interface IChildrenBusinessUser {
   addedAt: Date;
   addedBy: Types.ObjectId;
   status: TChildrenBusinessUserStatus;
+  
+  // Secondary User Flag (Only ONE per business user can be true)
+  isSecondaryUser: boolean;
+  
   note?: string;
   isDeleted: boolean;
   createdAt?: Date;

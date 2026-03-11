@@ -3,7 +3,8 @@ flowchart LR
         TaskCreated[Task Created]
         TaskAssigned[Task Assigned]
         DeadlineApproaching[Deadline Near]
-        TaskCompleted[Task Completed]
+        TaskCompleted[Task Completed ⭐]
+        SuggestionRequested[⏰ Suggestion Requested]
     end
 
     subgraph Processing["⚙️ Processing"]
@@ -11,6 +12,8 @@ flowchart LR
         RuleEngine[Notification Rules]
         TemplateEngine[Template Engine]
         ChannelRouter[Channel Router]
+        PrefTimeCalc[⏰ Preferred Time Calc]
+        PrefSuggestion[⏰ Suggestion Generator]
     end
 
     subgraph Delivery["📬 Delivery"]
@@ -18,12 +21,14 @@ flowchart LR
         Email[Email]
         Push[Push Notification]
         SMS[SMS]
+        SuggestionUI[Suggestion Dialog]
     end
 
     subgraph Tracking["📊 Tracking"]
         DeliveryStatus[Delivery Status]
         ReadStatus[Read Status]
         Analytics[Analytics]
+        PrefTimeUpdate[Update user.preferredTime]
     end
 
     TaskCreated --> EventPublisher
@@ -47,3 +52,17 @@ flowchart LR
 
     DeliveryStatus --> ReadStatus
     ReadStatus --> Analytics
+
+    TaskCompleted --> PrefTimeCalc
+    PrefTimeCalc --> PrefTimeUpdate
+
+    SuggestionRequested --> PrefSuggestion
+    PrefSuggestion --> SuggestionUI
+    SuggestionUI --> Delivery
+
+    style TaskCompleted fill:#9f9,stroke:#333,stroke-width:2px
+    style PrefTimeCalc fill:#f9f,stroke:#333,stroke-width:2px
+    style PrefTimeUpdate fill:#bbf,stroke:#333,stroke-width:2px
+    style SuggestionRequested fill:#9ff,stroke:#333,stroke-width:2px
+    style PrefSuggestion fill:#f9f,stroke:#333,stroke-width:2px
+    style SuggestionUI fill:#ff9,stroke:#333,stroke-width:2px

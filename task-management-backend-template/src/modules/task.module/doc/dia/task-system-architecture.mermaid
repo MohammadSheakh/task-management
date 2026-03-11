@@ -2,6 +2,8 @@ graph TB
     subgraph frontend["🖥️ Frontend"]
         FlutterApp[Flutter Mobile App]
         WebApp[React Website]
+        TaskCreation[Task Creation Screen]
+        SuggestionDialog[Suggestion Dialog UI]
     end
 
     subgraph api_gateway["🔌 API Gateway"]
@@ -12,6 +14,7 @@ graph TB
 
     subgraph backend["⚙️ Backend Services"]
         TaskModule[Task Module]
+        PrefSuggestion[⏰ Suggestion Service]
         GroupModule[Group Module]
         NotificationModule[Notification Module]
         UserModule[User Module]
@@ -21,10 +24,13 @@ graph TB
     subgraph async["🔄 Async Processing"]
         BullMQ[BullMQ Queues]
         Workers[Background Workers]
+        PrefTimeWorker[⏰ Preferred Time Worker]
     end
 
     subgraph data["💾 Data Layer"]
         MongoDB[MongoDB Database]
+        TaskDB[(Task Collection)]
+        UserDB[(User Collection)]
         Redis[Redis Cache]
         FileStorage[File Storage]
     end
@@ -45,6 +51,7 @@ graph TB
     NotificationModule --> BullMQ
 
     BullMQ --> Workers
+    BullMQ --> PrefTimeWorker
 
     TaskModule --> MongoDB
     TaskModule --> Redis
@@ -54,3 +61,25 @@ graph TB
     NotificationModule --> Redis
 
     AttachmentModule --> FileStorage
+
+    PrefTimeWorker --> TaskDB
+    PrefTimeWorker --> UserDB
+
+    TaskDB -.->|Get completed tasks | PrefTimeWorker
+    PrefTimeWorker -.->|Calculate average | PrefTimeWorker
+    PrefTimeWorker -.->|Update preferredTime | UserDB
+
+    %% Suggestion Flow
+    TaskCreation --> PrefSuggestion
+    PrefSuggestion --> UserDB
+    UserDB -.->|Get preferredTime | PrefSuggestion
+    PrefSuggestion -.->|Return suggestion | TaskCreation
+    PrefSuggestion -.->|Generate alternatives | PrefSuggestion
+
+    TaskCreation --> SuggestionDialog
+    SuggestionDialog --> FlutterApp
+
+    style PrefTimeWorker fill:#f9f,stroke:#333,stroke-width:2px
+    style UserDB fill:#bbf,stroke:#333,stroke-width:2px
+    style PrefSuggestion fill:#9ff,stroke:#333,stroke-width:2px
+    style SuggestionDialog fill:#ff9,stroke:#333,stroke-width:2px

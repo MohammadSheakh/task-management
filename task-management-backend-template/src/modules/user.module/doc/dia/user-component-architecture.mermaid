@@ -9,6 +9,7 @@ flowchart TB
             UserModel[user.model.ts]
             UserInterface[user.interface.ts]
             UserValidation[user.validation.ts]
+            PrefTimeEndpoint[⏰ preferredTime Service]
         end
 
         subgraph UserProfile["UserProfile Sub-module"]
@@ -52,6 +53,11 @@ flowchart TB
         RateLimitMiddleware[rateLimit.middleware.ts]
     end
 
+    subgraph Async["Async Processing"]
+        BullMQ[BullMQ Queue]
+        PrefWorker[⏰ Preferred Time Worker]
+    end
+
     subgraph External["External Dependencies"]
         Redis[Redis Cache]
         MongoDB[MongoDB]
@@ -59,6 +65,7 @@ flowchart TB
         FCM[Firebase Cloud Messaging]
         GoogleOAuth[Google OAuth]
         AppleOAuth[Apple OAuth]
+        TaskModule[Task Module]
     end
 
     UserRoute --> UserController
@@ -102,3 +109,17 @@ flowchart TB
     DevicesModel --> MongoDB
     RoleDataModel --> MongoDB
     OAuthModel --> MongoDB
+
+    %% Preferred Time Flow
+    PrefTimeEndpoint --> UserService
+    UserService --> UserCol[(User Collection)]
+    
+    TaskModule --> BullMQ
+    BullMQ --> PrefWorker
+    PrefWorker --> TaskCol[(Task Collection)]
+    PrefWorker --> UserCol
+
+    style PrefTimeEndpoint fill:#9ff,stroke:#333,stroke-width:2px
+    style PrefWorker fill:#f9f,stroke:#333,stroke-width:2px
+    style BullMQ fill:#ff9,stroke:#333,stroke-width:2px
+    style UserCol fill:#bbf,stroke:#333,stroke-width:2px

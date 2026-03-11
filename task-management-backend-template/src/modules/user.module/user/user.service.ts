@@ -958,6 +958,60 @@ export class UserService extends GenericService<typeof User, IUser> {
     };
   }
 
+  // ────────────────────────────────────────────────────────────────────────
+  // Preferred Time Management
+  // ────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Get user's preferred working time
+   * @param userId - User ID
+   * @returns Preferred time in HH:mm format
+   * @see Figma: profile-permission-account-interface.png (Preferred Time section)
+   */
+  async getPreferredTime(userId: string) {
+    const user = await User.findById(userId).select('preferredTime').lean();
+
+    if (!user) {
+      throw new ApiError(
+        StatusCodes.NOT_FOUND,
+        'User not found'
+      );
+    }
+
+    return {
+      userId,
+      preferredTime: user.preferredTime || '07:00',
+    };
+  }
+
+  /**
+   * Update user's preferred working time
+   * @param userId - User ID
+   * @param preferredTime - New preferred time in HH:mm format (24-hour)
+   * @returns Updated preferred time info
+   * @see Figma: profile-permission-account-interface.png (Preferred Time section)
+   */
+  async updatePreferredTime(userId: string, preferredTime: string) {
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { preferredTime },
+      { new: true, runValidators: true }
+    ).select('preferredTime updatedAt');
+
+    if (!user) {
+      throw new ApiError(
+        StatusCodes.NOT_FOUND,
+        'User not found'
+      );
+    }
+
+    return {
+      userId,
+      preferredTime: user.preferredTime,
+      updatedAt: user.updatedAt,
+    };
+  }
+
 }
 
 /*********

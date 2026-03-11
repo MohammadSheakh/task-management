@@ -64,3 +64,30 @@ export const updateNotificationStyleValidationSchema = z.object({
     }),
   }),
 });
+
+/**
+ * Preferred Time Validation Schema
+ * @see Figma: profile-permission-account-interface.png (Preferred Time section)
+ * Format: HH:mm in 24-hour format (e.g., "08:30" for 8:30 AM)
+ * Range: 05:00 - 23:00 (5 AM - 11 PM)
+ */
+export const updatePreferredTimeValidationSchema = z.object({
+  body: z.object({
+    preferredTime: z
+      .string({
+        required_error: 'Preferred time is required',
+        invalid_type_error: 'Preferred time must be a string',
+      })
+      .regex(
+        /^([01]\d|2[0-3]):([0-5]\d)$/,
+        'Preferred time must be in HH:mm format (24-hour)'
+      )
+      .refine(
+        (time) => {
+          const [hours] = time.split(':').map(Number);
+          return hours >= 5 && hours <= 23; // 5 AM - 11 PM
+        },
+        'Preferred time must be between 05:00 and 23:00'
+      ),
+  }),
+});

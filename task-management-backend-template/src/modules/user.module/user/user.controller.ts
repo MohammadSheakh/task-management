@@ -588,6 +588,52 @@ export class UserController extends GenericController<
     });
   });
 
+  // ────────────────────────────────────────────────────────────────────────
+  // Preferred Time Management
+  // ────────────────────────────────────────────────────────────────────────
+
+  /** ----------------------------------------------
+   * @role Child | Business | User
+   * @Section Profile
+   * @module User
+   * @figmaIndex profile-permission-account-interface.png
+   * @desc Get user's preferred working time for tasks
+   *----------------------------------------------*/
+  getPreferredTime = catchAsync(async (req: Request, res: Response) => {
+    const userId = (req.user as IUser).userId;
+
+    const result = await this.userService.getPreferredTime(userId);
+
+    sendResponse(res, {
+      code: StatusCodes.OK,
+      data: result,
+      message: 'Preferred time retrieved successfully',
+      success: true,
+    });
+  });
+
+  /** ----------------------------------------------
+   * @role Child | Business | User
+   * @Section Profile
+   * @module User
+   * @figmaIndex profile-permission-account-interface.png
+   * @desc Update user's preferred working time for tasks
+   * @validation HH:mm format (24-hour), range: 05:00-23:00
+   *----------------------------------------------*/
+  updatePreferredTime = catchAsync(async (req: Request, res: Response) => {
+    const userId = (req.user as IUser).userId;
+    const { preferredTime } = req.body;
+
+    const result = await this.userService.updatePreferredTime(userId, preferredTime);
+
+    sendResponse(res, {
+      code: StatusCodes.OK,
+      data: result,
+      message: 'Preferred time updated successfully',
+      success: true,
+    });
+  });
+
 }
 
 

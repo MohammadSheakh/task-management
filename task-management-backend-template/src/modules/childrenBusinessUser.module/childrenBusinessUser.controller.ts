@@ -275,6 +275,75 @@ export class ChildrenBusinessUserController {
       success: true,
     });
   });
+
+  /**
+   * Set/Unset child as Secondary User
+   * PUT /children-business-users/children/:childId/secondary-user
+   *
+   * @description Designate a child as Secondary User (Task Manager)
+   *              Only ONE child per business user can be Secondary User
+   * @auth Business user (Parent/Teacher) only
+   * @figmaIndex dashboard-flow-03.png
+   */
+  setSecondaryUser = catchAsync(async (req: Request, res: Response) => {
+    /*-─────────────────────────────────
+    |  Step 1: Get business user ID and child ID
+    └──────────────────────────────────*/
+    const businessUserId = (req.user as IUser).userId;
+    const { childId } = req.params;
+    const { isSecondaryUser } = req.body;
+
+    /*-─────────────────────────────────
+    |  Step 2: Set/Unset as Secondary User
+    └──────────────────────────────────*/
+    const result = await this.service.setSecondaryUser(
+      businessUserId,
+      childId,
+      isSecondaryUser
+    );
+
+    /*-─────────────────────────────────
+    |  Step 3: Send success response
+    └──────────────────────────────────*/
+    (res as any).sendResponse({
+      code: StatusCodes.OK,
+      data: result,
+      message: isSecondaryUser
+        ? 'Child set as Secondary User successfully'
+        : 'Child removed as Secondary User successfully',
+      success: true,
+    });
+  });
+
+  /**
+   * Get Secondary User for current business user
+   * GET /children-business-users/secondary-user
+   *
+   * @description Get the current Secondary User (Task Manager)
+   * @auth Business user (Parent/Teacher) only
+   * @figmaIndex dashboard-flow-03.png
+   */
+  getSecondaryUser = catchAsync(async (req: Request, res: Response) => {
+    /*-─────────────────────────────────
+    |  Step 1: Get business user ID
+    └──────────────────────────────────*/
+    const businessUserId = (req.user as IUser).userId;
+
+    /*-─────────────────────────────────
+    |  Step 2: Get Secondary User
+    └──────────────────────────────────*/
+    const result = await this.service.getSecondaryUser(businessUserId);
+
+    /*-─────────────────────────────────
+    |  Step 3: Send success response
+    └──────────────────────────────────*/
+    (res as any).sendResponse({
+      code: StatusCodes.OK,
+      data: result || { childUserId: null, isSecondaryUser: false },
+      message: 'Secondary user retrieved successfully',
+      success: true,
+    });
+  });
 }
 
 export const childrenBusinessUserController = new ChildrenBusinessUserController();

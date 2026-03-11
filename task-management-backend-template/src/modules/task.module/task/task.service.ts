@@ -480,4 +480,173 @@ export class TaskService extends GenericService<typeof Task, ITask> {
 
     return result;
   }
+
+  // ────────────────────────────────────────────────────────────────────────
+  // Automatic Preferred Time Calculation
+  // ────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Calculate and update user's preferred time based on task history
+   * Analyzes last 10 completed tasks to find pattern
+   * Updates user.preferredTime automatically
+   * 
+   * @param userId - User ID to calculate preferred time for
+   * @returns Calculated preferred time in HH:mm format, or null if insufficient data
+   */
+  async calculateAndUpdatePreferredTime(userId: Types.ObjectId): Promise<string | null> {
+    try {
+      // Get user's last 10 completed tasks
+      const tasks = await Task.find({
+        ownerUserId: userId,
+        status: TaskStatus.completed,
+        startTime: { $exists: true, $ne: null },
+        isDeleted: false,
+      })
+        .sort({ startTime: -1 })  // Most recent first
+        .limit(10)
+        .select('startTime')
+        .lean();
+
+      // Need at least 5 tasks to establish a pattern
+      if (tasks.length < 5) {
+        logger.info(`Insufficient data for preferred time calculation (user: ${userId}, tasks: ${tasks.length})`);
+        return null;
+      }
+
+      // Extract start times (in minutes from midnight)
+      const startTimesInMinutes = tasks.map(task => {
+        const date = new Date(task.startTime);
+        return date.getHours() * 60 + date.getMinutes();
+      });
+
+      // Calculate average start time
+      const totalMinutes = startTimesInMinutes.reduce((sum, minutes) => sum + minutes, 0);
+      const averageMinutes = Math.round(totalMinutes / startTimesInMinutes.length);
+
+      // Convert back to HH:mm format
+      const hours = Math.floor(averageMinutes / 60);
+      const minutes = averageMinutes % 60;
+      const preferredTime = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+
+      // Import User model dynamically to avoid circular dependency
+      const { User } = await import('../../user.module/user/user.model');
+
+      // Update user's preferred time
+      await User.findByIdAndUpdate(
+        userId,
+        { preferredTime },
+        { runValidators: true }
+      );
+
+      logger.info(`✅ Preferred time updated for user ${userId}: ${preferredTime} (based on ${tasks.length} tasks)`);
+
+      return preferredTime;
+
+    } catch (error) {
+      errorLogger.error('❌ Error calculating preferred time:', error);
+      return null;
+    }
+  }
+
+  // ────────────────────────────────────────────────────────────────────────
+  // Preferred Time Suggestion for Task Scheduling
+  // ────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Get preferred time suggestion for task scheduling
+   * Returns suggested time based on user's or assignee's preferred time
+   * 
+   * @param userId - User creating the task
+   * @param assignedUserIds - Optional: Array of assigned user IDs (for parent creating for child)
+   * @returns Suggested time with confidence level and explanation
+   */
+  async getPreferredTimeSuggestion(
+    userId: Types.ObjectId,
+    assignedUserIds?: Types.ObjectId[]
+  ): Promise<{
+    suggestedTime: string;
+    suggestedTime12Hour: string;
+    basedOn: string;
+    confidence: 'high' | 'medium' | 'low';
+    explanation: string;
+    alternativeTimes?: string[];
+  } | null> {
+    try {
+      // Import User model dynamically
+      const { User } = await import('../../user.module/user/user.model');
+
+      let targetUserId = userId;
+      let basedOn = 'your_preferred_time';
+      let userName = 'You';
+
+      // If task is assigned to someone else (parent creating for child)
+      if (assignedUserIds && assignedUserIds.length > 0) {
+        // Use the first assignee's preferred time
+        targetUserId = assignedUserIds[0];
+        basedOn = 'assignee_preferred_time';
+      }
+
+      // Get target user's preferred time
+      const targetUser = await User.findById(targetUserId).select('preferredTime name role').lean();
+
+      if (!targetUser) {
+        logger.warn(`User not found for preferred time suggestion: ${targetUserId}`);
+        return null;
+      }
+
+      userName = targetUser.name;
+
+      // Check if user has a preferred time set
+      if (!targetUser.preferredTime) {
+        // No preferred time set - return default suggestion
+        return {
+          suggestedTime: '09:00',
+          suggestedTime12Hour: '09:00 AM',
+          basedOn: 'default',
+          confidence: 'low',
+          explanation: targetUserId.toString() === userId.toString()
+            ? 'You haven\'t set a preferred time yet. We suggest 9:00 AM as a default.'
+            : `${userName} hasn't set a preferred time yet. We suggest 9:00 AM as a default.`,
+          alternativeTimes: ['09:00', '10:00', '14:00'],
+        };
+      }
+
+      // Parse preferred time to 12-hour format
+      const [hours, minutes] = targetUser.preferredTime.split(':').map(Number);
+      const period = hours >= 12 ? 'PM' : 'AM';
+      const displayHours = hours % 12 || 12;
+      const suggestedTime12Hour = `${String(displayHours).padStart(2, '0')}:${String(minutes).padStart(2, '0')} ${period}`;
+
+      // Calculate confidence based on whether it's auto-calculated or manually set
+      // For now, we'll consider auto-calculated as high confidence
+      const confidence: 'high' | 'medium' | 'low' = 'high';
+
+      // Generate alternative times (±1 hour)
+      const altHour1 = (hours - 1 + 24) % 24;
+      const altHour2 = (hours + 1) % 24;
+      const alternativeTimes = [
+        `${String(altHour1).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`,
+        targetUser.preferredTime,
+        `${String(altHour2).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`,
+      ];
+
+      const explanation = targetUserId.toString() === userId.toString()
+        ? `Based on your task history, you usually start tasks at ${suggestedTime12Hour}.`
+        : `${userName} usually starts tasks at ${suggestedTime12Hour}, based on their task history.`;
+
+      return {
+        suggestedTime: targetUser.preferredTime,
+        suggestedTime12Hour,
+        basedOn,
+        confidence,
+        explanation,
+        alternativeTimes,
+      };
+
+    } catch (error) {
+      errorLogger.error('❌ Error getting preferred time suggestion:', error);
+      return null;
+    }
+  }
+
 }

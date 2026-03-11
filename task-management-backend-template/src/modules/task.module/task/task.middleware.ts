@@ -99,6 +99,71 @@ export const verifyTaskOwnership = async (
 };
 
 /**
+ * Check if user is Secondary User (has task management privileges)
+ * Secondary User can create/assign tasks for family
+ * Business users always have permission
+ * 
+ * @figmaIndex dashboard-flow-03.png
+ * @figmaIndex add-task-flow-for-permission-account-interface.png
+ */
+export const checkSecondaryUserPermission = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      throw new ApiError(StatusCodes.UNAUTHORIZED, 'User not authenticated');
+    }
+
+    const { User } = await import('../../user.module/user/user.model');
+    const user = await User.findById(userId).select('role').lean();
+
+    if (!user) {
+      throw new ApiError(StatusCodes.NOT_FOUND, 'User not found');
+    }
+
+    // If business user → always allow
+    if (user.role === 'business') {
+      return next();
+    }
+
+    // If child user → check if they are Secondary User
+    if (user.role === 'commonUser') {
+      const { ChildrenBusinessUser } = await import(
+        '../../childrenBusinessUser.module/childrenBusinessUser.model'
+      );
+
+      const relationship = await ChildrenBusinessUser.findOne({
+        childUserId: new Types.ObjectId(userId),
+        isSecondaryUser: true,
+        isDeleted: false,
+        status: 'active',
+      });
+
+      if (!relationship) {
+        throw new ApiError(
+          StatusCodes.FORBIDDEN,
+          'Only Secondary Users can create tasks. Ask your parent to grant permission.'
+        );
+      }
+
+      // User is Secondary User → allow
+      return next();
+    }
+
+    throw new ApiError(
+      StatusCodes.FORBIDDEN,
+      'Unauthorized to perform this action'
+    );
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
  * Validate task type and assigned users consistency
  * - Personal tasks should not have assigned users
  * - Collaborative tasks must have multiple assigned users

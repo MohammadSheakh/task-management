@@ -45,6 +45,21 @@ const childrenBusinessUserSchema = new Schema<IChildrenBusinessUser>(
       ],
       default: CHILDREN_BUSINESS_USER_STATUS.ACTIVE,
     },
+    
+    /*-─────────────────────────────────
+    |  Secondary User Flag
+    |  Figma: dashboard-flow-03.png (Permissions section)
+    |  Only ONE child per business user can be Secondary User
+    |  Secondary User can:
+    |    - Create tasks for family
+    |    - Assign tasks to parent/teacher/other children
+    |    - Act as "Task Manager"
+    └──────────────────────────────────*/
+    isSecondaryUser: {
+      type: Boolean,
+      default: false,  // Default: Not secondary user
+    },
+    
     note: {
       type: String,
       maxlength: [500, 'Note cannot exceed 500 characters'],
@@ -143,12 +158,27 @@ childrenBusinessUserSchema.set('toJSON', {
 });
 
 /*-─────────────────────────────────
-|  Pre-save hook: Validate relationship before saving
+|  Pre-save hook: Ensure only ONE secondary user per business user
 └──────────────────────────────────*/
 childrenBusinessUserSchema.pre('save', async function (next) {
   // Prevent self-reference (business user cannot be their own child)
   if (this.parentBusinessUserId.equals(this.childUserId)) {
     throw new Error('Parent business user cannot be the same as child user');
+  }
+
+  // If this child is being set as secondary user
+  if (this.isSecondaryUser && this.isModified('isSecondaryUser')) {
+    // Check if another child is already the secondary user
+    const existingSecondary = await (this.constructor as any).findOne({
+      parentBusinessUserId: this.parentBusinessUserId,
+      isSecondaryUser: true,
+      childUserId: { $ne: this.childUserId }, // Exclude current document
+      isDeleted: false,
+    });
+
+    if (existingSecondary) {
+      throw new Error('Only one child can be the Secondary User per business user. Please remove the existing secondary user first.');
+    }
   }
 
   next();

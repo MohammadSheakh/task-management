@@ -2,6 +2,8 @@ flowchart TB
     subgraph Client["Client Layer"]
         Flutter[Flutter App]
         Web[Task Management Website]
+        ProfileScreen[Profile Screen]
+        PrefTimeUI[Preferred Time UI]
     end
 
     subgraph LB["Load Balancer"]
@@ -14,6 +16,7 @@ flowchart TB
             UserController[user.controller.ts]
             UserService[user.service.ts]
             UserModel[user.model.ts]
+            PrefTimeEndpoint[⏰ /user/preferred-time]
         end
 
         subgraph ProfileModule["UserProfile Module"]
@@ -54,11 +57,17 @@ flowchart TB
 
     subgraph DB["Database Layer"]
         MongoDB[(MongoDB Atlas)]
-        UserCol[User Collection]
+        UserCol[User Collection<br/>+ preferredTime field]
         ProfileCol[UserProfile Collection]
         DeviceCol[UserDevices Collection]
         RoleCol[UserRoleData Collection]
         OAuthCol[OAuthAccount Collection]
+        TaskCol[(Task Collection)]
+    end
+
+    subgraph Async["Async Processing"]
+        BullMQ[BullMQ Queue]
+        PrefWorker[⏰ Preferred Time Worker]
     end
 
     subgraph External["External Services"]
@@ -66,10 +75,14 @@ flowchart TB
         Apple[Apple Sign-In]
         EmailService[Email Service]
         FCM[Firebase Cloud Messaging]
+        TaskModule[Task Module]
     end
 
     Flutter --> NGINX
     Web --> NGINX
+    ProfileScreen --> PrefTimeUI
+    PrefTimeUI --> Flutter
+
     NGINX --> UserRoute
     NGINX --> ProfileRoute
     NGINX --> DeviceRoute
@@ -80,6 +93,10 @@ flowchart TB
     UserController --> UserService
     UserService --> UserCache
     UserService --> UserModel
+
+    PrefTimeEndpoint --> UserController
+    UserController --> UserService
+    UserService --> UserCol
 
     ProfileRoute --> ProfileController
     ProfileController --> ProfileService
@@ -112,3 +129,15 @@ flowchart TB
     OAuthService --> Apple
     UserService --> EmailService
     DeviceService --> FCM
+
+    %% Preferred Time Flow
+    TaskModule --> BullMQ
+    BullMQ --> PrefWorker
+    PrefWorker --> TaskCol
+    PrefWorker --> UserCol
+    UserCol -.->|preferredTime| UserCache
+
+    style PrefTimeEndpoint fill:#9ff,stroke:#333,stroke-width:2px
+    style PrefWorker fill:#f9f,stroke:#333,stroke-width:2px
+    style UserCol fill:#bbf,stroke:#333,stroke-width:2px
+    style PrefTimeUI fill:#ff9,stroke:#333,stroke-width:2px
