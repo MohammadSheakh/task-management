@@ -7,7 +7,7 @@ import { TaskService } from './task.service';
 import { TRole } from '../../../middlewares/roles';
 import ApiError from '../../../errors/ApiError';
 import { GroupMember } from '../../group.module/groupMember/groupMember.model';
-import { SubTaskService } from '../subtask/subtask.service';
+import { SubTaskService } from '../subtask/subTask.service';
 
 /**
  * Task Controller
