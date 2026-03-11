@@ -4,7 +4,8 @@ import { redisClient } from '../../../helpers/redis/redis';
 import { logger, errorLogger } from '../../../shared/logger';
 import { User } from '../../user.module/user/user.model';
 import { Task } from '../../task.module/task/task.model';
-import { Group } from '../../group.module/group/group.model';
+// ❌ REMOVED: Group module not needed
+// import { Group } from '../../group.module/group/group.model';
 import {
   IAdminDashboardAnalytics,
   IPlatformOverview,

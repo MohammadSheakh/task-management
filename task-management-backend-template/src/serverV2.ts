@@ -13,7 +13,7 @@ import cluster from 'cluster';
 import { createAdapter } from '@socket.io/redis-adapter';
 //@ts-ignore
 import http from "http";
-import { startNotificationWorker, startGroupInvitationWorker, startTaskRemindersWorker, startPreferredTimeWorker } from './helpers/bullmq/bullmq'; // ⬅️ ADD THIS
+import { startNotificationWorker, startTaskRemindersWorker, startPreferredTimeWorker } from './helpers/bullmq/bullmq'; // ⬅️ REMOVED: startGroupInvitationWorker
 import connectToDb from './config/mongoDbConfig';
 import { initializeRedis, redisClient, redisPubClient, redisSubClient } from './helpers/redis/redis';
 import { socketHelperForKafka } from './helpers/socket/socketForChatV1WithKafka';
@@ -108,7 +108,7 @@ async function main() {
 
     // 🔥 Start BullMQ Worker (listens for schedule jobs)
     startNotificationWorker();
-    startGroupInvitationWorker();
+    // startGroupInvitationWorker(); // ❌ REMOVED: Group module not needed
     startTaskRemindersWorker();
     startPreferredTimeWorker(); // ⬅️ NEW: Automatic preferred time calculation
 

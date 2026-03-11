@@ -6,8 +6,9 @@ import { redisClient } from '../../../helpers/redis/redis';
 import { logger, errorLogger } from '../../../shared/logger';
 import { Task } from '../../task.module/task/task.model';
 import { TaskProgress } from '../../taskProgress.module/taskProgress.model';
-import { Group } from '../../group.module/group/group.model';
-import { GroupMember } from '../../group.module/groupMember/groupMember.model';
+// ❌ REMOVED: Group module not needed
+// import { Group } from '../../group.module/group/group.model';
+// import { GroupMember } from '../../group.module/groupMember/groupMember.model';
 import {
   IStatusDistribution,
   ITaskOverviewAnalytics,
@@ -199,98 +200,13 @@ export class TaskAnalyticsService {
   }
 
   /**
-   * Get Group Task Analytics
+   * ❌ REMOVED: Group analytics not needed
+   * Use childrenBusinessUser analytics instead
    */
-  async getGroupTaskAnalytics(groupId: Types.ObjectId): Promise<IGroupTaskAnalytics> {
-    const cacheKey = this.getCacheKey('group', groupId.toString());
-    
-    const cached = await this.getFromCache<IGroupTaskAnalytics>(cacheKey);
-    if (cached) {
-      return cached;
-    }
-
-    // Get group info
-    const group = await Group.findById(groupId).select('name').lean();
-    if (!group) {
-      throw new ApiError(StatusCodes.NOT_FOUND, 'Group not found');
-    }
-
-    // Get task stats for group
-    const statusDist = await this.getStatusDistribution({ groupId: groupId.toString() });
-
-    // Get member stats
-    const memberStats = await GroupMember.aggregate([
-      {
-        $match: { groupId, isDeleted: false },
-      },
-      {
-        $lookup: {
-          from: 'tasks',
-          let: { memberId: '$userId' },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $or: [
-                    { $eq: ['$ownerUserId', '$$memberId'] },
-                    { $in: ['$$memberId', '$assignedUserIds'] },
-                  ],
-                },
-                groupId,
-                isDeleted: false,
-              },
-            },
-            {
-              $group: {
-                _id: '$status',
-                count: { $sum: 1 },
-              },
-            },
-          ],
-          as: 'taskStats',
-        },
-      },
-      {
-        $lookup: {
-          from: 'users',
-          localField: 'userId',
-          foreignField: '_id',
-          as: 'user',
-        },
-      },
-      { $unwind: '$user' },
-    ]);
-
-    const analytics: IGroupTaskAnalytics = {
-      groupId,
-      groupName: group.name,
-      totalTasks: statusDist.totalTasks,
-      statusDistribution: statusDist.distribution,
-      byPriority: {
-        low: { count: 0, percentage: 0 },
-        medium: { count: 0, percentage: 0 },
-        high: { count: 0, percentage: 0 },
-      },
-      byTaskType: {
-        personal: { count: 0, percentage: 0 },
-        singleAssignment: { count: 0, percentage: 0 },
-        collaborative: { count: 0, percentage: 0 },
-      },
-      memberStats: memberStats.map((m: any) => ({
-        memberId: m.userId,
-        memberName: m.user.name,
-        tasksAssigned: m.taskStats?.reduce((sum: number, s: any) => sum + s.count, 0) || 0,
-        tasksCompleted: m.taskStats?.find((s: any) => s._id === 'completed')?.count || 0,
-        completionRate: 0,
-      })),
-      overdueTasks: 0,
-      dueToday: 0,
-      averageCompletionTime: 0,
-    };
-
-    await this.setInCache(cacheKey, analytics, ANALYTICS_CACHE_CONFIG.TASK_OVERVIEW);
-    return analytics;
-  }
+  // async getGroupTaskAnalytics(groupId: Types.ObjectId): Promise<IGroupTaskAnalytics> {
+  //   const cacheKey = this.getCacheKey('group', groupId.toString());
+  //   ... (entire method removed - it's all group-related code)
+  // }
 
   /**
    * Get Completion Trend

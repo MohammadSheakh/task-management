@@ -9,7 +9,8 @@ import { TRole } from "../../middlewares/roles";
 import { Conversation } from "../../modules/chatting.module/conversation/conversation.model";
 import { IConversation } from "../../modules/chatting.module/conversation/conversation.interface";
 import { ConversationParticipents } from "../../modules/chatting.module/conversationParticipents/conversationParticipents.model";
-import { GroupInvitation } from "../../modules/group.module/groupInvitation/groupInvitation.model";
+// ❌ REMOVED: Group module not needed
+// import { GroupInvitation } from "../../modules/group.module/groupInvitation/groupInvitation.model";
 //@ts-ignore
 import mongoose from 'mongoose';
 import { buildTranslatedField } from "../../utils/buildTranslatedField";
@@ -200,58 +201,12 @@ export const startUpdateConversationsLastMessageWorker = () => {
 
 
 /*-─────────────────────────────────
-|  Group Invitation Queue
+|  ❌ REMOVED: Group Invitation Queue
+|  Group module not needed - using childrenBusinessUser instead
 └──────────────────────────────────*/
 
-export const groupInvitationQueue = new Queue(
-  'group-invitations-queue',
-  { connection: redisPubClient.options }
-);
-
-interface IGroupInvitationJobData {
-  invitationId: string;
-  email?: string;
-  groupName: string;
-  invitedBy: string;
-  token: string;
-  expiresAt: Date;
-  message?: string;
-}
-
-export const startGroupInvitationWorker = () => {
-  const worker = new Worker<IGroupInvitationJobData>(
-    'group-invitations-queue',
-    async (job) => {
-      const { invitationId, email, groupName, invitedBy, token, expiresAt, message } = job.data;
-
-      logger.info(`Processing group invitation job ${job.id} for ${email || invitationId}`);
-
-      try {
-        // TODO: Implement email sending logic here
-        // This would integrate with your existing email service
-        // Example: await sendEmail({ to: email, template: 'group-invitation', data: { ... } });
-
-        logger.info(`✅ Group invitation email sent to ${email} for group ${groupName}`);
-
-        // You can also send push notifications here if needed
-        // await sendPushNotification({ userId: invitedBy, ... });
-
-      } catch (err: any) {
-        errorLogger.error(`❌ Group invitation job ${job.id} failed:`, err);
-        throw err;
-      }
-    },
-    { connection: redisPubClient.options }
-  );
-
-  worker.on('completed', (job) =>
-    logger.info(`✅ Group invitation job ${job.id} completed`)
-  );
-
-  worker.on('failed', (job, err) =>
-    errorLogger.error(`❌ Group invitation job ${job?.id} failed`, err)
-  );
-};
+// export const groupInvitationQueue = new Queue(...);
+// export const startGroupInvitationWorker = () => { ... };
 
 /*-─────────────────────────────────
 |  Task Reminders Queue
@@ -517,17 +472,5 @@ export const startPreferredTimeWorker = () => {
   );
   worker.on('failed', (job, err) =>
     errorLogger.error(`❌ Preferred time job ${job?.id} failed`, err)
-  );
-};
-
-    { connection: redisPubClient.options }
-  );
-
-  worker.on('completed', (job:Job, result:any) =>
-    logger.info(`✅ Notify job ${job.id} completed. Notified ${result?.notified?.length || 0} users.`)
-  );
-
-  worker.on('failed', (job:Job, err:any) =>
-    errorLogger.error(`❌ Notify job ${job.id} failed`, err)
   );
 };

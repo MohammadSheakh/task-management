@@ -6,7 +6,8 @@ import { ITask } from './task.interface';
 import { TaskService } from './task.service';
 import { TRole } from '../../../middlewares/roles';
 import ApiError from '../../../errors/ApiError';
-import { GroupMember } from '../../group.module/groupMember/groupMember.model';
+// ❌ REMOVED: GroupMember not needed (using checkSecondaryUserPermission instead)
+// import { GroupMember } from '../../group.module/groupMember/groupMember.model';
 import { SubTaskService } from '../subTask/subTask.service';
 import { logger, errorLogger } from '../../../shared/logger';
 
@@ -41,24 +42,8 @@ export class TaskController extends GenericController<typeof Task, ITask> {
     const taskData = req.body;
 
     // ────────────────────────────────────────────────────────────────────────
-    // Permission Check for Group/Collaborative Tasks
-    // ────────────────────────────────────────────────────────────────────────
-    // If task is for a group or is collaborative, check if user has permission
-    if (taskData.groupId || taskData.taskType === 'collaborative') {
-      const groupId = taskData.groupId;
-
-      if (groupId) {
-        // Check if user has permission to create tasks in this group
-        const canCreate = await GroupMember.canCreateTasks(groupId, userId);
-
-        if (!canCreate) {
-          throw new ApiError(
-            StatusCodes.FORBIDDEN,
-            'You do not have permission to create tasks for this group. Please contact the group owner to request access.'
-          );
-        }
-      }
-    }
+    // Permission Check: Handled by checkSecondaryUserPermission middleware
+    // The middleware checks if user is Secondary User (can create tasks)
     // ────────────────────────────────────────────────────────────────────────
 
     const result = await this.taskService.createTask(taskData, userId);

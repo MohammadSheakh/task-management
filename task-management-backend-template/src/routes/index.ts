@@ -12,8 +12,9 @@ import { SettingsRoutes } from '../modules/settings.module/settings/settings.rou
 import { FaqCategoryRoute } from '../modules/settings.module/faqCategory/faqCategory.route';
 import { FaqRoute } from '../modules/settings.module/faq/faq.route';
 import { TaskRoute } from '../modules/task.module/task/task.route';
-import { GroupRoute } from '../modules/group.module/group/group.route';
-import { GroupMemberRoute } from '../modules/group.module/groupMember/groupMember.route';
+// ❌ REMOVED: Group module not needed (using childrenBusinessUser instead)
+// import { GroupRoute } from '../modules/group.module/group/group.route';
+// import { GroupMemberRoute } from '../modules/group.module/groupMember/groupMember.route';
 import { NotificationRoute } from '../modules/notification.module/notification/notification.route';
 import { TaskReminderRoute } from '../modules/notification.module/taskReminder/taskReminder.route';
 import { AnalyticsRoutes } from '../modules/analytics.module/analytics.route';
@@ -49,15 +50,16 @@ const apiRoutes = [
     route: SubTaskRoute,
   },
 
-  /////////////////////////////////////////  Group/Team Management
-  { // 🟢
-    path: '/groups',
-    route: GroupRoute,
-  },
-  { // 🟢
-    path: '/group-members',
-    route: GroupMemberRoute,
-  },
+  /////////////////////////////////////////  ❌ REMOVED: Group/Team Management
+  // Group module removed - using childrenBusinessUser instead
+  // { // 🟢
+  //   path: '/groups',
+  //   route: GroupRoute,
+  // },
+  // { // 🟢
+  //   path: '/group-members',
+  //   route: GroupMemberRoute,
+  // },
 
   /////////////////////////////////////////  Notification & Reminders
   { // 🟢

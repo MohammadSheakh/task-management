@@ -425,17 +425,6 @@ export class ChildrenBusinessUserService extends GenericService<typeof ChildrenB
   }
 
   /**
-   * Get family group for business user
-   */
-  private async getFamilyGroup(businessUserId: string): Promise<any> {
-    const { Group } = await import('../../group.module/group/group.model');
-    return await Group.findOne({ 
-      ownerUserId: new Types.ObjectId(businessUserId),
-      isDeleted: false,
-    });
-  }
-
-  /**
    * Reactivate child account
    */
   async reactivateChild(
