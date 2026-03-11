@@ -108,16 +108,6 @@ export interface ITaskReminderDocument extends ITaskReminder, Document {
   _id: Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
-
-  /**
-   * Check if reminder is due
-   */
-  isDue(): boolean;
-
-  /**
-   * Check if reminder is recurring
-   */
-  isRecurring(): boolean;
 }
 
 /**

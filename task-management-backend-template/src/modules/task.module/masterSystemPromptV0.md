@@ -229,3 +229,18 @@ Instruction #23:
 in postman-collections folder .. you previously create role wise postman collection .. as after that .. we fix and modify so many things .. can you generate postman collections again .. you should generate one by one .. as you cant generate all in one for token issue
 
 
+====================> [   ]
+Instruction #23:
+
+for task.module you generate API_DOCUMENTATION.md .. i think as a backend developer .. i need to
+  understand the api flow of this whole project .. feature wise .. also figma screen shot wise ..
+  i think mainly figma screen shot wise .. i think if you want to generate for whole flow .. it
+  will be tough for you .. generate one by one .. take one postman collection for a role .. check
+  figma .. then make a api flow .. you find postman collections in @postman-collections/  and you
+  can genrate flows in that folders "flow" folder
+
+
+====================> [   ]
+Instruction #24:
+
+kokhono ami vul bolle sheta mene niba na .. ei rokom ekta instruction likhte hobe

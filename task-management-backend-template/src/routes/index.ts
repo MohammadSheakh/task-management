@@ -19,7 +19,7 @@ import { TaskReminderRoute } from '../modules/notification.module/taskReminder/t
 import { AnalyticsRoutes } from '../modules/analytics.module/analytics.route';
 import { ChildrenBusinessUserRoute } from '../modules/childrenBusinessUser.module/childrenBusinessUser.route';
 import { TaskProgressRoute } from '../modules/taskProgress.module/taskProgress.route';
-import { SubTaskRoute } from '../modules/task.module/subtask/subtask.route';
+import { SubTaskRoute } from '../modules/task.module/subTask/subTask.route';
 
 // import { ChatRoutes } from '../modules/chat/chat.routes';
 // import { MessageRoutes } from '../modules/message/message.routes';

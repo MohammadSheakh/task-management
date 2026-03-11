@@ -4,7 +4,7 @@ import { GenericController } from '../../_generic-module/generic.controller';
 import { SubTask } from './subTask.model';
 import { ISubTask } from './subTask.interface';
 import ApiError from '../../../errors/ApiError';
-import { SubTaskService } from './subtask.service';
+import { SubTaskService } from './subTask.service';
 
 /**
  * SubTask Controller

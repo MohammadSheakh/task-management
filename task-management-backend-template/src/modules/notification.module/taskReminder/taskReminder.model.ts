@@ -55,7 +55,7 @@ const taskReminderSchema = new Schema<ITaskReminderDocument>(
      */
     triggerType: {
       type: String,
-      enum: Object.values(TASK_REMINDER_TRIGGER),
+      enum: Object.values(TaskReminderTrigger),
       required: [true, 'Trigger type is required'],
     },
 
@@ -93,7 +93,7 @@ const taskReminderSchema = new Schema<ITaskReminderDocument>(
      */
     status: {
       type: String,
-      enum: Object.values(TASK_REMINDER_STATUS),
+      enum: Object.values(TaskReminderStatus),
       required: [true, 'Reminder status is required'],
       default: TaskReminderStatus.PENDING,
       index: true,
@@ -104,7 +104,7 @@ const taskReminderSchema = new Schema<ITaskReminderDocument>(
      */
     frequency: {
       type: String,
-      enum: Object.values(TASK_REMINDER_FREQUENCY),
+      enum: Object.values(TaskReminderFrequency),
       required: [true, 'Frequency is required'],
       default: TaskReminderFrequency.ONCE,
     },
@@ -207,31 +207,17 @@ taskReminderSchema.virtual('isRecurring').get(function () {
  */
 taskReminderSchema.virtual('canSendAgain').get(function () {
   const doc = this as ITaskReminderDocument;
-  return doc.isRecurring() && doc.sentCount < doc.maxOccurrences!;
+  return doc.isRecurring && doc.sentCount < doc.maxOccurrences!;
 });
 
 // ─── Instance Methods ────────────────────────────────────────────────
-/**
- * Check if reminder is due
- */
-taskReminderSchema.methods.isDue = function (): boolean {
-  return this.reminderTime <= new Date() && this.status === TaskReminderStatus.PENDING;
-};
-
-/**
- * Check if reminder is recurring
- */
-taskReminderSchema.methods.isRecurring = function (): boolean {
-  return this.frequency !== TaskReminderFrequency.ONCE;
-};
-
 /**
  * Calculate next occurrence for recurring reminder
  */
 taskReminderSchema.methods.calculateNextOccurrence = function (): Date | null {
   const doc = this as ITaskReminderDocument;
-  
-  if (!doc.isRecurring()) {
+
+  if (!doc.isRecurring) {
     return null;
   }
 
@@ -264,7 +250,7 @@ taskReminderSchema.methods.markAsSent = async function (): Promise<void> {
   doc.status = TaskReminderStatus.SENT;
   doc.sentCount += 1;
 
-  if (doc.isRecurring() && doc.sentCount < doc.maxOccurrences!) {
+  if (doc.isRecurring && doc.sentCount < doc.maxOccurrences!) {
     const nextOccurrence = doc.calculateNextOccurrence();
     if (nextOccurrence) {
       doc.nextReminderTime = nextOccurrence;

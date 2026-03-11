@@ -18,23 +18,52 @@
       "item": [
         {
           "name": "Register Secondary User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set(\"SECONDARY_USER_EMAIL\", jsonData.data.user.email);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [{"key": "Content-Type", "value": "application/json"}],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Alex Student\",\n  \"email\": \"alex@example.com\",\n  \"password\": \"StudentPass123!\",\n  \"role\": \"user\"\n}"
+              "raw": "{\n  \"name\": \"Alex Student\",\n  \"email\": \"alex@example.com\",\n  \"password\": \"StudentPass123!\"\n}"
             },
             "url": {
-              "raw": "{{BASE_URL}}/auth/signup",
+              "raw": "{{BASE_URL}}/auth/register",
               "host": ["{{BASE_URL}}"],
-              "path": ["auth", "signup"]
+              "path": ["auth", "register"]
             },
-            "description": "Register as a secondary user (student/child)"
+            "description": "Register as a secondary user (student/child)\n\n**Rate Limit**: 10 per hour"
           }
         },
         {
           "name": "Login as Secondary User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set(\"SECONDARY_USER_TOKEN\", jsonData.data.tokens.accessToken);",
+                  "    pm.environment.set(\"SECONDARY_USER_ID\", jsonData.data.user._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [{"key": "Content-Type", "value": "application/json"}],
@@ -47,7 +76,7 @@
               "host": ["{{BASE_URL}}"],
               "path": ["auth", "login"]
             },
-            "description": "Login and save token to SECONDARY_USER_TOKEN variable"
+            "description": "Login and save token to SECONDARY_USER_TOKEN variable\n\n**Rate Limit**: 5 attempts per 15 minutes"
           }
         }
       ]
