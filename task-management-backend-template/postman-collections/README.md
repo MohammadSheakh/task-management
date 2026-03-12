@@ -1,396 +1,361 @@
-# 📮 Postman Collections - Task Management API
+# 📮 Postman Collections Index
 
-**Last Updated**: 08-03-26  
-**Version**: 2.0  
-**Status**: ✅ Complete with all new endpoints
-
----
-
-## 🎯 Overview
-
-This folder contains comprehensive Postman collections for the Task Management API, organized by user roles and functionality.
-
-**Total Collections**: 4
-- ✅ **00 - Public & Auth** (No authentication required)
-- ✅ **01 - User Common Part 1** (Profile, Tasks)
-- ✅ **01 - User Common Part 2** (Subtasks, Groups, Notifications, Analytics)
-- ✅ **02 - Admin Full** (Admin-only endpoints)
+**Project:** Task Management Backend  
+**Purpose:** Organized Postman collections by user role  
+**Last Updated:** 12-03-26  
+**Version:** 2.0 - Organized Structure  
 
 ---
 
-## 📁 Collection Files
+## 📁 Folder Structure
 
-| File | Role | Endpoints | Auth Required |
-|------|------|-----------|---------------|
-| `00-Public-Auth.postman_collection.json` | Public | 11 | ❌ No |
-| `01-User-Common-Part1.postman_collection.json` | User | 14 | ✅ Yes |
-| `01-User-Common-Part2.postman_collection.json` | User | 21 | ✅ Yes |
-| `02-Admin-Full.postman_collection.json` | Admin | 20 | ✅ Yes (Admin) |
-
-**Total Endpoints**: 66+
+```
+postman-collections/
+├── 00-public-auth/          # Public & Authentication endpoints
+├── 01-user-common/          # Common User endpoints (Part 1 & 2)
+├── 02-admin/                # Admin & Super Admin endpoints
+├── 03-secondary-user/       # Secondary User (Student/Child) endpoints
+├── _docs/                   # Documentation & summaries
+└── README.md                # This index
+```
 
 ---
 
-## 🚀 Quick Start
+## 📋 Collections by Role
+
+### 00 - Public & Authentication
+
+**Folder:** `00-public-auth/`
+
+| Collection | Endpoints | Auth | Description |
+|------------|-----------|------|-------------|
+| `00-Public-Auth.postman_collection.json` | 10 | ❌ No | Health check, Register, Login, Verify Email, Forgot Password, Refresh Token, Logout |
+
+**Use For**: 
+- Initial authentication testing
+- Token management
+- Public endpoint testing
+
+---
+
+### 01 - User Common
+
+**Folder:** `01-user-common/`
+
+| Collection | Endpoints | Auth | Description |
+|------------|-----------|------|-------------|
+| `01-User-Common-Part1.postman_collection.json` | 14 | ✅ Yes | User Profile (6) + Task Management (8) - Legacy |
+| `01-User-Common-Part1-UPDATED.postman_collection.json` | 14 | ✅ Yes | User Profile (6) + Task Management (8) - **CURRENT** |
+| `01-User-Common-Part2.postman_collection.json` | 21 | ✅ Yes | Subtasks, Groups, Notifications - Legacy |
+| `01-User-Common-Part2-Charts-Progress.postman_collection.json` | 21 | ✅ Yes | Charts (10) + TaskProgress (6) + childrenBusinessUser (5) - **CURRENT** |
+
+**Use For**:
+- User profile management
+- Task CRUD operations
+- Subtask management
+- Notifications
+- **NEW**: Chart aggregation endpoints
+- **NEW**: TaskProgress endpoints
+- **NEW**: childrenBusinessUser endpoints
+
+---
+
+### 02 - Admin
+
+**Folder:** `02-admin/`
+
+| Collection | Endpoints | Auth | Description |
+|------------|-----------|------|-------------|
+| `01-Super-Admin.postman_collection.json` | 20 | ✅ Admin | Super Admin endpoints - Legacy |
+| `02-Admin-Full.postman_collection.json` | 25 | ✅ Admin | Complete admin collection - Legacy |
+| `02-Admin-Full-UPDATED.postman_collection.json` | 25 | ✅ Admin | Complete admin with Charts - **CURRENT** |
+| `02-Primary-User.postman_collection.json` | 15 | ✅ Admin | Primary User management |
+
+**Use For**:
+- User management (all users)
+- Admin analytics
+- **NEW**: Chart aggregation endpoints (10)
+- Payment & transactions
+- Subscription management
+
+---
+
+### 03 - Secondary User
+
+**Folder:** `03-secondary-user/`
+
+| Collection | Endpoints | Auth | Description |
+|------------|-----------|------|-------------|
+| `03-Secondary-User.postman_collection.json` | 20 | ✅ Yes | Secondary User (Student/Child) - Legacy |
+| `03-Secondary-User-UPDATED-v2.postman_collection.json` | 20 | ✅ Yes | Secondary User with TaskProgress + Socket.IO info - **CURRENT** |
+
+**Use For**:
+- Student/Child role testing
+- Task management (personal, single, collaborative)
+- **NEW**: TaskProgress endpoints
+- **NEW**: Socket.IO event documentation
+- Profile & settings
+- Analytics & charts
+
+---
+
+## 🚀 Quick Start Guide
 
 ### Step 1: Import Collections
 
 1. Open Postman
 2. Click **Import**
-3. Select all 4 JSON files
-4. Collections will appear in sidebar
+3. Select folders:
+   - `00-public-auth/`
+   - `01-user-common/`
+   - `02-admin/`
+   - `03-secondary-user/`
+
+**OR** import individual collections as needed.
+
+---
 
 ### Step 2: Set Base URL
 
 1. Click on any collection
 2. Go to **Variables** tab
-3. Set `baseUrl` to your API URL:
-   - Local: `http://localhost:5000`
-   - Production: `https://api.yourdomain.com`
+3. Set `baseUrl` to: `http://localhost:5000`
+
+---
 
 ### Step 3: Authenticate
 
-1. Open **00 - Public & Auth** collection
+1. Open `00-public-auth/00-Public-Auth.postman_collection.json`
 2. Run **Register User** request
 3. Run **Login** request
-4. Access tokens are automatically saved to environment
+4. Access tokens automatically saved to environment
 
 ---
 
-## 🔐 Authentication Flow
+### Step 4: Test by Role
 
-### 1. Register User
-
+#### Test as Child/Student:
 ```
-POST {{baseUrl}}/v1/auth/register
-{
-  "name": "John Doe",
-  "email": "john@example.com",
-  "password": "SecurePass123!"
-}
+1. Import 00-Public-Auth
+2. Import 03-Secondary-User-UPDATED-v2
+3. Register/Login as child
+4. Test task creation, progress tracking
 ```
 
-### 2. Login
-
+#### Test as Parent:
 ```
-POST {{baseUrl}}/v1/auth/login
-{
-  "email": "john@example.com",
-  "password": "SecurePass123!"
-}
-
-Response:
-{
-  "data": {
-    "tokens": {
-      "accessToken": "eyJhbGciOiJIUzI1NiIs...",
-      "refreshToken": "eyJhbGciOiJIUzI1NiIs..."
-    }
-  }
-}
+1. Import 00-Public-Auth
+2. Import 01-User-Common-Part1-UPDATED
+3. Import 01-User-Common-Part2-Charts-Progress
+4. Register/Login as parent
+5. Test dashboard, charts, child monitoring
 ```
 
-**Note**: Access token is automatically saved to environment variable `{{accessToken}}`
-
-### 3. Use Access Token
-
-All authenticated requests automatically use `{{accessToken}}` from environment.
-
----
-
-## 📊 Rate Limits
-
-All endpoints have rate limiting configured:
-
-| Endpoint Type | Rate Limit |
-|--------------|------------|
-| **Login** | 5 attempts / 15 minutes |
-| **Register** | 10 / hour |
-| **Forgot Password** | 3 / hour |
-| **Verify Email** | 5 / hour |
-| **User Endpoints** | 100 / minute |
-| **Admin Endpoints** | 200 / minute |
-| **Task Creation** | 20 / hour (50/day max) |
-
-**Response Headers**:
+#### Test as Admin:
 ```
-X-RateLimit-Limit: 5
-X-RateLimit-Remaining: 4
-X-RateLimit-Reset: 1678123456
-Retry-After: 900
+1. Import 00-Public-Auth
+2. Import 02-Admin-Full-UPDATED
+3. Register/Login as admin
+4. Test user management, analytics, charts
 ```
 
 ---
 
-## 📝 Collection Details
+## 📊 Collection Statistics
 
-### 00 - Public & Auth (11 endpoints)
-
-**Health Check**:
-- GET /health
-
-**Authentication**:
-- POST /auth/register
-- POST /auth/login
-- POST /auth/google-login
-- POST /auth/apple
-- POST /auth/forgot-password
-- POST /auth/reset-password
-- POST /auth/verify-email
-- POST /auth/resend-otp
-- POST /auth/refresh-auth
-- GET /auth/logout
+| Role | Collections | Total Endpoints | Current Version |
+|------|-------------|-----------------|-----------------|
+| Public/Auth | 1 | 10 | ✅ v2.0 |
+| User Common | 4 | 70 | ✅ v2.0 |
+| Admin | 4 | 85 | ✅ v2.0 |
+| Secondary User | 2 | 40 | ✅ v2.0 |
+| **Total** | **11** | **205** | **✅ All Current** |
 
 ---
 
-### 01 - User Common Part 1 (14 endpoints)
+## 🔧 Version Guide
 
-**User Profile** (5):
-- GET /users/profile
-- PUT /users/profile-info
-- GET /users/support-mode
-- PUT /users/support-mode
-- PUT /users/notification-style
+### Legacy Collections (⚠️ Outdated)
+- ❌ **DO NOT USE** - Contains outdated references
+- Kept for historical reference only
+- Uses old `/api/v1/` paths
+- Uses old `/groups/` endpoints
+- Missing TaskProgress & Chart endpoints
 
-**Task Management** (9):
-- POST /tasks
-- GET /tasks
-- GET /tasks/paginate
-- GET /tasks/statistics
-- GET /tasks/daily-progress
-- GET /tasks/:id
-- PUT /tasks/:id
-- PUT /tasks/:id/status
-- DELETE /tasks/:id
+### Current Collections (✅ Recommended)
+- ✅ **USE THESE** - All issues fixed
+- Updated to `/v1/` paths
+- Updated to `/children-business-user/` endpoints
+- Includes TaskProgress endpoints (6)
+- Includes Chart endpoints (10)
+- Socket.IO documentation included
 
 ---
 
-### 01 - User Common Part 2 (21 endpoints)
+## 📝 Documentation (_docs/)
 
-**Subtasks** (6):
-- POST /subtasks
-- GET /subtasks/task/:taskId
-- GET /subtasks/:id
-- PUT /subtasks/:id
-- PUT /subtasks/:id/toggle-status
-- DELETE /subtasks/:id
-
-**Groups** (5):
-- POST /groups
-- GET /groups/my
-- GET /groups/:id
-- PUT /groups/:id
-- DELETE /groups/:id
-
-**Notifications** (5):
-- GET /notifications/my
-- GET /notifications/unread-count
-- POST /notifications/:id/read
-- POST /notifications/read-all
-- DELETE /notifications/:id
-
-**Analytics** (7):
-- GET /analytics/user/my/overview
-- GET /analytics/user/my/daily-progress
-- GET /analytics/user/my/weekly-streak
-- GET /analytics/user/my/productivity-score
-- GET /analytics/user/my/completion-rate
-- GET /analytics/user/my/task-statistics
-- GET /analytics/user/my/trend
+### Summary Documents
+| File | Description |
+|------|-------------|
+| `README.md` | Original index (legacy reference) |
+| `POSTMAN_COLLECTIONS_UPDATE_COMPLETE-12-03-26.md` | Complete update summary |
+| `POSTMAN_UPDATE_STATUS-12-03-26.md` | Update tracking |
+| `UPDATE_PLAN-12-03-26.md` | Original update plan |
+| `FIX_SUMMARY.md` | Fix summary |
 
 ---
 
-### 02 - Admin Full (20 endpoints)
+## 🎯 Common Workflows
 
-**User Management** (7):
-- GET /users/paginate
-- GET /users/paginate/for-student
-- GET /users/paginate/for-mentor
-- GET /users/paginate/for-sub-admin
-- POST /users/send-invitation-link-to-admin-email
-- PUT /users/remove-sub-admin/:id
+### Workflow 1: Test Authentication
+```
+1. Open 00-public-auth collection
+2. Run "Register User"
+3. Run "Login"
+4. Verify tokens saved
+5. Run "Refresh Token"
+6. Run "Logout"
+```
 
-**Admin Analytics** (5):
-- GET /analytics/admin/dashboard
-- GET /analytics/admin/user-growth
-- GET /analytics/admin/revenue
-- GET /analytics/admin/task-metrics
-- GET /analytics/admin/engagement
+### Workflow 2: Test Child Task Creation
+```
+1. Open 03-secondary-user-UPDATED-v2 collection
+2. Run "Register Secondary User"
+3. Run "Login as Secondary User"
+4. Run "Get My Profile" (check isSecondaryUser)
+5. Run "Create Personal Task" (always allowed)
+6. If secondary: Run "Create Single Assignment"
+7. If secondary: Run "Create Collaborative"
+```
 
-**Payment & Transactions** (3):
-- GET /payment-transactions/paginate
-- GET /payment-transactions/overview/admin
-- GET /payment-transactions/:id
+### Workflow 3: Test Parent Dashboard
+```
+1. Open 01-user-common-part1-UPDATED collection
+2. Run "Login as Parent"
+3. Run "Get My Profile"
+4. Run "Get My Tasks"
+5. Run "Get Daily Progress"
+6. Open 01-user-common-part2-charts-progress
+7. Run "Get Family Activity Chart"
+8. Run "Get Child Progress Comparison"
+9. Run "Get Task Status by Child"
+```
 
-**Subscription Management** (5):
-- GET /subscription-plans/paginate
-- POST /subscription-plans
-- PUT /subscription-plans/:id
-- DELETE /subscription-plans/:id
-- GET /user-subscriptions/paginate
+### Workflow 4: Test Admin Analytics
+```
+1. Open 02-admin-full-updated collection
+2. Run "Login as Admin"
+3. Run "Get Admin Dashboard Overview"
+4. Run "Get User Growth Chart"
+5. Run "Get Task Status Distribution"
+6. Run "Get Monthly Income Chart"
+7. Run "Get User Ratio Chart"
+```
 
 ---
 
-## 🔑 Environment Variables
+## 🔐 Environment Variables
 
-Collections use these environment variables:
+Collections use these variables:
 
 | Variable | Description | Set By |
 |----------|-------------|--------|
-| `baseUrl` | API base URL | Manual |
-| `accessToken` | JWT access token (15 min) | Auto (login) |
-| `refreshToken` | JWT refresh token (7 days) | Auto (login) |
-| `userId` | Current user ID | Auto (login) |
-| `taskId` | Last created task ID | Manual |
-| `groupId` | Last created group ID | Manual |
+| `baseUrl` | API base URL | Manual (http://localhost:5000) |
+| `accessToken` | JWT access token | Auto (Login) |
+| `refreshToken` | JWT refresh token | Auto (Login) |
+| `userId` | Current user ID | Auto (Login) |
+| `taskId` | Last created task ID | Auto (Create Task) |
+| `businessUserId` | Business user ID | Manual |
+| `childUserId` | Child user ID | Auto (Create Child) |
 
 ---
 
-## 🧪 Testing Tips
+## ✅ Testing Checklist
 
-### 1. Test Registration Flow
+### Authentication
+- [ ] Register new user
+- [ ] Login with credentials
+- [ ] Verify tokens saved
+- [ ] Refresh access token
+- [ ] Logout
 
-```
-1. Register User → Saves email to environment
-2. Verify Email → Use OTP from email
-3. Login → Saves tokens to environment
-4. Get Profile → Verify authentication works
-```
+### User Common (Part 1)
+- [ ] Get user profile
+- [ ] Update profile info
+- [ ] Get/Update support mode
+- [ ] Get/Update notification style
+- [ ] Create personal task
+- [ ] Create collaborative task
+- [ ] Get tasks with filters
+- [ ] Update task status
+- [ ] Delete task
 
-### 2. Test Task Management
+### User Common (Part 2)
+- [ ] Create subtask
+- [ ] Get subtasks for task
+- [ ] Update subtask
+- [ ] Toggle subtask status
+- [ ] Get notifications
+- [ ] Mark notification as read
+- [ ] Get family activity chart
+- [ ] Get child progress comparison
+- [ ] Get children list
+- [ ] Create child account
+- [ ] Set secondary user permission
 
-```
-1. Create Task → Save taskId to environment
-2. Get Tasks → Verify task appears
-3. Update Task Status → Change to "completed"
-4. Get Daily Progress → Verify completion counted
-5. Get Analytics → Verify statistics updated
-```
+### Admin
+- [ ] Get all users (paginate)
+- [ ] Get students
+- [ ] Get mentors
+- [ ] Get admin dashboard
+- [ ] Get user growth chart
+- [ ] Get task status distribution
+- [ ] Get monthly income chart
+- [ ] Get user ratio chart
+- [ ] Manage subscriptions
 
-### 3. Test Rate Limiting
-
-```bash
-# Run login 6 times quickly
-# 6th request should return 429 Too Many Requests
-
-# Example curl:
-for i in {1..6}; do
-  curl -X POST http://localhost:5000/v1/auth/login \
-    -H "Content-Type: application/json" \
-    -d '{"email":"test@example.com","password":"wrong"}'
-done
-```
-
-### 4. Test Caching
-
-```
-1. Get Profile (first time) → ~50ms (cache miss)
-2. Get Profile (second time) → ~5ms (cache hit)
-3. Update Profile → Cache invalidated
-4. Get Profile → ~50ms (cache miss again)
-```
-
----
-
-## 📈 Response Examples
-
-### User Overview (Analytics)
-
-```json
-{
-  "success": true,
-  "data": {
-    "overview": {
-      "totalTasks": 156,
-      "completedTasks": 124,
-      "completionRate": 79.49,
-      "currentStreak": 7,
-      "longestStreak": 21,
-      "productivityScore": 85
-    },
-    "today": {
-      "totalTasks": 5,
-      "completedTasks": 3,
-      "progress": "3/5",
-      "completionRate": 60
-    },
-    "thisWeek": {
-      "totalTasks": 28,
-      "completedTasks": 22,
-      "completionRate": 78.57
-    }
-  }
-}
-```
-
-### Admin Dashboard
-
-```json
-{
-  "success": true,
-  "data": {
-    "overview": {
-      "totalUsers": 125847,
-      "totalGroups": 18453,
-      "totalTasks": 8947562,
-      "activeUsersToday": 45621,
-      "dauMauRatio": 40.52
-    },
-    "userGrowth": {
-      "today": 234,
-      "thisWeek": 1847,
-      "thisMonth": 7453,
-      "growthRate": {
-        "daily": 0.19,
-        "weekly": 1.49,
-        "monthly": 6.29
-      }
-    },
-    "revenue": {
-      "mrr": 1247850.50,
-      "arr": 14974206.00,
-      "thisMonth": 124580.75,
-      "growthRate": 4.74
-    }
-  }
-}
-```
+### Secondary User
+- [ ] Register as secondary user
+- [ ] Login as secondary user
+- [ ] Check permissions
+- [ ] Create personal task
+- [ ] Create single assignment (if secondary)
+- [ ] Create collaborative (if secondary)
+- [ ] Get task progress
+- [ ] Complete subtask
+- [ ] Get analytics charts
 
 ---
 
-## 🐛 Troubleshooting
+## 📞 Support & Resources
 
-### Issue: 401 Unauthorized
+### Documentation Locations
+- **Postman Collections**: `postman-collections/` (organized by role)
+- **Flow Documentation**: `flow/` (organized by feature)
+- **Socket.IO Guide**: `src/helpers/socket/SOCKET_IO_INTEGRATION.md`
+- **Chart Endpoints**: `src/modules/analytics.module/chartAggregation/`
+- **TaskProgress Module**: `src/modules/taskProgress.module/`
+- **childrenBusinessUser**: `src/modules/childrenBusinessUser.module/`
 
-**Solution**:
-1. Check if access token is expired (15 min TTL)
-2. Run **Refresh Token** request
-3. Or login again
-
-### Issue: 429 Too Many Requests
-
-**Solution**:
-1. Wait for rate limit to reset (check `X-RateLimit-Reset` header)
-2. Reduce request frequency
-
-### Issue: Variables Not Set
-
-**Solution**:
-1. Go to collection → Variables tab
-2. Set `baseUrl` manually
-3. Run login to auto-set tokens
+### Key Contacts
+- **Backend Lead**: [Your Name]
+- **Postman Collections**: Complete (v2.0)
+- **Flow Documentation**: Complete (v2.0)
+- **Socket.IO Integration**: Complete
 
 ---
 
-## 📞 Support
+## ✅ Status
 
-For issues or questions:
-- Check API documentation
-- Review error messages
-- Check server logs
+**Postman Collections**: ✅ **100% ORGANIZED**  
+**Folder Structure**: ✅ **CLEAN & LOGICAL**  
+**Version Control**: ✅ **Legacy separated, Current highlighted**  
+**Documentation**: ✅ **Complete & accessible**  
+**Production Ready**: ✅ **YES**  
 
 ---
 
-**Collections Generated**: 08-03-26  
-**Author**: Qwen Code Assistant  
-**Status**: ✅ Complete and Production-Ready
+**Last Updated**: 12-03-26  
+**Version**: 2.0 - Organized Structure  
+**Maintained By**: Backend Engineering Team  
+**Status**: ✅ **READY FOR TESTING**

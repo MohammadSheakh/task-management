@@ -1,0 +1,473 @@
+{
+	"info": {
+		"_postman_id": "01-user-common-part1-v2",
+		"name": "01 - User Common (Part 1: Profile + Tasks + Charts)",
+		"description": "Common user endpoints: User Profile, Tasks, and Chart Analytics\n\n**Authentication Required**: Yes\n**Header**: Authorization: Bearer {{accessToken}}\n\n**Rate Limits**:\n- User endpoints: 100 requests / minute\n- Task creation: 20 / hour (50/day max)\n- Chart endpoints: 30 / minute\n\n**Base URL**: {{baseUrl}}/v1\n\n**New Endpoints Added**:\n- 10 Chart aggregation endpoints for dashboards\n- Real-time Socket.IO info",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:5000",
+			"type": "string"
+		},
+		{
+			"key": "accessToken",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "userId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "taskId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "businessUserId",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "01 - User Profile",
+			"item": [
+				{
+					"name": "Get My Profile",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/v1/users/profile",
+							"host": ["{{baseUrl}}"],
+							"path": ["v1", "users", "profile"]
+						},
+						"description": "Get current user profile with statistics\n\n**Response**:\n```json\n{\n  \"success\": true,\n  \"data\": {\n    \"_id\": \"...\",\n    \"name\": \"John Doe\",\n    \"email\": \"john@example.com\",\n    \"supportMode\": \"calm\",\n    \"notificationStyle\": \"gentle\",\n    \"preferredTime\": \"09:00\",\n    \"statistics\": {\n      \"totalTasks\": 156,\n      \"completedTasks\": 124,\n      \"completionRate\": 79.49,\n      \"currentStreak\": 7,\n      \"productivityScore\": 85\n    }\n  }\n}\n```"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Profile Info",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"John Doe Updated\",\n  \"phoneNumber\": \"+1234567890\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/v1/users/profile-info",
+							"host": ["{{baseUrl}}"],
+							"path": ["v1", "users", "profile-info"]
+						},
+						"description": "Update user profile information"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Support Mode",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/v1/users/support-mode",
+							"host": ["{{baseUrl}}"],
+							"path": ["v1", "users", "support-mode"]
+						},
+						"description": "Get user's support mode preference (Calm/Encouraging/Logical)\n\n**Figma**: profile-permission-account-interface.png"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Support Mode",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"supportMode\": \"encouraging\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/v1/users/support-mode",
+							"host": ["{{baseUrl}}"],
+							"path": ["v1", "users", "support-mode"]
+						},
+						"description": "Update support mode preference\n\n**Options**:\n- calm\n- encouraging\n- logical"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Notification Style",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/v1/users/notification-style",
+							"host": ["{{baseUrl}}"],
+							"path": ["v1", "users", "notification-style"]
+						},
+						"description": "Get user's notification style preference"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Notification Style",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"notificationStyle\": \"firm\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/v1/users/notification-style",
+							"host": ["{{baseUrl}}"],
+							"path": ["v1", "users", "notification-style"]
+						},
+						"description": "Update notification style preference\n\n**Options**:\n- gentle\n- firm\n- xyz"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "02 - Task Management",
+			"item": [
+				{
+					"name": "Create Task",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"taskId\", jsonData.data._id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Clean the house\",\n  \"description\": \"Clean all rooms\",\n  \"taskType\": \"collaborative\",\n  \"startTime\": \"2026-03-12T09:00:00Z\",\n  \"assignedUserIds\": [\"child1Id\", \"child2Id\"],\n  \"subtasks\": [\n    { \"title\": \"Living room\", \"duration\": \"30m\" },\n    { \"title\": \"Kitchen\", \"duration\": \"45m\" },\n    { \"title\": \"Bedrooms\", \"duration\": \"60m\" }\n  ]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/v1/tasks",
+							"host": ["{{baseUrl}}"],
+							"path": ["v1", "tasks"]
+						},
+						"description": "Create a new task\n\n**Task Types**:\n- personal: For yourself\n- single_assignment: Assign to one person\n- collaborative: Assign to multiple people\n\n**Rate Limit**: 20 per hour (50/day max)"
+					},
+					"response": []
+				},
+				{
+					"name": "Get My Tasks",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/v1/tasks?page=1&limit=20&status=pending",
+							"host": ["{{baseUrl}}"],
+							"path": ["v1", "tasks"],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "20"
+								},
+								{
+									"key": "status",
+									"value": "pending",
+									"description": "Filter by status: pending, inProgress, completed"
+								}
+							]
+						},
+						"description": "Get tasks with filtering and pagination\n\n**Query Params**:\n- page: Page number\n- limit: Items per page\n- status: Filter by status\n- taskType: Filter by type\n- priority: Filter by priority\n- from: Start date\n- to: End date\n\n**Figma**: home-flow.png"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Task Statistics",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/v1/tasks/statistics",
+							"host": ["{{baseUrl}}"],
+							"path": ["v1", "tasks", "statistics"]
+						},
+						"description": "Get task statistics\n\n**Response**:\n```json\n{\n  \"success\": true,\n  \"data\": {\n    \"total\": 156,\n    \"pending\": 32,\n    \"inProgress\": 24,\n    \"completed\": 100\n  }\n}\n```"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Daily Progress",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/v1/tasks/daily-progress?date=2026-03-12",
+							"host": ["{{baseUrl}}"],
+							"path": ["v1", "tasks", "daily-progress"],
+							"query": [
+								{
+									"key": "date",
+									"value": "2026-03-12",
+									"description": "Date to check (default: today)"
+								}
+							]
+						},
+						"description": "Get daily progress with task details\n\n**Figma**: home-flow.png (Daily Progress: 1/5)\n\n**Response**:\n```json\n{\n  \"success\": true,\n  \"data\": {\n    \"date\": \"2026-03-12\",\n    \"total\": 5,\n    \"completed\": 3,\n    \"pending\": 2,\n    \"inProgress\": 0,\n    \"progressPercentage\": 60,\n    \"tasks\": [\n      {\n        \"_id\": \"...\",\n        \"title\": \"Task 1\",\n        \"status\": \"completed\",\n        \"progressPercentage\": 100\n      }\n    ]\n  }\n}\n```"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Task By ID",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/v1/tasks/{{taskId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["v1", "tasks", "{{taskId}}"]
+						},
+						"description": "Get task details by ID\n\n**Figma**: task-details-of-a-task.png"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Task",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Updated task title\",\n  \"description\": \"Updated description\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/v1/tasks/{{taskId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["v1", "tasks", "{{taskId}}"]
+						},
+						"description": "Update task details\n\n**Figma**: edit-update-task-flow.png"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Task Status",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"status\": \"completed\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/v1/tasks/{{taskId}}/status",
+							"host": ["{{baseUrl}}"],
+							"path": ["v1", "tasks", "{{taskId}}", "status"]
+						},
+						"description": "Update task status\n\n**Status Options**:\n- pending\n- inProgress\n- completed\n\n**Note**: Auto-sets completedTime when status is 'completed'"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Task",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/v1/tasks/{{taskId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["v1", "tasks", "{{taskId}}"]
+						},
+						"description": "Soft delete task (sets isDeleted: true)"
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}
