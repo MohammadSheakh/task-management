@@ -133,8 +133,7 @@ erDiagram
 
     CHILDREN_BUSINESS_USER ||--o{ NOTIFICATION : "triggers_activity"
 
-    %% INDEXES
-    note "Indexes:\n- receiverId + createdAt + isDeleted\n- receiverId + status + isDeleted (unread)\n- scheduledFor + status + isDeleted\n- linkFor + linkId + isDeleted\n- Text search: title, subTitle"
+    note on NOTIFICATION "Indexes: receiverId+createdAt, receiverId+status, scheduledFor, linkFor+linkId, Text search"
 
     %% STYLING
     style NOTIFICATION fill:#ffca28,color:#000

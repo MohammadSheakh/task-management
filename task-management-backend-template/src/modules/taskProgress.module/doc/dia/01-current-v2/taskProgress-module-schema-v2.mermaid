@@ -1,21 +1,20 @@
 erDiagram
     %% ===========================================
-    %% SUBTASK MODULE - SCHEMA (v2.0)
+    %% TASK PROGRESS MODULE - SCHEMA (v2.0)
     %% Updated: 12-03-26
     %% ===========================================
 
-    %% MAIN SUBTASK COLLECTION
-    SUBTASK {
+    %% MAIN TASK PROGRESS COLLECTION
+    TASK_PROGRESS {
         ObjectId _id PK
-        ObjectId taskId FK "Parent task"
-        ObjectId createdById FK "Who created"
-        ObjectId assignedToUserId FK "Who it's assigned to"
-        String title
-        String description
-        String duration
-        Boolean isCompleted
+        ObjectId taskId FK "Task being tracked"
+        ObjectId userId FK "Child working on task"
+        String status "notStarted|inProgress|completed"
+        DateTime startedAt
         DateTime completedAt
-        Number order
+        Number[] completedSubtaskIndexes "Which subtasks done"
+        Number progressPercentage "0-100"
+        String note
         Boolean isDeleted
         DateTime createdAt
         DateTime updatedAt
@@ -46,16 +45,15 @@ erDiagram
         Boolean isDeleted
     }
 
-    %% TASK PROGRESS COLLECTION (Referenced) ⭐ NEW!
-    TASK_PROGRESS {
+    %% SUBTASK COLLECTION (Referenced)
+    SUBTASK {
         ObjectId _id PK
         ObjectId taskId FK
-        ObjectId userId FK "Child working on task"
-        String status "notStarted|inProgress|completed"
-        Number[] completedSubtaskIndexes
-        Number progressPercentage "0-100"
+        String title
+        String duration
+        Boolean isCompleted
         DateTime completedAt
-        Boolean isDeleted
+        Number order
     }
 
     %% NOTIFICATION COLLECTION (Referenced)
@@ -65,47 +63,48 @@ erDiagram
         String subTitle
         ObjectId senderId FK
         ObjectId receiverId FK
-        String type "task|subtask|activity"
+        String type "task|progress|activity"
         String priority "low|normal|high|urgent"
         String status "pending|sent|delivered|read"
         DateTime createdAt
     }
 
     %% SOCKET.IO STATE (Redis - Virtual) ⭐ NEW!
-    SOCKET_IO_SUBTASK_STATE {
-        String cacheKey "socket:subtask:{subtaskId}:subscribers"
-        ObjectId subtaskId
-        ObjectId[] subscribers
+    SOCKET_IO_PROGRESS_STATE {
+        String cacheKey "socket:progress:{taskId}:{userId}:state"
+        ObjectId taskId
+        ObjectId userId
+        String status
+        Number progressPercentage
         DateTime lastUpdated
         Number ttl "60 seconds"
     }
 
     %% RELATIONSHIPS
 
-    SUBTASK }o--|| TASK : "belongs_to"
-    SUBTASK }o--|| USER : "created_by"
-    SUBTASK }o--|| USER : "assigned_to"
-
-    TASK ||--o{ SUBTASK : "contains"
-    TASK ||--o{ TASK_PROGRESS : "tracked_by"
-
-    USER ||--o{ SUBTASK : "creates"
-    USER ||--o{ SUBTASK : "assigned_to"
-    USER ||--o{ TASK_PROGRESS : "works_on"
-
     TASK_PROGRESS }o--|| TASK : "tracks"
     TASK_PROGRESS }o--|| USER : "child_working"
+    TASK_PROGRESS }o--o{ SUBTASK : "completes"
 
-    SUBTASK ||--o{ NOTIFICATION : "triggers"
+    TASK ||--o{ TASK_PROGRESS : "tracked_by"
+    TASK ||--o{ SUBTASK : "contains"
+
+    USER ||--o{ TASK_PROGRESS : "works_on"
+    USER ||--o{ NOTIFICATION : "sends"
+    USER ||--o{ NOTIFICATION : "receives"
+
+    SUBTASK }o--|| TASK : "belongs_to"
+
+    TASK_PROGRESS ||--o{ NOTIFICATION : "triggers"
     NOTIFICATION }o--|| USER : "sender"
     NOTIFICATION }o--|| USER : "receiver"
 
-    note on SUBTASK "Indexes: taskId+order, taskId+isCompleted, assignedToUserId+isCompleted\nAuto-Update: totalSubtasks, completedSubtasks, completionPercentage"
+    note on TASK_PROGRESS "Indexes: taskId+userId (unique), taskId+status, userId+status"
 
     %% STYLING
-    style SUBTASK fill:#66bb6a,color:#fff
-    style TASK fill:#66bb6a,color:#fff
     style TASK_PROGRESS fill:#66bb6a,color:#fff
+    style TASK fill:#66bb6a,color:#fff
+    style SUBTASK fill:#66bb6a,color:#fff
     style USER fill:#42a5f5,color:#fff
     style NOTIFICATION fill:#ffca28,color:#000
-    style SOCKET_IO_SUBTASK_STATE fill:#fff176,color:#000
+    style SOCKET_IO_PROGRESS_STATE fill:#fff176,color:#000

@@ -7,14 +7,14 @@ flowchart LR
     subgraph Sources["📊 Data Sources<br/>(Other Modules)"]
         S1[User Module<br/>User Data]
         S2[Task Module<br/>Task Data]
-        S3[childrenBusinessUser ⭐<br/>Family Data]
-        S4[TaskProgress ⭐<br/>Progress Data]
+        S3[childrenBusinessUser<br/>Family Data]
+        S4[TaskProgress<br/>Progress Data]
         S5[Notification<br/>Activity Data]
         S6[Subscription<br/>Revenue Data]
     end
 
     subgraph Aggregation["⚙️ Aggregation Layer"]
-        A1[chartAggregation.service ⭐<br/>10 Chart Endpoints]
+        A1[chartAggregation.service<br/>10 Chart Endpoints]
         A2[groupAnalytics.service<br/>Family Analytics]
         A3[userAnalytics.service<br/>User Analytics]
         A4[adminAnalytics.service<br/>Admin Analytics]
@@ -22,23 +22,23 @@ flowchart LR
     end
 
     subgraph Cache["🔴 Cache Layer<br/>(Redis)"]
-        C1[Chart Cache ⭐<br/>5 min TTL]
+        C1[Chart Cache<br/>5 min TTL]
         C2[Family Cache<br/>5 min TTL]
         C3[User Cache<br/>5 min TTL]
         C4[Admin Cache<br/>10 min TTL]
-        C5[Socket.IO State ⭐<br/>1 min TTL]
+        C5[Socket.IO State<br/>1 min TTL]
     end
 
-    subgraph RealTime["⚡ Real-Time Layer ⭐ NEW!"]
+    subgraph RealTime["⚡ Real-Time Layer<br/>(Socket.IO)"]
         R1[Socket.IO Server]
         R2[Redis Adapter]
         R3[Family Rooms]
-        R4[Events<br/>group:activity<br/>task-progress:*]
+        R4[Events<br/>group:activity<br/>task-progress]
     end
 
     subgraph Response["📤 Response Layer"]
-        D1[Chart.js Format ⭐<br/>labels[], datasets[]]
-        D2[Family Overview<br/>children[], stats[]]
+        D1[Chart.js Format<br/>labels and datasets]
+        D2[Family Overview<br/>children and stats]
         D3[User Overview<br/>streak, score, rate]
         D4[Admin Dashboard<br/>metrics, growth, revenue]
     end
@@ -90,7 +90,7 @@ flowchart LR
     A3 --> D3
     A4 --> D4
 
-    %% Real-Time Integration ⭐
+    %% Real-Time Integration
     A2 -.->|Broadcast| R1
     A4 -.->|Broadcast| R1
     R1 --> R2
@@ -105,7 +105,7 @@ flowchart LR
     D3 --> F1
     D4 --> F3
 
-    %% Real-Time to Frontend ⭐
+    %% Real-Time to Frontend
     R1 -.->|Push| F2
     R1 -.->|Push| F3
 

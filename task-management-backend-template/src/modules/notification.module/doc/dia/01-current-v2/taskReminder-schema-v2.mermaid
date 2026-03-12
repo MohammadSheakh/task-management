@@ -89,11 +89,7 @@ erDiagram
     TASK_REMINDER ||--o| BULLMQ_JOB : "scheduled_as"
     BULLMQ_JOB }o--|| TASK_REMINDER : "processes"
 
-    %% UNIQUENESS CONSTRAINTS
-    note "Constraints:\n- Max 10 occurrences per reminder\n- Max 5 reminders per task\n- Min 15 min between reminders"
-
-    %% INDEXES
-    note "Indexes:\n- taskId + isDeleted\n- userId + reminderTime + isDeleted\n- scheduledFor + status + isDeleted\n- triggerType + frequency"
+    note on TASK_REMINDER "Constraints: Max 10 occurrences, Max 5/task, Min 15min between. Indexes: taskId, userId+reminderTime, scheduledFor"
 
     %% STYLING
     style TASK_REMINDER fill:#ffca28,color:#000

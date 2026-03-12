@@ -26,12 +26,13 @@ stateDiagram-v2
         Inactive --> Active: Reactivated
         Active --> Removed: Removed from Family
         Removed --> [*]
-        
-        state SecondaryUser {
-            [*] --> NotSecondary: Default
-            NotSecondary --> Secondary: Parent Grants Permission
-            Secondary --> NotSecondary: Parent Revokes
-        }
+    }
+
+    %% SECONDARY USER STATES
+    state SecondaryUserStates {
+        [*] --> NotSecondary: Default
+        NotSecondary --> Secondary: Parent Grants Permission
+        Secondary --> NotSecondary: Parent Revokes
     }
 
     %% TASK STATES
@@ -40,12 +41,13 @@ stateDiagram-v2
         Draft --> Pending: Submit Task
         Draft --> Deleted: Delete Draft
         Pending --> InProgress: Start Task
+        Pending --> Completed: Complete Task
         Pending --> Deleted: Delete Task
         InProgress --> Completed: Complete Task
         InProgress --> Pending: Reopen Task
         InProgress --> Deleted: Delete Task
-        Completed --> Deleted: Delete Completed
         Completed --> Pending: Reopen Completed
+        Completed --> Deleted: Delete Completed
         Deleted --> [*]
         
         note right of Completed
@@ -60,8 +62,8 @@ stateDiagram-v2
     state SubtaskStates {
         [*] --> Pending: Create Subtask
         Pending --> InProgress: Start Subtask
+        Pending --> Completed: Complete Subtask
         InProgress --> Completed: Complete Subtask
-        Pending --> Completed: Quick Complete
         Completed --> Pending: Reopen Subtask
         Completed --> [*]
         Deleted --> [*]
@@ -73,17 +75,17 @@ stateDiagram-v2
         NotStarted --> InProgress: Child Starts
         InProgress --> Completed: Child Completes
         NotStarted --> Completed: Direct Complete
-        
-        state SubtaskProgress {
-            [*] --> SubtaskPending
-            SubtaskPending --> SubtaskCompleted: Complete Subtask
-            SubtaskCompleted --> [*]
-        }
-        
         Completed --> [*]
     }
 
-    %% GROUP/FAMILY STATES (Replaced by ChildrenBusinessUser)
+    %% SUBTASK PROGRESS STATES
+    state SubtaskProgressStates {
+        [*] --> SubtaskPending
+        SubtaskPending --> SubtaskCompleted: Complete Subtask
+        SubtaskCompleted --> [*]
+    }
+
+    %% FAMILY STATES (Replaced by ChildrenBusinessUser)
     state FamilyStates {
         [*] --> Creating: Parent Signs Up
         Creating --> Active: Family Setup Complete
@@ -147,11 +149,12 @@ stateDiagram-v2
         Failed --> Pending: Retry
         Failed --> [*]
         Read --> [*]
-        
-        state Scheduled {
-            Pending --> Scheduled: Schedule for Later
-            Scheduled --> Sent: Trigger Time Reached
-        }
+    }
+
+    %% SCHEDULED NOTIFICATION STATES
+    state ScheduledNotificationStates {
+        Pending --> Scheduled: Schedule for Later
+        Scheduled --> Sent: Trigger Time Reached
     }
 
     %% TASK REMINDER STATES
@@ -162,11 +165,12 @@ stateDiagram-v2
         Scheduled --> Cancelled: User Cancels
         Sent --> [*]
         Cancelled --> [*]
-        
-        state Recurring {
-            Scheduled --> Sent: Trigger
-            Sent --> Scheduled: Next Occurrence
-        }
+    }
+
+    %% RECURRING REMINDER STATES
+    state RecurringReminderStates {
+        Scheduled --> Sent: Trigger
+        Sent --> Scheduled: Next Occurrence
     }
 
     %% CONVERSATION STATES
@@ -199,12 +203,47 @@ stateDiagram-v2
         style Deleted fill:#ef5350
     }
     
+    state ChildBusinessUserStates {
+        style Pending fill:#90caf9
+        style Active fill:#66bb6a
+        style Inactive fill:#ffa726
+        style Removed fill:#ef5350
+    }
+    
+    state TaskStates {
+        style Draft fill:#90caf9
+        style Pending fill:#fff9c4
+        style InProgress fill:#ffe0b2
+        style Completed fill:#81c784
+        style Deleted fill:#e57373
+    }
+    
+    state SubtaskStates {
+        style Pending fill:#fff9c4
+        style InProgress fill:#ffe0b2
+        style Completed fill:#81c784
+    }
+    
+    state TaskProgressStates {
+        style NotStarted fill:#90caf9
+        style InProgress fill:#ffe0b2
+        style Completed fill:#81c784
+    }
+    
+    style UserStates fill:#e3f2fd,stroke:#1565c0
+    style ChildBusinessUserStates fill:#e3f2fd,stroke:#1565c0
+    style SecondaryUserStates fill:#e8f5e9,stroke:#2e7d32
     style TaskStates fill:#c8e6c9,stroke:#2e7d32
     style SubtaskStates fill:#c8e6c9,stroke:#2e7d32
     style TaskProgressStates fill:#c8e6c9,stroke:#2e7d32
+    style SubtaskProgressStates fill:#c8e6c9,stroke:#2e7d32
+    style FamilyStates fill:#fce4ec,stroke:#c2185b
+    style MemberStates fill:#fce4ec,stroke:#c2185b
     style SubscriptionStates fill:#e1bee7,stroke:#7b1fa2
     style PaymentStates fill:#80cbc4,stroke:#00695c
     style NotificationStates fill:#ffe082,stroke:#f9a825
+    style ScheduledNotificationStates fill:#ffe082,stroke:#f9a825
     style ReminderStates fill:#ffe082,stroke:#f9a825
+    style RecurringReminderStates fill:#ffe082,stroke:#f9a825
     style ConversationStates fill:#b0bec5,stroke:#37474f
     style MessageStates fill:#b0bec5,stroke:#37474f

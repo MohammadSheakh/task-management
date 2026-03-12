@@ -94,8 +94,8 @@ stateDiagram-v2
         QueryDB --> Store: Store in Redis
         Store --> Return: Return Data
         Return --> [*]
-        
-        note right of CacheStates
+
+        note right of CheckCache
             Cache TTLs:
             - Unread count: 60s
             - Notification list: 300s

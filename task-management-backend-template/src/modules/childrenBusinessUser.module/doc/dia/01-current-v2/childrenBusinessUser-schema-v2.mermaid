@@ -12,7 +12,7 @@ erDiagram
         DateTime addedAt
         ObjectId addedBy FK "Who added"
         String status "active|inactive|removed"
-        Boolean isSecondaryUser "Can create tasks for family"
+        Boolean isSecondaryUser "Can create tasks"
         String note
         Boolean isDeleted
         DateTime createdAt
@@ -25,7 +25,7 @@ erDiagram
         String name
         String email
         String role "business|child"
-        ObjectId accountCreatorId FK "Who created account"
+        ObjectId accountCreatorId FK "Who created"
         Boolean isBusinessUser "Is parent/teacher"
         String profileImage
         Boolean isEmailVerified
@@ -59,7 +59,7 @@ erDiagram
     SUBSCRIPTION_PLAN {
         ObjectId _id PK
         String subscriptionType "individual|business_starter|business_level1|business_level2"
-        Number maxChildrenAccount "Max children allowed"
+        Number maxChildrenAccount "Max children"
         Number price
         String currency
         Boolean isActive
@@ -82,7 +82,7 @@ erDiagram
     TASK_PROGRESS {
         ObjectId _id PK
         ObjectId taskId FK
-        ObjectId userId FK "Child working on task"
+        ObjectId userId FK "Child working"
         String status "notStarted|inProgress|completed"
         Number progressPercentage
         DateTime completedAt
@@ -125,10 +125,12 @@ erDiagram
 
     %% UNIQUENESS CONSTRAINTS
     note "Only ONE Secondary User per business user"
-    note "Unique index: {parentBusinessUserId, isSecondaryUser, status, isDeleted}"
+    note "Unique index: parentBusinessUserId + isSecondaryUser + status + isDeleted"
 
     %% INDEXES
-    note "Indexes:\n- parentBusinessUserId + status + isDeleted\n- childUserId + status + isDeleted\n- isSecondaryUser + parentBusinessUserId (unique)"
+    note "Indexes: parentBusinessUserId + status + isDeleted"
+    note "Indexes: childUserId + status + isDeleted"
+    note "Indexes: isSecondaryUser + parentBusinessUserId (unique)"
 
     %% STYLING
     style CHILDREN_BUSINESS_USER fill:#ef5350,color:#fff

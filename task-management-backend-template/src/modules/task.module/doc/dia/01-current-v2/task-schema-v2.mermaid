@@ -145,10 +145,8 @@ erDiagram
     TASK_REMINDER }o--|| TASK : "reminds_about"
     TASK_REMINDER }o--|| USER : "for_user"
 
-    %% INDEXES
-    note "Task Indexes:\n- ownerUserId + status + isDeleted + startTime\n- assignedUserIds + status + isDeleted\n- taskType + assignedUserIds + isDeleted\n- Text search: title, description"
-
-    note "TaskProgress Indexes:\n- taskId + userId (unique)\n- taskId + status + isDeleted\n- userId + status + isDeleted"
+    note on TASK "Indexes: ownerUserId+status, assignedUserIds, taskType, Text search"
+    note on TASK_PROGRESS "Indexes: taskId+userId (unique), taskId+status, userId+status"
 
     %% STYLING
     style TASK fill:#66bb6a,color:#fff

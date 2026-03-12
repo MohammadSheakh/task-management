@@ -106,8 +106,8 @@ stateDiagram-v2
         QueryDB --> Store: Store in Redis
         Store --> Return: Return Data
         Return --> [*]
-        
-        note right of CacheStates
+
+        note right of CheckCache
             Cache TTLs:
             - Task detail: 5 min
             - Task list: 2 min

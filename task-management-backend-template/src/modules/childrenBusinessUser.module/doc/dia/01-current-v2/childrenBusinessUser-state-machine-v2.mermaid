@@ -94,8 +94,8 @@ stateDiagram-v2
         QueryDB --> Store: Store in Redis
         Store --> Return: Return Data
         Return --> [*]
-        
-        note right of CacheStates
+
+        note right of CheckCache
             Cache TTLs:
             - Family: 10 min
             - Secondary: 15 min
