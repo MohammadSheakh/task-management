@@ -6,11 +6,13 @@ import { TaskProgress } from './taskProgress.model';
 import { ITaskProgress, ITaskProgressDocument, ITaskProgressSummary } from './taskProgress.interface';
 import ApiError from '../../errors/ApiError';
 import { Task } from '../task.module/task/task.model';
-import { TaskProgressStatus, TASK_PROGRESS_CACHE_CONFIG, TASK_PROGRESS_EVENTS } from './taskProgress.constant';
+import { TaskProgressStatus, TASK_PROGRESS_CACHE_CONFIG, TASK_PROGRESS_EVENTS, TTaskProgressStatus } from './taskProgress.constant';
 import { redisClient } from '../../helpers/redis/redis';
 import { errorLogger, logger } from '../../shared/logger';
 import { User } from '../user.module/user/user.model';
 import { NotificationService } from '../notification.module/notification/notification.service';
+import { socketService } from '../../helpers/socket/socketForChatV3';
+import { ACTIVITY_TYPE } from '../notification.module/notification/notification.constant';
 
 const notificationService = new NotificationService();
 
@@ -192,6 +194,9 @@ export class TaskProgressService extends GenericService<typeof TaskProgress, ITa
       await this.notifyParentOnTaskCompletion(taskId, userId);
     }
 
+    // 🚀 NEW: Emit real-time progress update to parent
+    await this.emitProgressUpdateToParent(taskId, userId, status, oldStatus);
+
     // Invalidate cache
     await this.invalidateCache(taskId, userId);
 
@@ -246,6 +251,9 @@ export class TaskProgressService extends GenericService<typeof TaskProgress, ITa
     if (progress.status === TaskProgressStatus.COMPLETED) {
       await this.notifyParentOnTaskCompletion(taskId, userId);
     }
+
+    // 🚀 NEW: Emit real-time subtask completion to parent
+    await this.emitSubtaskCompletionToParent(taskId, userId, subtaskIndex, progress.progressPercentage);
 
     // Invalidate cache
     await this.invalidateCache(taskId, userId);
@@ -426,6 +434,139 @@ export class TaskProgressService extends GenericService<typeof TaskProgress, ITa
       );
     } catch (error) {
       errorLogger.error('Error sending parent notification:', error);
+    }
+  }
+
+  // ────────────────────────────────────────────────────────────────────────
+  // Socket.IO Real-Time Updates to Parent
+  // Figma: dashboard-flow-01.png (Task Monitoring section)
+  // ────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Emit progress update to parent via Socket.IO
+   * Called when child starts or completes task
+   *
+   * @param taskId - Task ID
+   * @param userId - Child user ID
+   * @param status - New status
+   * @param oldStatus - Previous status
+   */
+  private async emitProgressUpdateToParent(
+    taskId: string,
+    userId: string,
+    status: TTaskProgressStatus,
+    oldStatus: TTaskProgressStatus
+  ): Promise<void> {
+    try {
+      // Get task to find parent (creator)
+      const task = await Task.findById(taskId).select('createdById title taskType');
+      if (!task) return;
+
+      const parentId = task.createdById.toString();
+
+      // Get child name
+      const child = await User.findById(userId).select('name profileImage');
+      if (!child) return;
+
+      // Determine event type
+      let eventType: string;
+      let message: string;
+
+      if (status === TaskProgressStatus.IN_PROGRESS && oldStatus === TaskProgressStatus.NOT_STARTED) {
+        eventType = 'task-progress:started';
+        message = `${child.name} started working on "${task.title}"`;
+      } else if (status === TaskProgressStatus.COMPLETED) {
+        eventType = 'task-progress:completed';
+        message = `${child.name} completed "${task.title}"`;
+      } else {
+        return; // Skip other status changes
+      }
+
+      // Emit to parent via Socket.IO
+      // Parent is auto-joined to family room, but we also emit to personal room for specific updates
+      await socketService.emitToTaskUsers([parentId], eventType, {
+        taskId,
+        taskTitle: task.title,
+        childId: userId,
+        childName: child.name,
+        childProfileImage: child.profileImage?.imageUrl,
+        status,
+        oldStatus,
+        timestamp: new Date(),
+        message,
+      });
+
+      // Also broadcast to family room (for live activity feed)
+      if (task.taskType === 'collaborative') {
+        await socketService.broadcastGroupActivity(parentId, {
+          type: status === TaskProgressStatus.COMPLETED ? ACTIVITY_TYPE.TASK_COMPLETED : ACTIVITY_TYPE.TASK_STARTED,
+          actor: {
+            userId,
+            name: child.name,
+            profileImage: child.profileImage?.imageUrl,
+          },
+          task: {
+            taskId,
+            title: task.title,
+          },
+          timestamp: new Date(),
+        });
+      }
+
+      logger.info(`🚀 Emitted ${eventType} to parent ${parentId}`);
+
+    } catch (error) {
+      errorLogger.error('Error emitting progress update to parent:', error);
+      // Don't throw - Socket.IO emission is optional
+    }
+  }
+
+  /**
+   * Emit subtask completion to parent via Socket.IO
+   * Called when child completes a subtask
+   *
+   * @param taskId - Task ID
+   * @param userId - Child user ID
+   * @param subtaskIndex - Completed subtask index
+   * @param progressPercentage - Current progress percentage
+   */
+  private async emitSubtaskCompletionToParent(
+    taskId: string,
+    userId: string,
+    subtaskIndex: number,
+    progressPercentage: number
+  ): Promise<void> {
+    try {
+      // Get task to find parent (creator)
+      const task = await Task.findById(taskId).select('createdById title subtasks taskType');
+      if (!task || !task.subtasks || task.subtasks.length <= subtaskIndex) return;
+
+      const parentId = task.createdById.toString();
+      const subtaskTitle = task.subtasks[subtaskIndex].title;
+
+      // Get child name
+      const child = await User.findById(userId).select('name profileImage');
+      if (!child) return;
+
+      // Emit to parent
+      await socketService.emitToTaskUsers([parentId], 'task-progress:subtask-completed', {
+        taskId,
+        taskTitle: task.title,
+        subtaskIndex,
+        subtaskTitle,
+        childId: userId,
+        childName: child.name,
+        childProfileImage: child.profileImage?.imageUrl,
+        progressPercentage,
+        timestamp: new Date(),
+        message: `${child.name} completed "${subtaskTitle}" (${progressPercentage}% done)`,
+      });
+
+      logger.info(`🚀 Emitted subtask-completed to parent ${parentId}`);
+
+    } catch (error) {
+      errorLogger.error('Error emitting subtask completion to parent:', error);
+      // Don't throw - Socket.IO emission is optional
     }
   }
 

@@ -10,6 +10,7 @@ import { logger, errorLogger } from '../../../shared/logger';
 import { NotificationService } from '../../notification.module/notification/notification.service';
 import { ACTIVITY_TYPE } from '../../notification.module/notification/notification.constant';
 import { TaskProgressService } from '../../taskProgress.module/taskProgress.service';
+import { socketService } from '../../../helpers/socket/socketForChatV3';
 
 const notificationService = new NotificationService();
 const taskProgressService = new TaskProgressService();
@@ -180,6 +181,36 @@ export class TaskService extends GenericService<typeof Task, ITask> {
       );
     }
 
+    // 🚀 NEW: Emit real-time event to task subscribers
+    // This notifies all users who joined the task room about the new/updated task
+    await socketService.emitToTask(task._id.toString(), 'task:created', {
+      taskId: task._id.toString(),
+      title: task.title,
+      taskType: task.taskType,
+      status: task.status,
+      groupId: data.groupId?.toString(),
+      assignedUserIds: data.assignedUserIds?.map(id => id.toString()),
+      createdById: userId.toString(),
+      createdAt: task.createdAt,
+    });
+
+    // 🚀 NEW: Emit to group room if this is a group/family task
+    if (data.groupId) {
+      await socketService.broadcastGroupActivity(data.groupId.toString(), {
+        type: ACTIVITY_TYPE.TASK_CREATED,
+        actor: {
+          userId: userId.toString(),
+          name: userId.toString(), // Will be populated by service
+          profileImage: undefined,
+        },
+        task: {
+          taskId: task._id.toString(),
+          title: task.title,
+        },
+        timestamp: new Date(),
+      });
+    }
+
     return task;
   }
 
@@ -304,16 +335,47 @@ export class TaskService extends GenericService<typeof Task, ITask> {
 
     // ✨ NEW: Record activity for task status changes
     if (updatedTask.groupId) {
-      const activityType = status === TaskStatus.completed 
-        ? ACTIVITY_TYPE.TASK_COMPLETED 
+      const activityType = status === TaskStatus.completed
+        ? ACTIVITY_TYPE.TASK_COMPLETED
         : ACTIVITY_TYPE.TASK_STARTED;
-      
+
       await notificationService.recordGroupActivity(
         updatedTask.groupId.toString(),
         userId.toString(),
         activityType,
         { taskId: updatedTask._id.toString(), taskTitle: updatedTask.title }
       );
+    }
+
+    // 🚀 NEW: Emit real-time status change to task subscribers
+    await socketService.emitToTask(taskId, 'task:status-changed', {
+      taskId,
+      oldStatus: (updatedTask as any)._doc?.status || status, // Previous status
+      newStatus: status,
+      changedBy: userId.toString(),
+      changedAt: new Date(),
+      taskTitle: updatedTask.title,
+    });
+
+    // 🚀 NEW: Broadcast to group room if group task
+    if (updatedTask.groupId) {
+      const activityType = status === TaskStatus.completed
+        ? ACTIVITY_TYPE.TASK_COMPLETED
+        : ACTIVITY_TYPE.TASK_STARTED;
+
+      await socketService.broadcastGroupActivity(updatedTask.groupId.toString(), {
+        type: activityType,
+        actor: {
+          userId: userId.toString(),
+          name: userId.toString(), // Will be populated
+          profileImage: undefined,
+        },
+        task: {
+          taskId: updatedTask._id.toString(),
+          title: updatedTask.title,
+        },
+        timestamp: new Date(),
+      });
     }
 
     return updatedTask;

@@ -257,11 +257,15 @@ export class SocketService {
 
         // 🆕 Join role-based rooms
         if (userProfile.role == TRole.admin) {
-
           console.log("🔌3🔌")
           socket.join(`role::${userProfile.role}`); // e.g., "role::admin", "role::user"
           logger.info(`👤🛡️ User ${userId} joined role room: role::${userProfile.role}`);
         }
+
+        // 🆕 Auto-join family room (based on childrenBusinessUser relationship)
+        // Figma: dashboard-flow-01.png (Live Activity section)
+        // Every user (parent or child) automatically joins their family room
+        await this.autoJoinFamilyRoom(socket, userId, userProfile);
 
         // Notify related users about online status
         await this.notifyRelatedUsersOnlineStatus(userId, userProfile, true);
@@ -599,6 +603,97 @@ export class SocketService {
 
     // Add other event handlers here (send-new-message, get-all-conversations, etc.)
     // ... (your existing event handlers remain the same)
+
+    // ────────────────────────────────────────────────────────────────────────
+    // TASK MANAGEMENT EVENT HANDLERS (NEW)
+    // For real-time task updates, collaboration, and progress tracking
+    // ────────────────────────────────────────────────────────────────────────
+
+    //---------------------------------
+    // Join task room for real-time updates
+    //---------------------------------
+    socket.on('join-task', async (taskData: { taskId: string }, callback) => {
+      if (!taskData.taskId) {
+        return callback?.({ success: false, message: 'taskId is required' });
+      }
+
+      const taskId = taskData.taskId;
+
+      logger.info(`📋 User ${userProfile.name} joining task room ${taskId}`);
+
+      // Join socket.io room
+      socket.join(taskId);
+
+      // Update Redis state
+      await this.redisStateManager.joinTaskRoom(userId, taskId);
+
+      // Get task room users
+      const roomUsers = await this.redisStateManager.getTaskRoomUsers(taskId);
+
+      logger.info(`📋 Task room ${taskId} has ${roomUsers.length} users: ${roomUsers.join(', ')}`);
+
+      // Notify others in the task
+      socket.to(taskId).emit('user-joined-task', {
+        userId,
+        userName: userProfile?.name,
+        taskId,
+        isOnline: true,
+      });
+
+      callback?.({ success: true, message: 'Joined task room successfully' });
+    });
+
+    //---------------------------------
+    // Leave task room
+    //---------------------------------
+    socket.on('leave-task', async (taskData: { taskId: string }, callback) => {
+      if (!taskData.taskId) {
+        return callback?.({ success: false, message: 'taskId is required' });
+      }
+
+      const taskId = taskData.taskId;
+
+      // Leave socket.io room
+      socket.leave(taskId);
+
+      // Update Redis state
+      await this.redisStateManager.leaveTaskRoom(userId, taskId);
+
+      // Notify others
+      socket.to(taskId).emit('user-left-task', {
+        userId,
+        userName: userProfile?.name,
+        taskId,
+      });
+
+      callback?.({ success: true, message: 'Left task room successfully' });
+    });
+
+    // ────────────────────────────────────────────────────────────────────────
+    // FAMILY/FAMILY ROOM EVENT HANDLERS (NEW)
+    // Auto-joined based on childrenBusinessUser relationship
+    // No manual join/leave - users are automatically part of their family
+    // ────────────────────────────────────────────────────────────────────────
+
+    //---------------------------------
+    // Get live activity feed for family
+    // Figma: dashboard-flow-01.png (Live Activity section)
+    //---------------------------------
+    socket.on('get-family-activity-feed', async (groupData: { businessUserId: string; limit?: number }, callback) => {
+      if (!groupData.businessUserId) {
+        return callback?.({ success: false, message: 'businessUserId is required' });
+      }
+
+      try {
+        const limit = groupData.limit || 10;
+        const activities = await this.redisStateManager.getActivityFeed(groupData.businessUserId, limit);
+
+        callback?.({ success: true, data: activities });
+      } catch (error) {
+        logger.error('Error fetching activity feed:', error);
+        callback?.({ success: false, message: 'Failed to fetch activity feed' });
+      }
+    });
   }
 
   // 🔗➡️ setupEventHandlers
@@ -621,7 +716,7 @@ export class SocketService {
   private async notifyRelatedUsersOnlineStatus(userId: string, userProfile: any, isOnline: boolean) {
     try {
       const relatedUsers = await this.redisStateManager.getRelatedOnlineUsers(userId);
-      
+
       relatedUsers.forEach((relatedUserId: string) => {
         this.io!.emit(`related-user-online-status::${relatedUserId}`, {
           userId,
@@ -632,6 +727,68 @@ export class SocketService {
 
     } catch (error) {
       logger.error('Error notifying related users:', error);
+    }
+  }
+
+  // ────────────────────────────────────────────────────────────────────────
+  // Family Room Auto-Join Logic
+  // Figma: dashboard-flow-01.png (Live Activity section)
+  // ────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Auto-join user to their family room based on childrenBusinessUser relationship
+   * Called on user connection
+   *
+   * Logic:
+   * 1. If user is a business user (parent/teacher) → join room with their businessUserId
+   * 2. If user is a child → find their parent's businessUserId → join that room
+   *
+   * @param socket - Socket instance
+   * @param userId - User ID
+   * @param userProfile - User profile
+   */
+  private async autoJoinFamilyRoom(socket: Socket, userId: string, userProfile: IUserProfile): Promise<void> {
+    try {
+      // Import ChildrenBusinessUser model dynamically to avoid circular dependency
+      const { ChildrenBusinessUser } = await import('../../modules/childrenBusinessUser.module/childrenBusinessUser.model');
+
+      let familyRoomId: string | null = null;
+
+      // Check if user is a child (has a parent business user)
+      const childRelationship = await ChildrenBusinessUser.findOne({
+        childUserId: new Types.ObjectId(userId),
+        status: 'active',
+        isDeleted: false,
+      }).select('parentBusinessUserId');
+
+      if (childRelationship) {
+        // User is a child → join parent's family room
+        familyRoomId = childRelationship.parentBusinessUserId.toString();
+        logger.info(`👨‍👩‍👧‍👦 User ${userId} joined family room ${familyRoomId} (as child)`);
+      } else {
+        // Check if user is a business user (has children)
+        const parentRelationship = await ChildrenBusinessUser.findOne({
+          parentBusinessUserId: new Types.ObjectId(userId),
+          status: 'active',
+          isDeleted: false,
+        }).select('parentBusinessUserId');
+
+        if (parentRelationship) {
+          // User is a business user → join their own family room
+          familyRoomId = userId;
+          logger.info(`👨‍👩‍👧‍👦 User ${userId} joined family room ${familyRoomId} (as business user)`);
+        }
+      }
+
+      // Join family room if found
+      if (familyRoomId) {
+        socket.join(familyRoomId);
+        await this.redisStateManager.joinGroupRoom(userId, familyRoomId);
+      }
+
+    } catch (error) {
+      logger.error('Error auto-joining family room:', error);
+      // Don't throw - family room join is optional
     }
   }
 
@@ -692,7 +849,7 @@ export class SocketService {
   }
 
   /********
-   * 🟢🟢 
+   * 🟢🟢
    * This method helps us to send notification to admin
    * 🔗➡️  bullmq.ts -> startNotificationWorker
    * ******* */
@@ -709,6 +866,173 @@ export class SocketService {
      data: any) {
     if (!this.io) return;
     this.io.to(conversationId).emit(event, data);
+  }
+
+  // ────────────────────────────────────────────────────────────────────────
+  // TASK MANAGEMENT EMISSION METHODS (NEW)
+  // For broadcasting task updates to all subscribed users
+  // ────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Emit event to all users subscribed to a task
+   * Used for real-time task updates (status change, edits, etc.)
+   *
+   * @param taskId - Task ID
+   * @param event - Event name (e.g., 'task:updated', 'task:status-changed')
+   * @param data - Event data
+   * @returns true if emitted
+   *
+   * @example
+   * socketService.emitToTask(
+   *   taskId,
+   *   'task:status-changed',
+   *   { taskId, oldStatus: 'pending', newStatus: 'inProgress', changedBy: userId }
+   * );
+   */
+  public async emitToTask(taskId: string, event: string, data: any): Promise<boolean> {
+    if (!this.io) return false;
+
+    // Emit to task room (all users subscribed to this task)
+    this.io.to(taskId).emit(event, data);
+
+    logger.info(`📋 Emitted ${event} to task ${taskId}`);
+    return true;
+  }
+
+  /**
+   * Emit task update to specific users (e.g., assignees, creator)
+   *
+   * @param userIds - Array of user IDs to notify
+   * @param event - Event name
+   * @param data - Event data
+   * @returns true if emitted
+   */
+  public async emitToTaskUsers(userIds: string[], event: string, data: any): Promise<boolean> {
+    if (!this.io) return false;
+
+    for (const userId of userIds) {
+      this.io.to(userId).emit(event, data);
+    }
+
+    logger.info(`📋 Emitted ${event} to ${userIds.length} task users`);
+    return true;
+  }
+
+  // ────────────────────────────────────────────────────────────────────────
+  // GROUP/FAMILY MANAGEMENT EMISSION METHODS (NEW)
+  // For broadcasting group activities via childrenBusinessUser module
+  // ────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Emit event to all members of a group/family
+   * Used for live activity feed, member changes, etc.
+   *
+   * @param groupId - Group ID (businessUserId for family groups)
+   * @param event - Event name (e.g., 'group:activity', 'group:member-joined')
+   * @param data - Event data
+   * @returns true if emitted
+   *
+   * @example
+   * socketService.emitToGroup(
+   *   businessUserId,
+   *   'group:activity',
+   *   {
+   *     type: 'task_completed',
+   *     actor: { userId, name },
+   *     task: { taskId, title },
+   *     timestamp: new Date()
+   *   }
+   * );
+   */
+  public async emitToGroup(groupId: string, event: string, data: any): Promise<boolean> {
+    if (!this.io) return false;
+
+    // Emit to group room (all family/team members)
+    this.io.to(groupId).emit(event, data);
+
+    logger.info(`👨‍👩‍👧‍👦 Emitted ${event} to group ${groupId}`);
+    return true;
+  }
+
+  /**
+   * Add activity to group's activity feed and broadcast to all members
+   * This is a convenience method that combines Redis storage + Socket emission
+   *
+   * @param groupId - Group ID
+   * @param activity - Activity data
+   * @param broadcast - Whether to broadcast to all members (default: true)
+   *
+   * @example
+   * await socketService.broadcastGroupActivity(
+   *   businessUserId,
+   *   {
+   *     type: 'task_created',
+   *     actor: { userId: '123', name: 'John' },
+   *     task: { taskId: 'abc', title: 'Homework' },
+   *     timestamp: new Date()
+   *   }
+   * );
+   */
+  public async broadcastGroupActivity(
+    groupId: string,
+    activity: {
+      type: string;
+      actor: { userId: string; name: string; profileImage?: string };
+      task?: { taskId: string; title: string };
+      message?: string;
+      timestamp: Date;
+    },
+    broadcast: boolean = true
+  ): Promise<void> {
+    // Add to Redis activity feed
+    await this.redisStateManager.addActivityToFeed(groupId, activity);
+
+    // Broadcast to all group members if enabled
+    if (broadcast) {
+      this.io.to(groupId).emit('group:activity', activity);
+      logger.info(`📢 Broadcast activity to group ${groupId}`);
+    }
+  }
+
+  /**
+   * Get activity feed for a group
+   *
+   * @param groupId - Group ID
+   * @param limit - Number of activities to return
+   * @returns Array of activities
+   */
+  public async getGroupActivityFeed(groupId: string, limit: number = 10): Promise<any[]> {
+    return await this.redisStateManager.getActivityFeed(groupId, limit);
+  }
+
+  // ────────────────────────────────────────────────────────────────────────
+  // NOTIFICATION ENHANCEMENT METHODS (NEW)
+  // For better real-time notification delivery
+  // ────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Emit notification to user with automatic online/offline handling
+   * If user is online → emit via Socket.IO
+   * If user is offline → returns false (caller should send push notification)
+   *
+   * @param userId - User ID
+   * @param event - Event name
+   * @param data - Notification data
+   * @returns true if emitted (user was online)
+   */
+  public async emitNotificationToUser(userId: string, event: string, data: any): Promise<boolean> {
+    if (!this.io) return false;
+
+    const isOnline = await this.isUserOnline(userId);
+
+    if (isOnline) {
+      this.io.to(userId).emit(event, data);
+      logger.info(`🔔 Emitted notification to online user ${userId}`);
+      return true;
+    }
+
+    logger.info(`📴 User ${userId} is offline, notification not emitted`);
+    return false;
   }
 
   public emit(event: string, data: any) {
