@@ -566,7 +566,7 @@ export class ChartAggregationService {
    */
   async getActivityHeatmap(userId: string, days: number = 30): Promise<IActivityHeatmap> {
     const cacheKey = this.getCacheKey(`heatmap-${userId}-${days}`);
-    
+
     const cached = await this.getFromCache<IActivityHeatmap>(cacheKey);
     if (cached) return cached;
 
@@ -593,11 +593,10 @@ export class ChartAggregationService {
     ]);
 
     const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    const days = dayNames;
     const hours = Array.from({ length: 24 }, (_, i) => i);
 
     const result: IActivityHeatmap = {
-      days,
+      days: dayNames,
       hours,
       activity: activity.map((a: any) => ({
         day: dayNames[a._id.day - 1] || 'Unknown',

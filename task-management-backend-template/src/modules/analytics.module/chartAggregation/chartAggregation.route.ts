@@ -13,8 +13,8 @@
 
 //@ts-ignore
 import express from 'express';
-import { auth } from '../../../middlewares/auth';
-import { authorize } from '../../../middlewares/roles';
+import auth from '../../../middlewares/auth';
+import { TRole } from '../../../middlewares/roles';
 import { rateLimiter } from '../../../middlewares/rateLimiter';
 import { ChartAggregationController } from './chartAggregation.controller';
 
@@ -33,8 +33,7 @@ const router = express.Router();
 └──────────────────────────────────*/
 router.get(
   '/user-growth',
-  auth(),
-  authorize('admin'),
+  auth(TRole.admin),
   rateLimiter('user'),
   ChartAggregationController.getUserGrowthChart
 );
@@ -47,8 +46,7 @@ router.get(
 └──────────────────────────────────*/
 router.get(
   '/task-status',
-  auth(),
-  authorize('admin'),
+  auth(TRole.admin),
   rateLimiter('user'),
   ChartAggregationController.getTaskStatusDistribution
 );
@@ -61,8 +59,7 @@ router.get(
 └──────────────────────────────────*/
 router.get(
   '/monthly-income',
-  auth(),
-  authorize('admin'),
+  auth(TRole.admin),
   rateLimiter('user'),
   ChartAggregationController.getMonthlyIncomeChart
 );
@@ -75,8 +72,7 @@ router.get(
 └──────────────────────────────────*/
 router.get(
   '/user-ratio',
-  auth(),
-  authorize('admin'),
+  auth(TRole.admin),
   rateLimiter('user'),
   ChartAggregationController.getUserRatioChart
 );
@@ -94,8 +90,7 @@ router.get(
 └──────────────────────────────────*/
 router.get(
   '/family-activity/:businessUserId',
-  auth(),
-  authorize('user', 'admin'),
+  auth(TRole.business, TRole.admin),
   rateLimiter('user'),
   ChartAggregationController.getFamilyTaskActivityChart
 );
@@ -108,8 +103,7 @@ router.get(
 └──────────────────────────────────*/
 router.get(
   '/child-progress/:businessUserId',
-  auth(),
-  authorize('user', 'admin'),
+  auth(TRole.business, TRole.admin),
   rateLimiter('user'),
   ChartAggregationController.getChildProgressComparison
 );
@@ -122,8 +116,7 @@ router.get(
 └──────────────────────────────────*/
 router.get(
   '/status-by-child/:businessUserId',
-  auth(),
-  authorize('user', 'admin'),
+  auth(TRole.business, TRole.admin),
   rateLimiter('user'),
   ChartAggregationController.getTaskStatusByChild
 );
@@ -141,8 +134,7 @@ router.get(
 └──────────────────────────────────*/
 router.get(
   '/completion-trend/:userId',
-  auth(),
-  authorize('user', 'admin'),
+  auth(TRole.business, TRole.admin),
   rateLimiter('user'),
   ChartAggregationController.getTaskCompletionTrend
 );
@@ -155,8 +147,7 @@ router.get(
 └──────────────────────────────────*/
 router.get(
   '/activity-heatmap/:userId',
-  auth(),
-  authorize('user', 'admin'),
+  auth(TRole.business, TRole.admin),
   rateLimiter('user'),
   ChartAggregationController.getActivityHeatmap
 );
@@ -169,8 +160,7 @@ router.get(
 └──────────────────────────────────*/
 router.get(
   '/collaborative-progress/:taskId',
-  auth(),
-  authorize('user', 'admin'),
+  auth(TRole.business, TRole.admin),
   rateLimiter('user'),
   ChartAggregationController.getCollaborativeTaskProgress
 );
