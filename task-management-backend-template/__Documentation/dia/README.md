@@ -1,161 +1,150 @@
 # 📊 Global Diagrams Index
 
-**Project**: Task Management Backend  
-**Last Updated**: 08-03-26  
-**Total Diagrams**: 9 comprehensive diagrams
+**Project:** Task Management Backend  
+**Purpose:** Project-level diagrams showing complete system architecture  
+**Last Updated:** 12-03-26  
+**Version:** 2.0 - Organized Structure  
 
 ---
 
-## 🎯 Overview
+## 📁 Folder Structure
 
-This folder contains **project-level diagrams** that show the complete system architecture, data flows, and interactions across all modules in the Task Management System.
-
----
-
-## 📋 Diagram List
-
-### 1. Complete System Schema (ER Diagram)
-**File**: [`complete-system-schema.mermaid`](./complete-system-schema.mermaid)
-
-**Description**: Entity-Relationship diagram showing all collections and their relationships across all modules.
-
-**Entities**:
-- User Module (User, UserProfile)
-- Task Module (Task, SubTask)
-- Group Module (Group, GroupMember, GroupInvitation)
-- Notification Module (Notification, TaskReminder)
-- Subscription Module (SubscriptionPlan, UserSubscription)
-- Payment Module (PaymentTransaction)
-- Analytics (Virtual collections)
-
-**Relationships**: 50+ relationships mapped
+```
+__Documentation/dia/
+├── 01-current-v2/          # Current v2.0 diagrams (ACTIVE)
+├── 02-legacy-v1/           # Legacy v1.0 diagrams (REFERENCE)
+└── README.md               # This index
+```
 
 ---
 
-### 2. Complete System Architecture
-**File**: [`complete-system-architecture.mermaid`](./complete-system-architecture.mermaid)
+## 📋 Current Diagrams (v2.0) ⭐
 
-**Description**: High-level system architecture showing all layers from frontend to external services.
+**Folder:** `01-current-v2/`
 
-**Layers**:
-- Frontend Layer (Flutter, Website, Admin Dashboard)
-- API Gateway (Load Balancer, Auth, Rate Limiter)
-- Backend Services (All 10 modules)
-- Async Processing (BullMQ, Workers)
-- Data Layer (MongoDB, Redis, File Storage)
-- External Services (Stripe, Email, Push, SMS)
+**Contains**: 9 comprehensive diagrams updated with:
+- ✅ childrenBusinessUser module
+- ✅ taskProgress module
+- ✅ Socket.IO Real-Time Layer
+- ✅ Chart aggregation endpoints
+- ✅ Updated collections and relationships
 
----
+### Diagram List
 
-### 3. Complete User Journey
-**File**: [`complete-user-journey.mermaid`](./complete-user-journey.mermaid)
-
-**Description**: End-to-end user journey from signup to subscription renewal.
-
-**Phases**:
-- Onboarding (Signup, Verify, Profile)
-- Subscription (View Plans, Trial, Payment)
-- Group Setup (Create, Invite, Join)
-- Task Management (Create, Assign, Complete)
-- Collaboration (Activity, Comments, Leaderboard)
-- Analytics (Stats, Streak, Productivity)
-- Renewal (Auto-renew, Continue)
+| # | Diagram | File | Description |
+|---|---------|------|-------------|
+| 1 | **System Schema** | `complete-system-schema-v2.mermaid` | ER Diagram with all collections |
+| 2 | **System Architecture** | `complete-system-architecture-v2.mermaid` | Complete system architecture |
+| 3 | **User Journey** | `complete-user-journey-v2.mermaid` | Parent, Child, Admin journeys |
+| 4 | **Module Dependency** | `module-dependency-diagram-v2.mermaid` | Module dependencies |
+| 5 | **State Machine** | `complete-state-machine-v2.mermaid` | All entity state machines |
+| 6 | **Data Flow** | `complete-data-flow-v2.mermaid` | End-to-end data flows |
+| 7 | **Sequence Diagram** | `complete-sequence-diagram-v2.mermaid` | 8 key scenarios |
+| 8 | **Swimlane Diagram** | `complete-swimlane-diagram-v2.mermaid` | Responsibility swimlanes |
+| 9 | **Deployment Architecture** | `deployment-architecture-v2.mermaid` | Production deployment |
 
 ---
 
-### 4. Complete Data Flow
-**File**: [`complete-data-flow.mermaid`](./complete-data-flow.mermaid)
+## 📚 Legacy Diagrams (v1.0)
 
-**Description**: End-to-end data flow showing how data moves through the system.
+**Folder:** `02-legacy-v1/`
 
-**Flows**:
-- User Actions → API Gateway
-- Business Logic Layer
-- Data Layer (MongoDB, Redis)
-- Async Processing (BullMQ)
-- External Services
+**Contains**: Original v1.0 diagrams (kept for historical reference)
 
----
+**Note**: These diagrams are **outdated** and should only be used for:
+- Historical reference
+- Understanding migration path
+- Comparing v1.0 vs v2.0 changes
 
-### 5. Complete Sequence Diagram
-**File**: [`complete-sequence-diagram.mermaid`](./complete-sequence-diagram.mermaid)
+### Legacy Diagram List
 
-**Description**: Sequence diagram showing key operations across all modules.
-
-**Operations**:
-1. User Signup & Login
-2. Create Group & Invite Members
-3. Create Task
-4. Complete Task
-5. View Analytics
-6. Subscribe to Plan
-7. Stripe Webhook Processing
+| # | Diagram | File | Status |
+|---|---------|------|--------|
+| 1 | System Schema | `complete-system-schema.mermaid` | ⚠️ Outdated |
+| 2 | System Architecture | `complete-system-architecture.mermaid` | ⚠️ Outdated |
+| 3 | User Journey | `complete-user-journey.mermaid` | ⚠️ Outdated |
+| 4 | Module Dependency | `module-dependency-diagram.mermaid` | ⚠️ Outdated |
+| 5 | State Machine | `complete-state-machine.mermaid` | ⚠️ Outdated |
+| 6 | Data Flow | `complete-data-flow.mermaid` | ⚠️ Outdated |
+| 7 | Sequence Diagram | `complete-sequence-diagram.mermaid` | ⚠️ Outdated |
+| 8 | Swimlane Diagram | `complete-swimlane-diagram.mermaid` | ⚠️ Outdated |
+| 9 | Deployment Architecture | `deployment-architecture.mermaid` | ⚠️ Outdated |
 
 ---
 
-### 6. Complete Swimlane Diagram
-**File**: [`complete-swimlane-diagram.mermaid`](./complete-swimlane.mermaid)
+## 🆕 What's New in v2.0
 
-**Description**: Swimlane diagram showing responsibilities across all actors.
+### New Collections (ER Diagram)
+1. ✅ **CHILDREN_BUSINESS_USER** - Parent-child relationship tracking
+2. ✅ **TASK_PROGRESS** - Per-child progress tracking
+3. ✅ **USER_DEVICE** - Device management for FCM
 
-**Swimlanes**:
-- User
-- Frontend (Flutter/Website)
-- Backend API
-- Database (MongoDB)
-- Cache (Redis)
-- Queue (BullMQ)
-- External Services
+### New Modules (Architecture)
+1. ✅ **taskProgress.module** - Real-time progress tracking
+2. ✅ **childrenBusinessUser.module** - Family management
+3. ✅ **chartAggregation service** - 10 chart endpoints
 
----
+### New Real-Time Layer ⭐
+- ✅ **Socket.IO Server** - Bidirectional communication
+- ✅ **Redis Adapter** - Multi-worker support
+- ✅ **Room Management** - User/Family/Task rooms
+- ✅ **Socket Events** - task:assigned, task-progress:*, group:activity
 
-### 7. Deployment Architecture
-**File**: [`deployment-architecture.mermaid`](./deployment-architecture.mermaid)
+### New State Machines
+1. ✅ **TaskProgress States** - notStarted → inProgress → completed
+2. ✅ **ChildBusinessUser States** - Pending → Active → Removed
+3. ✅ **SecondaryUser States** - NotSecondary ↔ Secondary
 
-**Description**: Production deployment architecture with AWS services.
+### New User Journeys
+1. ✅ **Parent/Business User Journey** - 7 phases
+2. ✅ **Child/Student User Journey** - 7 phases
+3. ✅ **Admin User Journey** - 5 phases
+4. ✅ **Collaborative Task Journey** - 5 phases
 
-**Components**:
-- CDN Layer (Cloudflare)
-- Load Balancing (AWS NLB/ALB)
-- Application Layer (Multiple Pods)
-- Data Layer (MongoDB Atlas, Redis Cluster)
-- Monitoring (CloudWatch, Sentry)
-- Security (WAF, SSL, Secrets Manager)
-
----
-
-### 8. Module Dependency Diagram
-**File**: [`module-dependency-diagram.mermaid`](./module-dependency-diagram.mermaid)
-
-**Description**: Module dependencies and relationships.
-
-**Groups**:
-- Core Modules (Auth, User, Token, OTP)
-- Task Modules (Task, SubTask)
-- Group Modules (Group, Member, Invite)
-- Notification Modules (Notification, Reminder)
-- Analytics Modules (User, Task, Group, Admin)
-- Subscription Modules (Plan, User Subscription)
-- Payment Modules (Payment, Transaction, Webhook)
-- Supporting Modules (Attachments, Chat, Settings)
-- Shared Components (Generic, Middleware, Helpers)
-- External Dependencies (Stripe, MongoDB, Redis, BullMQ)
+### New Sequence Scenarios
+1. ✅ Child Completes Task (Real-Time to Parent)
+2. ✅ Child Starts Task (Real-Time to Parent)
+3. ✅ Real-Time Family Activity Feed
 
 ---
 
-### 9. Complete State Machine
-**File**: [`complete-state-machine.mermaid`](./complete-state-machine.mermaid)
+## 🎯 Quick Navigation
 
-**Description**: State machines for all major entities.
+### Find Current Diagrams
+```bash
+cd __Documentation/dia/01-current-v2/
+ls -1
+# All 9 current v2.0 diagrams
+```
 
-**State Machines**:
-- User States (Unverified → Verified → Active)
-- Task States (Draft → Pending → In Progress → Completed)
-- Group States (Creating → Active → Deleted)
-- Member States (Invited → Accepted → Active)
-- Subscription States (None → Trial → Active → Renewed)
-- Payment States (Pending → Processing → Completed/Failed)
-- Notification States (Pending → Sent → Delivered → Read)
+### Find Legacy Diagrams
+```bash
+cd __Documentation/dia/02-legacy-v1/
+ls -1
+# All 9 legacy v1.0 diagrams
+```
+
+### Find Documentation
+```bash
+cd __Documentation/dia/01-current-v2/
+ls *.md
+# COMPLETE_DIAGRAMS_UPDATE_SUMMARY-12-03-26.md
+# DIAGRAM_UPDATE_PROGRESS-12-03-26.md
+```
+
+---
+
+## 📊 Diagram Statistics
+
+| Metric | v1.0 | v2.0 | Change |
+|--------|------|------|--------|
+| **Total Diagrams** | 9 | 9 | ✅ Updated |
+| **Total Lines** | ~2,500 | ~3,200 | +700 |
+| **Collections** | 15 | 18 | +3 |
+| **Modules** | 10 | 13 | +3 |
+| **State Machines** | 8 | 11 | +3 |
+| **User Journeys** | 3 | 4 | +1 |
+| **Sequence Scenarios** | 7 | 8 | +1 |
 
 ---
 
@@ -163,39 +152,83 @@ This folder contains **project-level diagrams** that show the complete system ar
 
 ### Color Coding
 
-| Color | Meaning |
-|-------|---------|
-| 🔵 Blue | User/Frontend |
-| 🟠 Orange | API Gateway |
-| 🟢 Green | Backend Services |
-| 🔴 Red | Data Layer |
-| 🟣 Purple | Async Processing |
-| 🟡 Yellow | Queue/External |
-| ⚪ Gray | Shared Components |
+| Color | Meaning | Module/Component |
+|-------|---------|------------------|
+| 🔵 Blue | User/Frontend | USER, PROFILE, Flutter |
+| 🟢 Green | Task Modules | TASK, SUBTASK, TASKPROG |
+| 🔴 Red | Family Modules | CHILDREN_BUSINESS_USER |
+| 🟡 Yellow | Notification | NOTIFICATION, REMINDER |
+| 🟣 Purple | Analytics | ANALYTICS, CHARTS |
+| 🟠 Orange | Subscription | SUBSCRIPTION_PLAN |
+| 🔵 Teal | Payment | PAYMENT_TRANSACTION |
+| ⚪ Gray | Chat | CONVERSATION, MESSAGE |
+| 🟡 Yellow | Real-Time | Socket.IO |
 
 ### Naming Conventions
 
-- **Modules**: `module-name/` (lowercase with hyphens)
-- **Files**: `descriptive-name.mermaid` (lowercase with hyphens)
-- **States**: `StateName` (PascalCase)
-- **Actions**: `actionName` (camelCase)
+- **Collections**: `CHILDREN_BUSINESS_USER` (UPPER_SNAKE)
+- **Modules**: `taskProgress.module` (camelCase)
+- **States**: `InProgress` (PascalCase)
+- **Actions**: `createTask` (camelCase)
+- **Files**: `complete-system-schema-v2.mermaid` (kebab-case)
 
 ---
 
-## 📊 Usage
+## 📝 Usage Guide
 
-### Viewing Diagrams
+### For New Team Members
 
-1. **VS Code**: Install Mermaid extension
-2. **GitHub**: Native Mermaid support
-3. **Online**: [Mermaid Live Editor](https://mermaid.live/)
+**Start Here**:
+1. Read `01-current-v2/COMPLETE_DIAGRAMS_UPDATE_SUMMARY-12-03-26.md`
+2. Review System Architecture (v2.0)
+3. Study User Journeys (v2.0)
+4. Explore Module Dependencies (v2.0)
 
-### Editing Diagrams
+**Then**:
+- Explore module-specific diagrams in `src/modules/<module>.module/doc/dia/`
+- Review flow documentation in `flow/`
+- Check Postman collections in `postman-collections/`
 
-1. Open `.mermaid` file
-2. Edit Mermaid syntax
-3. Preview in VS Code or browser
-4. Commit changes
+---
+
+### For Experienced Team Members
+
+**Quick Access**:
+```bash
+# Current diagrams
+cd __Documentation/dia/01-current-v2/
+
+# Specific diagram
+cat complete-system-schema-v2.mermaid
+cat complete-system-architecture-v2.mermaid
+```
+
+---
+
+### For Architects
+
+**Reference**:
+- System Architecture (v2.0) - High-level design
+- Module Dependencies (v2.0) - Module relationships
+- Deployment Architecture (v2.0) - Production setup
+
+---
+
+### For Developers
+
+**Reference**:
+- System Schema (v2.0) - Database design
+- State Machine (v2.0) - Entity states
+- Sequence Diagram (v2.0) - API interactions
+
+---
+
+### For QA Engineers
+
+**Reference**:
+- Data Flow (v2.0) - Data pipeline
+- Swimlane Diagram (v2.0) - Responsibilities
+- User Journeys (v2.0) - Test scenarios
 
 ---
 
@@ -206,73 +239,47 @@ This folder contains **project-level diagrams** that show the complete system ar
 Each module has its own `/doc/dia/` folder with 8 diagrams:
 
 - [`task.module/doc/dia/`](../../src/modules/task.module/doc/dia/)
-- [`group.module/doc/dia/`](../../src/modules/group.module/doc/dia/)
+- [`taskProgress.module/doc/dia/`](../../src/modules/taskProgress.module/doc/dia/)
+- [`childrenBusinessUser.module/doc/dia/`](../../src/modules/childrenBusinessUser.module/doc/dia/)
 - [`analytics.module/doc/dia/`](../../src/modules/analytics.module/doc/dia/)
-- [`subscription.module/doc/dia/`](../../src/modules/subscription.module/doc/dia/)
-- [`payment.module/doc/dia/`](../../src/modules/payment.module/doc/dia/)
+- [`notification.module/doc/dia/`](../../src/modules/notification.module/doc/dia/)
 
-### Architecture Documentation
+### Flow Documentation
 
-- [`task.module/doc/TASK_MODULE_ARCHITECTURE.md`](../../src/modules/task.module/doc/TASK_MODULE_ARCHITECTURE.md)
-- [`group.module/doc/GROUP_MODULE_ARCHITECTURE.md`](../../src/modules/group.module/doc/GROUP_MODULE_ARCHITECTURE.md)
-- [`analytics.module/doc/ANALYTICS_MODULE_ARCHITECTURE.md`](../../src/modules/analytics.module/doc/ANALYTICS_MODULE_ARCHITECTURE.md)
-- [`subscription.module/doc/SUBSCRIPTION_MODULE_ARCHITECTURE.md`](../../src/modules/subscription.module/doc/SUBSCRIPTION_MODULE_ARCHITECTURE.md)
-- [`payment.module/doc/PAYMENT_MODULE_ARCHITECTURE.md`](../../src/modules/payment.module/doc/PAYMENT_MODULE_ARCHITECTURE.md)
+- [`flow/`](../../flow/) - API flow documentation (organized by feature)
 
-### System Guides
+### Postman Collections
 
-- [`task.module/doc/TASK_MODULE_SYSTEM_GUIDE.md`](../../src/modules/task.module/doc/TASK_MODULE_SYSTEM_GUIDE-08-03-26.md)
-- [`group.module/doc/GROUP_MODULE_SYSTEM_GUIDE.md`](../../src/modules/group.module/doc/GROUP_MODULE_SYSTEM_GUIDE-08-03-26.md)
-- [`analytics.module/doc/ANALYTICS_MODULE_SYSTEM_GUIDE.md`](../../src/modules/analytics.module/doc/ANALYTICS_MODULE_SYSTEM_GUIDE-08-03-26.md)
-- [`subscription.module/doc/SUBSCRIPTION_MODULE_SYSTEM_GUIDE.md`](../../src/modules/subscription.module/doc/SUBSCRIPTION_MODULE_SYSTEM_GUIDE-08-03-26.md)
-- [`payment.module/doc/PAYMENT_MODULE_SYSTEM_GUIDE.md`](../../src/modules/payment.module/doc/PAYMENT_MODULE_SYSTEM_GUIDE-08-03-26.md)
+- [`postman-collections/`](../../postman-collections/) - Postman collections (organized by role)
 
 ---
 
-## 📝 Quick Reference
+## 📞 Support & Resources
 
-| Diagram | Use Case |
-|---------|----------|
-| **System Schema** | Database design, relationships |
-| **System Architecture** | System design, infrastructure |
-| **User Journey** | UX design, feature planning |
-| **Data Flow** | Data pipeline, integration points |
-| **Sequence** | API design, system interactions |
-| **Swimlane** | Team responsibilities, workflows |
-| **Deployment** | Production setup, scaling |
-| **Dependencies** | Module relationships, imports |
-| **State Machine** | Status transitions, validation |
+### Key Contacts
+- **Backend Lead**: [Your Name]
+- **Documentation**: Complete (v2.0)
+- **Socket.IO Integration**: Complete
+- **Chart Endpoints**: Complete
 
----
-
-## 🎯 Best Practices
-
-### When to Use Which Diagram
-
-1. **Database Design** → System Schema
-2. **System Design** → System Architecture
-3. **User Experience** → User Journey
-4. **Data Integration** → Data Flow
-5. **API Design** → Sequence Diagram
-6. **Workflow Design** → Swimlane Diagram
-7. **Infrastructure** → Deployment Architecture
-8. **Module Planning** → Dependency Diagram
-9. **Status Logic** → State Machine
+### External Resources
+- [Mermaid Documentation](https://mermaid.js.org/)
+- [Mermaid Live Editor](https://mermaid.live/)
+- [VS Code Mermaid Extension](https://marketplace.visualstudio.com/items?itemName=bierner.markdown-mermaid)
 
 ---
 
-## 📊 Statistics
+## ✅ Status
 
-| Metric | Value |
-|--------|-------|
-| **Total Diagrams** | 9 |
-| **Total Lines** | ~2,500+ |
-| **Entities Mapped** | 50+ |
-| **Modules Covered** | 10 |
-| **External Services** | 5 |
+**Diagram Organization**: ✅ **100% COMPLETE**  
+**Folder Structure**: ✅ **CLEAN & LOGICAL**  
+**Version Control**: ✅ **v1.0 vs v2.0 separated**  
+**Navigation**: ✅ **EASY & INTUITIVE**  
+**Production Ready**: ✅ **YES**  
 
 ---
 
-**Last Updated**: 08-03-26  
+**Last Updated**: 12-03-26  
+**Version**: 2.0 - Organized Structure  
 **Maintained By**: Backend Engineering Team  
-**Status**: ✅ Complete
+**Status**: ✅ **ALL DIAGRAMS ORGANIZED AND UP-TO-DATE**
