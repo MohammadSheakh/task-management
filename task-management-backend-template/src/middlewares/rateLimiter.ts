@@ -1,18 +1,19 @@
 /**
  * Rate Limiter Middleware
- * Centralized rate limiting solution using express-rate-limit
+ * Centralized rate limiting solution using express-rate-limit + rate-limit-redis
  *
  * Strategies Available:
  * 1. Memory Store (Default) - Simple, works for single-instance deployments
  * 2. Redis Store (Recommended) - For multi-instance/cluster deployments
  *
  * @see masterSystemPrompt.md Section 10: Rate Limiting Rules
- * @version 1.0.0
+ * @version 2.0.0 - Updated to use rate-limit-redis
  */
 
-import rateLimit, { MemoryStore, RateLimitRequestHandler } from 'express-rate-limit';
+import rateLimit, { RateLimitRequestHandler } from 'express-rate-limit';
+import RedisStore from 'rate-limit-redis';
 import { redisClient } from '../helpers/redis/redis';
-import { errorLogger } from '../shared/logger';
+import { errorLogger, logger } from '../shared/logger';
 
 /**
  * Rate Limit Configuration Types
@@ -102,66 +103,20 @@ export const RATE_LIMIT_PRESETS = {
 } as const;
 
 /**
- * Redis Store for Rate Limiting
- * Uses Redis to track request counts across multiple server instances
+ * Create Redis Store for Rate Limiting
+ * Uses official rate-limit-redis package for atomic operations
  *
  * @param windowMs - Time window in milliseconds
- * @returns Redis store configuration
+ * @returns RedisStore instance
  */
 function createRedisStore(windowMs: number) {
-  return {
-    // Custom key generator
-    keyGenerator: (req: any) => {
-      // Use user ID if authenticated, otherwise IP
-      return req.user?.id || req.ip || 'unknown';
-    },
-
-    // Custom increment function
-    increment: async (key: string) => {
-      try {
-        const redisKey = `ratelimit:${key}`;
-        const current = await redisClient.get(redisKey);
-        const count = current ? parseInt(current, 10) : 0;
-
-        if (count === 0) {
-          // First request, set expiry
-          await redisClient.setEx(redisKey, Math.ceil(windowMs / 1000), '1');
-          return 1;
-        }
-
-        // Increment counter
-        await redisClient.incr(redisKey);
-        return count + 1;
-      } catch (error) {
-        errorLogger.error('Redis rate limit increment error:', error);
-        // Fallback to memory store if Redis fails
-        return 1;
-      }
-    },
-
-    // Custom decrement function
-    decrement: async (key: string) => {
-      try {
-        const redisKey = `ratelimit:${key}`;
-        await redisClient.decr(redisKey);
-      } catch (error) {
-        errorLogger.error('Redis rate limit decrement error:', error);
-      }
-    },
-
-    // Get remaining requests
-    getRemainingRequests: async (key: string, max: number) => {
-      try {
-        const redisKey = `ratelimit:${key}`;
-        const current = await redisClient.get(redisKey);
-        const count = current ? parseInt(current, 10) : 0;
-        return Math.max(0, max - count);
-      } catch (error) {
-        errorLogger.error('Redis rate limit getRemainingRequests error:', error);
-        return max;
-      }
-    },
-  };
+  return new RedisStore({
+    // Send command to Redis
+    sendCommand: (...args: string[]) => redisClient.sendCommand(args),
+    
+    // Prefix for Redis keys
+    prefix: 'ratelimit:',
+  });
 }
 
 /**
@@ -169,7 +124,7 @@ function createRedisStore(windowMs: number) {
  * Factory function to create rate limiters with different configurations
  *
  * @param type - Rate limit type (user, admin, auth, api, strict)
- * @param useRedis - Whether to use Redis store (default: false for simplicity)
+ * @param useRedis - Whether to use Redis store (default: true for production)
  * @returns Rate limit middleware
  *
  * @example
@@ -179,7 +134,7 @@ function createRedisStore(windowMs: number) {
  */
 export function rateLimiter(
   type: TRateLimitType = 'user',
-  useRedis: boolean = false
+  useRedis: boolean = true  // ✅ Default to true for production
 ): RateLimitRequestHandler {
   const preset = RATE_LIMIT_PRESETS[type];
 
@@ -191,7 +146,10 @@ export function rateLimiter(
       if (redisStatus) {
         const store = createRedisStore(preset.windowMs);
 
+        logger.info(`✅ Rate limiter '${type}' using Redis store`);
+
         return rateLimit({
+          store,
           windowMs: preset.windowMs,
           max: preset.max,
           message: preset.message,
@@ -199,10 +157,19 @@ export function rateLimiter(
           legacyHeaders: false,   // Disable X-RateLimit-* headers
           keyGenerator: (req: any) => {
             // Use user ID if authenticated, otherwise IP
-            return req.user?.id || req.ip || 'unknown';
+            return req.user?.userId || req.ip || 'unknown';
           },
-          // Note: express-rate-limit v7+ doesn't support custom stores directly
-          // We use the built-in MemoryStore as fallback
+          handler: (req: any, res: any) => {
+            res.status(429).json({
+              success: false,
+              message: preset.message.message,
+              retryAfter: Math.ceil(preset.windowMs / 1000),
+            });
+          },
+          // Skip rate limiting for health checks
+          skip: (req: any) => {
+            return req.path === '/health' || req.path === '/api/v1/health';
+          },
         });
       }
     } catch (error) {
@@ -210,7 +177,9 @@ export function rateLimiter(
     }
   }
 
-  // Default: Use Memory Store (express-rate-limit built-in)
+  // Fallback: Use Memory Store
+  logger.warn(`⚠️ Rate limiter '${type}' using Memory store (Redis unavailable)`);
+  
   return rateLimit({
     windowMs: preset.windowMs,
     max: preset.max,
@@ -219,13 +188,11 @@ export function rateLimiter(
     legacyHeaders: false,     // Disable X-RateLimit-* headers
     keyGenerator: (req: any) => {
       // Use user ID if authenticated, otherwise IP
-      return req.user?.id || req.ip || 'unknown';
+      return req.user?.userId || req.ip || 'unknown';
     },
-    // Skip rate limiting for trusted IPs (optional)
+    // Skip rate limiting for health checks
     skip: (req: any) => {
-      // You can add logic to skip rate limiting for internal services
-      // Example: req.ip === '127.0.0.1'
-      return false;
+      return req.path === '/health' || req.path === '/api/v1/health';
     },
     // Handler when limit is exceeded
     handler: (req: any, res: any) => {
@@ -245,7 +212,7 @@ export function rateLimiter(
  * @param windowMs - Time window in milliseconds
  * @param max - Maximum requests allowed
  * @param message - Error message when limit exceeded
- * @param useRedis - Whether to use Redis store
+ * @param useRedis - Whether to use Redis store (default: true)
  * @returns Rate limit middleware
  *
  * @example
@@ -257,10 +224,45 @@ export function createCustomRateLimiter(
   windowMs: number,
   max: number,
   message?: string,
-  useRedis: boolean = false
+  useRedis: boolean = true
 ): RateLimitRequestHandler {
   const errorMessage = message || 'Too many requests, please try again later';
 
+  // Use Redis if enabled
+  if (useRedis) {
+    try {
+      const redisStatus = redisClient.isReady;
+      if (redisStatus) {
+        const store = createRedisStore(windowMs);
+
+        return rateLimit({
+          store,
+          windowMs,
+          max,
+          message: {
+            success: false,
+            message: errorMessage,
+          },
+          standardHeaders: true,
+          legacyHeaders: false,
+          keyGenerator: (req: any) => {
+            return req.user?.userId || req.ip || 'unknown';
+          },
+          handler: (req: any, res: any) => {
+            res.status(429).json({
+              success: false,
+              message: errorMessage,
+              retryAfter: Math.ceil(windowMs / 1000),
+            });
+          },
+        });
+      }
+    } catch (error) {
+      errorLogger.error('Custom Redis rate limiter failed, falling back to memory:', error);
+    }
+  }
+
+  // Fallback to memory store
   return rateLimit({
     windowMs,
     max,
@@ -271,7 +273,7 @@ export function createCustomRateLimiter(
     standardHeaders: true,
     legacyHeaders: false,
     keyGenerator: (req: any) => {
-      return req.user?.id || req.ip || 'unknown';
+      return req.user?.userId || req.ip || 'unknown';
     },
     handler: (req: any, res: any) => {
       res.status(429).json({

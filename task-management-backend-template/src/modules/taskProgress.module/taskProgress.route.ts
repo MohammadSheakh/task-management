@@ -5,33 +5,16 @@ import auth from '../../middlewares/auth';
 import { TRole } from '../../middlewares/roles';
 import validateRequest from '../../shared/validateRequest';
 import * as validation from './taskProgress.validation';
-import rateLimit from 'express-rate-limit';
-import { TASK_PROGRESS_RATE_LIMITS } from './taskProgress.constant';
+import { rateLimiter } from '../../middlewares/rateLimiter';
 
 const router = express.Router();
 
 // ─── Rate Limiters ─────────────────────────────────────────────────────
-const progressLimiter = rateLimit({
-  windowMs: TASK_PROGRESS_RATE_LIMITS.GENERAL.windowMs,
-  max: TASK_PROGRESS_RATE_LIMITS.GENERAL.max,
-  message: {
-    success: false,
-    message: TASK_PROGRESS_RATE_LIMITS.GENERAL.message,
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-const updateProgressLimiter = rateLimit({
-  windowMs: TASK_PROGRESS_RATE_LIMITS.UPDATE_PROGRESS.windowMs,
-  max: TASK_PROGRESS_RATE_LIMITS.UPDATE_PROGRESS.max,
-  message: {
-    success: false,
-    message: TASK_PROGRESS_RATE_LIMITS.UPDATE_PROGRESS.message,
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
+/**
+ * Rate limiters using centralized rateLimiter with Redis
+ */
+const progressLimiter = rateLimiter('user');        // 30 req/min
+const updateProgressLimiter = rateLimiter('user');  // 30 req/min
 
 /*-───────────────────────────────── ✔️
 |  Child | TaskProgress | status-section-flow-01.png | Get my progress on a task

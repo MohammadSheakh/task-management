@@ -29,8 +29,10 @@ import {
   endOfWeek,
   startOfMonth,
   endOfMonth,
+  startOfYear,
   subDays,
   eachDayOfInterval,
+  eachMonthOfInterval,
   format,
   isSameDay,
 } from 'date-fns';
@@ -404,8 +406,9 @@ export class UserAnalyticsService {
     return result;
   }
 
-  /** 🔁 MUST NEED IMPLEMENTATION || HARD CODE VALUE FOUND 
+  /** 🔁
    * Get Completion Rate Analytics
+   * Calculates completion rate with trend analysis
    */
   async getCompletionRate(
     userId: Types.ObjectId,
@@ -418,17 +421,56 @@ export class UserAnalyticsService {
       return cached;
     }
 
-    // Implementation for completion rate analytics
-    // Similar pattern to other methods
+    const now = new Date();
+
+    // Calculate date ranges
+    const weekStart = startOfWeek(now);
+    const weekEnd = endOfWeek(now);
+    const monthStart = startOfMonth(now);
+    const monthEnd = endOfMonth(now);
+    const lastWeekStart = subDays(weekStart, 7);
+    const lastWeekEnd = subDays(weekEnd, 7);
+
+    // Parallel aggregation for performance
+    const [weekStats, monthStats, lastWeekStats] = await Promise.all([
+      this.getTaskStatsForPeriod(userId, weekStart, weekEnd),
+      this.getTaskStatsForPeriod(userId, monthStart, monthEnd),
+      this.getTaskStatsForPeriod(userId, lastWeekStart, lastWeekEnd),
+    ]);
+
+    // Calculate completion rates
+    const weekRate = weekStats.total > 0
+      ? (weekStats.completed / weekStats.total) * 100
+      : 0;
+
+    const monthRate = monthStats.total > 0
+      ? (monthStats.completed / monthStats.total) * 100
+      : 0;
+
+    const lastWeekRate = lastWeekStats.total > 0
+      ? (lastWeekStats.completed / lastWeekStats.total) * 100
+      : 0;
+
+    // Calculate trend
+    const rateChange = weekRate - lastWeekRate;
+    let direction: 'increasing' | 'decreasing' | 'stable' = 'stable';
+    if (Math.abs(rateChange) < 2) {
+      direction = 'stable';
+    } else if (rateChange > 0) {
+      direction = 'increasing';
+    } else {
+      direction = 'decreasing';
+    }
+
     const analytics: ICompletionRateAnalytics = {
-      overall: 75.5,
+      overall: monthRate,
       byTimeRange: {
-        thisWeek: 80.0,
-        thisMonth: 75.5,
+        thisWeek: weekRate,
+        thisMonth: monthRate,
       },
       trend: {
-        direction: 'increasing',
-        percentageChange: 5.2,
+        direction,
+        percentageChange: Math.abs(rateChange),
         period: 'week',
       },
     };
@@ -481,37 +523,343 @@ export class UserAnalyticsService {
 
   /**
    * Get Task Statistics
+   * Comprehensive task statistics by status, priority, and type
    */
   async getTaskStatistics(userId: Types.ObjectId): Promise<ITaskStatistics> {
-    // Implementation similar to above methods
-    // Uses aggregation pipelines for detailed statistics
-    return {
-      totalTasks: 0,
-      byStatus: { pending: 0, inProgress: 0, completed: 0 },
-      byPriority: { low: 0, medium: 0, high: 0 },
-      byTaskType: { personal: 0, singleAssignment: 0, collaborative: 0 },
+    const cacheKey = this.getCacheKey('task-stats', userId.toString());
+
+    const cached = await this.getFromCache<ITaskStatistics>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    // Get statistics by status
+    const statusStats = await Task.aggregate([
+      {
+        $match: {
+          ownerUserId: userId,
+          isDeleted: false,
+        },
+      },
+      {
+        $group: {
+          _id: '$status',
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    // Get statistics by priority
+    const priorityStats = await Task.aggregate([
+      {
+        $match: {
+          ownerUserId: userId,
+          isDeleted: false,
+        },
+      },
+      {
+        $group: {
+          _id: '$priority',
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    // Get statistics by task type
+    const taskTypeStats = await Task.aggregate([
+      {
+        $match: {
+          ownerUserId: userId,
+          isDeleted: false,
+        },
+      },
+      {
+        $group: {
+          _id: '$taskType',
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    // Calculate average completion time (for completed tasks)
+    const completionTimeStats = await Task.aggregate([
+      {
+        $match: {
+          ownerUserId: userId,
+          status: 'completed',
+          completedTime: { $exists: true, $ne: null },
+          startTime: { $exists: true, $ne: null },
+          isDeleted: false,
+        },
+      },
+      {
+        $project: {
+          completionTime: {
+            $divide: [
+              { $subtract: ['$completedTime', '$startTime'] },
+              1000 * 60 * 60 // Convert to hours
+            ]
+          }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          avgCompletionTime: { $avg: '$completionTime' },
+        }
+      }
+    ]);
+
+    // Process results
+    const byStatus = { pending: 0, inProgress: 0, completed: 0 };
+    statusStats.forEach((stat: any) => {
+      if (stat._id === 'pending') byStatus.pending = stat.count;
+      else if (stat._id === 'inProgress') byStatus.inProgress = stat.count;
+      else if (stat._id === 'completed') byStatus.completed = stat.count;
+    });
+
+    const byPriority = { low: 0, medium: 0, high: 0 };
+    priorityStats.forEach((stat: any) => {
+      if (stat._id === 'low') byPriority.low = stat.count;
+      else if (stat._id === 'medium') byPriority.medium = stat.count;
+      else if (stat._id === 'high') byPriority.high = stat.count;
+    });
+
+    const byTaskType = { personal: 0, singleAssignment: 0, collaborative: 0 };
+    taskTypeStats.forEach((stat: any) => {
+      if (stat._id === 'personal') byTaskType.personal = stat.count;
+      else if (stat._id === 'singleAssignment') byTaskType.singleAssignment = stat.count;
+      else if (stat._id === 'collaborative') byTaskType.collaborative = stat.count;
+    });
+
+    const totalTasks = byStatus.pending + byStatus.inProgress + byStatus.completed;
+    const avgCompletionTime = completionTimeStats.length > 0
+      ? completionTimeStats[0].avgCompletionTime
+      : undefined;
+
+    // Calculate on-time completion rate (tasks completed before due date)
+    const onTimeStats = await Task.aggregate([
+      {
+        $match: {
+          ownerUserId: userId,
+          status: 'completed',
+          dueDate: { $exists: true, $ne: null },
+          completedTime: { $exists: true, $ne: null },
+          isDeleted: false,
+        },
+      },
+      {
+        $project: {
+          isOnTime: { $lte: ['$completedTime', '$dueDate'] }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: 1 },
+          onTime: {
+            $sum: { $cond: ['$isOnTime', 1, 0] }
+          }
+        }
+      }
+    ]);
+
+    const onTimeCompletionRate = onTimeStats.length > 0
+      ? (onTimeStats[0].onTime / onTimeStats[0].total) * 100
+      : undefined;
+
+    const statistics: ITaskStatistics = {
+      totalTasks,
+      byStatus,
+      byPriority,
+      byTaskType,
+      averageCompletionTime: avgCompletionTime ? Math.round(avgCompletionTime * 10) / 10 : undefined,
+      onTimeCompletionRate: onTimeCompletionRate ? Math.round(onTimeCompletionRate * 10) / 10 : undefined,
     };
+
+    await this.setInCache(
+      cacheKey,
+      statistics,
+      ANALYTICS_CACHE_CONFIG.USER_OVERVIEW // Reusing overview TTL
+    );
+
+    return statistics;
   }
 
   /**
    * Get Trend Analytics
+   * Analyzes task completion trends over time
    */
   async getTrendAnalytics(
     userId: Types.ObjectId,
     range: TAnalyticsTimeRange
   ): Promise<ITrendAnalytics> {
-    // Implementation for trend analysis
-    // Returns daily/weekly/monthly trend data
-    return {
+    const cacheKey = this.getCacheKey(`trend-${range}`, userId.toString());
+
+    const cached = await this.getFromCache<ITrendAnalytics>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    const now = new Date();
+    let startDate: Date;
+    let dateRange: Date[];
+
+    // Determine date range based on type
+    switch (range) {
+      case 'today':
+        startDate = startOfDay(now);
+        dateRange = [startDate];
+        break;
+      case 'yesterday':
+        startDate = subDays(startOfDay(now), 1);
+        dateRange = [startDate];
+        break;
+      case 'thisWeek':
+        startDate = startOfWeek(now);
+        dateRange = eachDayOfInterval({ start: startDate, end: now });
+        break;
+      case 'lastWeek':
+        startDate = subDays(startOfWeek(now), 7);
+        dateRange = eachDayOfInterval({
+          start: startDate,
+          end: subDays(endOfWeek(now), 7)
+        });
+        break;
+      case 'thisMonth':
+        startDate = startOfMonth(now);
+        dateRange = eachDayOfInterval({ start: startDate, end: now });
+        break;
+      case 'lastMonth':
+        startDate = subDays(startOfMonth(now), 1);
+        dateRange = eachDayOfInterval({
+          start: startOfMonth(startDate),
+          end: endOfMonth(startDate)
+        });
+        break;
+      case 'thisYear':
+        startDate = startOfYear(now);
+        dateRange = eachMonthOfInterval({ start: startDate, end: now });
+        break;
+      case 'all':
+      default:
+        startDate = new Date(0);
+        dateRange = eachDayOfInterval({
+          start: subDays(now, 30), // Last 30 days for 'all'
+          end: now
+        });
+        break;
+    }
+
+    // Get task data for the period
+    const taskData = await Task.aggregate([
+      {
+        $match: {
+          ownerUserId: userId,
+          startTime: {
+            $gte: startDate,
+            $lte: now,
+          },
+          isDeleted: false,
+        },
+      },
+      {
+        $facet: {
+          completed: [
+            { $match: { status: 'completed' } },
+            {
+              $group: {
+                _id: {
+                  $dateToString: {
+                    format: '%Y-%m-%d',
+                    date: '$completedTime'
+                  }
+                },
+                count: { $sum: 1 },
+              },
+            },
+          ],
+          created: [
+            {
+              $group: {
+                _id: {
+                  $dateToString: {
+                    format: '%Y-%m-%d',
+                    date: '$startTime'
+                  }
+                },
+                count: { $sum: 1 },
+              },
+            },
+          ],
+        },
+      },
+    ]);
+
+    // Build trend data points
+    const completedByDate = new Map<string, number>(
+      (taskData[0].completed as Array<{ _id: string; count: number }>).map(item => [item._id, item.count])
+    );
+    const createdByDate = new Map<string, number>(
+      (taskData[0].created as Array<{ _id: string; count: number }>).map(item => [item._id, item.count])
+    );
+
+    const data: ITrendDataPoint[] = dateRange.map(date => {
+      const dateStr = format(date, 'yyyy-MM-dd');
+      const completed = completedByDate.get(dateStr) || 0;
+      const created = createdByDate.get(dateStr) || 0;
+      const total = created;
+      const completionRate = total > 0 ? (completed / total) * 100 : 0;
+
+      return {
+        date: format(date, range === 'thisYear' ? 'MMM yyyy' : 'MMM dd'),
+        tasksCompleted: completed,
+        tasksCreated: created,
+        completionRate: Math.round(completionRate * 10) / 10,
+      };
+    });
+
+    // Calculate summary
+    const totalCompleted = data.reduce((sum, point) => sum + point.tasksCompleted, 0);
+    const averagePerDay = data.length > 0 ? totalCompleted / data.length : 0;
+
+    const bestDay = data.reduce((best, current) =>
+      current.tasksCompleted > best.count
+        ? { date: current.date, count: current.tasksCompleted }
+        : best,
+      { date: '', count: 0 }
+    );
+
+    const worstDayData = data.reduce((worst, current) =>
+      (current.tasksCompleted < worst.count || worst.count === 0)
+        ? { date: current.date, count: current.tasksCompleted }
+        : worst,
+      { date: '', count: 0 }
+    );
+    
+    // Handle edge case where all days have 0 completions
+    const worstDay = worstDayData.count === 0 && data.length > 0
+      ? { date: data[0].date, count: 0 }
+      : worstDayData;
+
+    const trendAnalytics: ITrendAnalytics = {
       period: range,
-      data: [],
+      data,
       summary: {
-        totalCompleted: 0,
-        averagePerDay: 0,
-        bestDay: { date: '', count: 0 },
-        worstDay: { date: '', count: 0 },
+        totalCompleted,
+        averagePerDay: Math.round(averagePerDay * 10) / 10,
+        bestDay,
+        worstDay,
       },
     };
+
+    await this.setInCache(
+      cacheKey,
+      trendAnalytics,
+      ANALYTICS_CACHE_CONFIG.USER_OVERVIEW // Reusing overview TTL
+    );
+
+    return trendAnalytics;
   }
 }
 

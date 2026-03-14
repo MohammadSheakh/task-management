@@ -5,40 +5,16 @@ import auth from '../../middlewares/auth';
 import { TRole } from '../../middlewares/roles';
 import validateRequest from '../../shared/validateRequest';
 import * as validation from './childrenBusinessUser.validation';
-import rateLimit from 'express-rate-limit';
-import { CHILDREN_RATE_LIMITS } from './childrenBusinessUser.constant';
+import { rateLimiter } from '../../middlewares/rateLimiter';
 
 const router = express.Router();
 
-/*-─────────────────────────────────
-|  Rate Limiter: Create child account
-|  Prevents abuse: 10 requests per hour
-└──────────────────────────────────*/
-const createChildLimiter = rateLimit({
-  windowMs: CHILDREN_RATE_LIMITS.CREATE_CHILD.windowMs,
-  max: CHILDREN_RATE_LIMITS.CREATE_CHILD.max,
-  message: {
-    success: false,
-    message: CHILDREN_RATE_LIMITS.CREATE_CHILD.message,
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-/*-─────────────────────────────────
-|  Rate Limiter: General children operations
-|  100 requests per minute
-└──────────────────────────────────*/
-const childrenLimiter = rateLimit({
-  windowMs: CHILDREN_RATE_LIMITS.GENERAL.windowMs,
-  max: CHILDREN_RATE_LIMITS.GENERAL.max,
-  message: {
-    success: false,
-    message: CHILDREN_RATE_LIMITS.GENERAL.message,
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
+// ─── Rate Limiters ─────────────────────────────────────────────────────
+/**
+ * Rate limiters using centralized rateLimiter with Redis
+ */
+const createChildLimiter = rateLimiter('strict');  // 3 req/hour (prevents abuse)
+const childrenLimiter = rateLimiter('user');       // 30 req/min
 
 const controller = new ChildrenBusinessUserController();
 

@@ -10,43 +10,18 @@ import { setQueryOptions } from '../../../middlewares/setQueryOptions';
 import { getLoggedInUserAndSetReferenceToUser } from '../../../middlewares/getLoggedInUserAndSetReferenceToUser';
 import * as validation from './task.validation';
 import { verifyTaskAccess, verifyTaskOwnership, validateTaskTypeConsistency, validateStatusTransition, checkDailyTaskLimit, checkSecondaryUserPermission } from './task.middleware';
-
+import { rateLimiter } from '../../../middlewares/rateLimiter';
 import { SubTaskRoute } from '../subTask/subTask.route';
-
-import rateLimit from 'express-rate-limit';
-import { TASK_RATE_LIMITS } from './task.constant';
 
 const router = express.Router();
 
 // ─── Rate Limiters ─────────────────────────────────────────────────────
 /**
- * Rate limiter for creating tasks
- * Prevents spam and resource exhaustion
+ * Rate limiters using centralized rateLimiter with Redis
+ * All rate limits are shared across server instances via Redis
  */
-const createTaskLimiter = rateLimit({
-  windowMs: TASK_RATE_LIMITS.CREATE_TASK.windowMs,
-  max: TASK_RATE_LIMITS.CREATE_TASK.max,
-  message: {
-    success: false,
-    message: TASK_RATE_LIMITS.CREATE_TASK.message,
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-/**
- * Rate limiter for general task operations
- */
-const taskLimiter = rateLimit({
-  windowMs: TASK_RATE_LIMITS.GENERAL.windowMs,
-  max: TASK_RATE_LIMITS.GENERAL.max,
-  message: {
-    success: false,
-    message: TASK_RATE_LIMITS.GENERAL.message,
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
+const createTaskLimiter = rateLimiter('user');  // 30 req/min
+const taskLimiter = rateLimiter('user');        // 30 req/min
 
 export const optionValidationChecking = <T extends keyof ITask | 'sortBy' | 'page' | 'limit' | 'populate' | 'status' | 'taskType' | 'priority' | 'from' | 'to'>(
   filters: T[]

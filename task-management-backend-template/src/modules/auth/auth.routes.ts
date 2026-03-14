@@ -7,72 +7,21 @@ import auth from '../../middlewares/auth';
 //@ts-ignore
 import multer from "multer";
 import { TRole } from '../../middlewares/roles';
-import rateLimit from 'express-rate-limit';
-import { AUTH_RATE_LIMITS } from './auth.constants';
+import { rateLimiter } from '../../middlewares/rateLimiter';
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 const router = Router();
 
 // ─── Rate Limiters ─────────────────────────────────────────────────────
 /**
- * Rate limiter for login endpoint
- * Prevents brute force attacks (5 attempts per 15 minutes)
+ * Rate limiters using centralized rateLimiter with Redis
+ * All rate limits are shared across server instances via Redis
  */
-const loginLimiter = rateLimit({
-  windowMs: AUTH_RATE_LIMITS.LOGIN.windowMs,
-  max: AUTH_RATE_LIMITS.LOGIN.max,
-  message: AUTH_RATE_LIMITS.LOGIN.message,
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-/**
- * Rate limiter for registration endpoint
- * Prevents spam registrations (10 per hour)
- */
-const registerLimiter = rateLimit({
-  windowMs: AUTH_RATE_LIMITS.REGISTER.windowMs,
-  max: AUTH_RATE_LIMITS.REGISTER.max,
-  message: AUTH_RATE_LIMITS.REGISTER.message,
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-/**
- * Rate limiter for forgot password endpoint
- * Prevents email spam (3 per hour)
- */
-const forgotPasswordLimiter = rateLimit({
-  windowMs: AUTH_RATE_LIMITS.FORGOT_PASSWORD.windowMs,
-  max: AUTH_RATE_LIMITS.FORGOT_PASSWORD.max,
-  message: AUTH_RATE_LIMITS.FORGOT_PASSWORD.message,
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-/**
- * Rate limiter for verify email endpoint
- * Prevents verification spam (5 per hour)
- */
-const verifyEmailLimiter = rateLimit({
-  windowMs: AUTH_RATE_LIMITS.VERIFY_EMAIL.windowMs,
-  max: AUTH_RATE_LIMITS.VERIFY_EMAIL.max,
-  message: AUTH_RATE_LIMITS.VERIFY_EMAIL.message,
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-/**
- * Rate limiter for general auth endpoints
- * 100 requests per minute
- */
-const authLimiter = rateLimit({
-  windowMs: AUTH_RATE_LIMITS.GENERAL.windowMs,
-  max: AUTH_RATE_LIMITS.GENERAL.max,
-  message: AUTH_RATE_LIMITS.GENERAL.message,
-  standardHeaders: true,
-  legacyHeaders: false,
-});
+const loginLimiter = rateLimiter('auth');
+const registerLimiter = rateLimiter('strict');
+const forgotPasswordLimiter = rateLimiter('strict');
+const verifyEmailLimiter = rateLimiter('strict');
+const authLimiter = rateLimiter('api');
 
 
 //---------------------------------
