@@ -42,9 +42,6 @@ export interface ITask {
   /** Users assigned to this task (for collaborative/single assignment) */
   assignedUserIds?: Types.ObjectId[];
 
-  /** Group ID if this is a group/collaborative task */
-  groupId?: Types.ObjectId;
-
   // ─── Task Details ──────────────────────────────────────────────────
   /** Title of the task (required) */
   title: string;

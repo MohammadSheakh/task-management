@@ -9,6 +9,7 @@ import { errorLogger, logger } from '../../../shared/logger';
 import { notificationQueue } from '../../../helpers/bullmq/bullmq';
 import PaginationService from '../../../common/service/paginationService';
 import { GenericService } from '../../_generic-module/generic.services';
+import { User } from '../../user.module/user/user.model';
 
 /**
  * Notification Service
@@ -118,8 +119,8 @@ export class NotificationService extends GenericService<typeof Notification, INo
             type: 'exponential',
             delay: QUEUE_CONFIG.BACKOFF_DELAY,
           },
-          delay: notification.scheduledFor 
-            ? notification.scheduledFor.getTime() - Date.now() 
+          delay: notification.scheduledFor
+            ? notification.scheduledFor.getTime() - Date.now()
             : 0,
         }
       );
@@ -144,8 +145,8 @@ export class NotificationService extends GenericService<typeof Notification, INo
     const notification = await Notification.create({
       ...data,
       scheduledFor: scheduledFor || data.scheduledFor,
-      status: scheduledFor && scheduledFor > new Date() 
-        ? NotificationStatus.PENDING 
+      status: scheduledFor && scheduledFor > new Date()
+        ? NotificationStatus.PENDING
         : NotificationStatus.PENDING,
     });
 
@@ -402,13 +403,13 @@ export class NotificationService extends GenericService<typeof Notification, INo
     reminderType: 'before_deadline' | 'at_deadline' | 'after_deadline' | 'custom' = 'before_deadline',
     message?: string
   ): Promise<INotificationDocument> {
-    const title = reminderType === 'before_deadline' 
+    const title = reminderType === 'before_deadline'
       ? 'Task Reminder: Deadline Approaching'
       : reminderType === 'at_deadline'
-      ? 'Task Due Now'
-      : reminderType === 'after_deadline'
-      ? 'Task Overdue'
-      : 'Task Reminder';
+        ? 'Task Due Now'
+        : reminderType === 'after_deadline'
+          ? 'Task Overdue'
+          : 'Task Reminder';
 
     return await this.createNotification(
       {
@@ -534,7 +535,7 @@ export class NotificationService extends GenericService<typeof Notification, INo
     // Get recent notifications for all activity types
     const notifications = await this.model.find({
       'data.groupId': groupObjectId.toString(),
-      type: { 
+      type: {
         $in: [
           ACTIVITY_TYPE.TASK_CREATED,
           ACTIVITY_TYPE.TASK_STARTED,
@@ -612,7 +613,7 @@ export class NotificationService extends GenericService<typeof Notification, INo
     }
   }
 
-  /**
+  /** 🔁
    * Record activity for group member
    * Creates a notification entry for live activity feed
    *

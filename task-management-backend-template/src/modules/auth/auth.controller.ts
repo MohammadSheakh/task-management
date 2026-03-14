@@ -31,11 +31,12 @@ const googleClient = new OAuth2Client(CLIENT_ID);
 
 const oAuthAccountService = new OAuthAccountService();
 
-const register = catchAsync(async (req :Request, res:Response) => {
+// 💎✨🔍 -> V2 Found
+const register = catchAsync(async (req: Request, res: Response) => {
 
-  const data : IRegisterData = req.body;
+  const data: IRegisterData = req.body;
 
-  if(!data.acceptTOC){
+  if (!data.acceptTOC) {
     sendResponse(res, {
       code: StatusCodes.CREATED,
       message: `Please Read Terms and Conditions and Accept it.`,
@@ -43,8 +44,8 @@ const register = catchAsync(async (req :Request, res:Response) => {
       success: true,
     });
   }
-  
-  const userProfile:IUserProfile = await UserProfile.create({
+
+  const userProfile: IUserProfile = await UserProfile.create({
     acceptTOC: data.acceptTOC,
   });
 
@@ -54,12 +55,12 @@ const register = catchAsync(async (req :Request, res:Response) => {
   // lets create wallet for mentor but we do this in AuthService.createUser function 
   //---------------------------------
 
-  const userDTO :ICreateUser = {
-    name:  data.name,
-    email : req.body.email,
-    password : req.body.password,
-    role : data.role,
-    profileId : userProfile._id
+  const userDTO: ICreateUser = {
+    name: data.name,
+    email: req.body.email,
+    password: req.body.password,
+    role: data.role,
+    profileId: userProfile._id
   }
 
   const result = await AuthService.createUser(userDTO, userProfile._id);
@@ -71,17 +72,17 @@ const register = catchAsync(async (req :Request, res:Response) => {
     success: true,
   });
 
-  
+
 });
 
 /*-─────────────────────────────────
 |  We refactor register service in this project
 └──────────────────────────────────*/
-const registerV2 = catchAsync(async (req :Request, res:Response) => {
+const registerV2 = catchAsync(async (req: Request, res: Response) => {
 
-  const data : IRegisterData = req.body;
+  const data: IRegisterData = req.body;
 
-  if(!data.acceptTOC){
+  if (!data.acceptTOC) {
     return sendResponse(res, {
       code: StatusCodes.CREATED,
       message: `Please Read Terms and Conditions and Accept it.`,
@@ -89,8 +90,8 @@ const registerV2 = catchAsync(async (req :Request, res:Response) => {
       success: true,
     });
   }
-  
-  const userProfile:IUserProfile = await UserProfile.create({
+
+  const userProfile: IUserProfile = await UserProfile.create({
     acceptTOC: data.acceptTOC,
   });
 
@@ -100,12 +101,12 @@ const registerV2 = catchAsync(async (req :Request, res:Response) => {
   // lets create wallet for mentor but we do this in AuthService.createUser function 
   //---------------------------------
 
-  const userDTO :ICreateUser = {
-    name:  data.name,
-    email : req.body.email,
-    password : req.body.password,
-    role : data.role,
-    profileId : userProfile._id
+  const userDTO: ICreateUser = {
+    name: data.name,
+    email: req.body.email,
+    password: req.body.password,
+    role: data.role,
+    profileId: userProfile._id
   }
 
   const result = await AuthService.createUserV2(userDTO, userProfile._id);
@@ -117,10 +118,11 @@ const registerV2 = catchAsync(async (req :Request, res:Response) => {
     success: true,
   });
 
-  
+
 });
 
-const login = catchAsync(async (req :Request, res:Response) => {
+// 💎✨🔍 -> V2 Found
+const login = catchAsync(async (req: Request, res: Response) => {
   const { email, password } = req.body;
   const result = await AuthService.login(email, password);
 
@@ -142,7 +144,7 @@ const login = catchAsync(async (req :Request, res:Response) => {
 /*-─────────────────────────────────
 |  We refactor login service in this project
 └──────────────────────────────────*/
-const loginV2 = catchAsync(async (req :Request, res:Response) => {
+const loginV2 = catchAsync(async (req: Request, res: Response) => {
   const { email, password, fcmToken } = req.body;
   const result = await AuthService.loginV2(email, password, fcmToken);
 
@@ -163,9 +165,9 @@ const loginV2 = catchAsync(async (req :Request, res:Response) => {
 
 // 💎✨🔍 -> V2 Found
 const googleLogin = async (idToken: string,
-   fcmToken?: string,  
-  deviceInfo?: { deviceType?: string, deviceName?: string}
- ) => {
+  fcmToken?: string,
+  deviceInfo?: { deviceType?: string, deviceName?: string }
+) => {
   try {
     // 🔐 Verify ID token
     const ticket = await googleClient.verifyIdToken({
@@ -202,7 +204,7 @@ const googleLogin = async (idToken: string,
         const deviceType = deviceInfo?.deviceType || 'web';
         const deviceName = deviceInfo?.deviceName || 'Unknown Device';
 
-        let device : IUserDevices | any = await UserDevices.findOne({
+        let device: IUserDevices | any = await UserDevices.findOne({
           userId: user._id,
           fcmToken,
         });
@@ -313,13 +315,13 @@ const googleLogin = async (idToken: string,
 
 // 💎✨🔍 -> V3 Found
 const googleLoginV2 = async (idToken: string,
-  role : string,
-  fcmToken?: string,  
-  deviceInfo?: { deviceType?: string, deviceName?: string}
- ) => {
+  role: string,
+  fcmToken?: string,
+  deviceInfo?: { deviceType?: string, deviceName?: string }
+) => {
   try {
-    
-    const { provider, providerId, email, name, picture} = await oAuthAccountService.verifyGoogleToken(idToken);
+
+    const { provider, providerId, email, name, picture } = await oAuthAccountService.verifyGoogleToken(idToken);
 
     if (!email || !providerId) {
       throw new ApiError(StatusCodes.BAD_REQUEST, 'Email or provider ID missing');
@@ -344,7 +346,7 @@ const googleLoginV2 = async (idToken: string,
         const deviceType = deviceInfo?.deviceType || 'web';
         const deviceName = deviceInfo?.deviceName || 'Unknown Device';
 
-        let device : IUserDevices | any = await UserDevices.findOne({
+        let device: IUserDevices | any = await UserDevices.findOne({
           userId: user._id,
           fcmToken,
         });
@@ -612,7 +614,7 @@ export const appleLogin = async (idToken: string, fcmToken?: string) => {
 */
 
 //[🚧][🧑‍💻✅][🧪]  // 🆗
-const verifyEmail = catchAsync(async (req :Request, res:Response) => {
+const verifyEmail = catchAsync(async (req: Request, res: Response) => {
   console.log(req.body);
   const { email, token, otp } = req.body;
   const result = await AuthService.verifyEmail(email, token, otp);
@@ -626,7 +628,7 @@ const verifyEmail = catchAsync(async (req :Request, res:Response) => {
   });
 });
 
-const resendOtp = catchAsync(async (req :Request, res:Response) => {
+const resendOtp = catchAsync(async (req: Request, res: Response) => {
   const { email } = req.body;
   const result = await AuthService.resendOtp(email);
   sendResponse(res, {
@@ -636,7 +638,7 @@ const resendOtp = catchAsync(async (req :Request, res:Response) => {
     success: true,
   });
 });
-const forgotPassword = catchAsync(async (req :Request, res:Response) => {
+const forgotPassword = catchAsync(async (req: Request, res: Response) => {
   const result = await AuthService.forgotPassword(req.body.email);
   sendResponse(res, {
     code: StatusCodes.OK,
@@ -646,7 +648,7 @@ const forgotPassword = catchAsync(async (req :Request, res:Response) => {
   });
 });
 
-const changePassword = catchAsync(async (req :Request, res:Response) => {
+const changePassword = catchAsync(async (req: Request, res: Response) => {
   const { userId } = req.user;
   const { currentPassword, newPassword } = req.body;
   const result = await AuthService.changePassword(
@@ -661,7 +663,7 @@ const changePassword = catchAsync(async (req :Request, res:Response) => {
     success: true,
   });
 });
-const resetPassword = catchAsync(async (req :Request, res:Response) => {
+const resetPassword = catchAsync(async (req: Request, res: Response) => {
   const { email, password, otp } = req.body;
   const result = await AuthService.resetPassword(email, password, otp);
   sendResponse(res, {
@@ -674,11 +676,11 @@ const resetPassword = catchAsync(async (req :Request, res:Response) => {
   });
 });
 
-const logout = catchAsync(async (req :Request, res:Response) => {
+const logout = catchAsync(async (req: Request, res: Response) => {
   // await AuthService.logout(req.body.refreshToken);
 
   // await UserDevices.deleteMany({userId : req.user.userId});
-  
+
   sendResponse(res, {
     code: StatusCodes.OK,
     message: 'User logged out successfully',
@@ -686,7 +688,7 @@ const logout = catchAsync(async (req :Request, res:Response) => {
   });
 });
 
-const refreshToken = catchAsync(async (req :Request, res:Response) => {
+const refreshToken = catchAsync(async (req: Request, res: Response) => {
   const tokens = await AuthService.refreshAuth(req.body.refreshToken);
   sendResponse(res, {
     code: StatusCodes.OK,
@@ -699,7 +701,7 @@ const refreshToken = catchAsync(async (req :Request, res:Response) => {
 
 export const AuthController = {
   register,
-  registerV2 , // 🆕
+  registerV2, // 🆕
   login,
   loginV2, // 🆕
   googleLogin,

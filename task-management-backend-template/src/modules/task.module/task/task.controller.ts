@@ -27,7 +27,7 @@ export class TaskController extends GenericController<typeof Task, ITask> {
     this.subTaskService = new SubTaskService();
   }
 
-  /**
+  /** ✔️
    * Create a new task
    * Overrides generic create to add user context
    * Includes permission check for group/collaborative tasks
@@ -56,7 +56,7 @@ export class TaskController extends GenericController<typeof Task, ITask> {
     });
   };
 
-  /**
+  /** ✔️
    * Get all tasks for the logged-in user
    * Supports filtering by status, type, priority, and date range
    */
@@ -78,7 +78,7 @@ export class TaskController extends GenericController<typeof Task, ITask> {
     });
   };
 
-  /**
+  /** ✔️
    * Get all tasks for the logged-in user with pagination
    */
   getMyTasksWithPagination = async (req: Request, res: Response) => {
@@ -109,7 +109,7 @@ export class TaskController extends GenericController<typeof Task, ITask> {
     });
   };
 
-  /**
+  /** ✔️
    * Get task statistics for the logged-in user
    */
   getStatistics = async (req: Request, res: Response) => {
@@ -129,7 +129,7 @@ export class TaskController extends GenericController<typeof Task, ITask> {
     });
   };
 
-  /**
+  /** ✔️
    * Get daily progress for a specific date
    */
   getDailyProgress = async (req: Request, res: Response) => {
@@ -150,7 +150,7 @@ export class TaskController extends GenericController<typeof Task, ITask> {
     });
   };
 
-  /**
+  /** ✔️
    * Update task status
    * Specialized endpoint for status changes
    */
@@ -174,7 +174,7 @@ export class TaskController extends GenericController<typeof Task, ITask> {
       try {
         // Import dynamically to avoid circular dependency
         const { preferredTimeQueue } = await import('../../../helpers/bullmq/bullmq');
-        
+
         // Add job to queue (async, don't wait)
         preferredTimeQueue.add('calculatePreferredTime', {
           userId: userId.toString()
@@ -183,7 +183,7 @@ export class TaskController extends GenericController<typeof Task, ITask> {
           removeOnComplete: true,
           removeOnFail: true,
         });
-        
+
         // Don't wait for completion - fire and forget
         logger.info(`⏰ Queued preferred time calculation for user ${userId}`);
       } catch (error) {
@@ -200,8 +200,8 @@ export class TaskController extends GenericController<typeof Task, ITask> {
     });
   };
 
-  /**
-   * Update subtask progress
+  /** ✔️
+   * Update subtask progress 
    * Automatically recalculates completion percentage
    */
   updateSubtaskProgress = async (req: Request, res: Response) => {
@@ -239,8 +239,8 @@ export class TaskController extends GenericController<typeof Task, ITask> {
       { path: 'createdById', select: 'name email profileImage' },
       { path: 'ownerUserId', select: 'name email profileImage' },
       { path: 'assignedUserIds', select: 'name email profileImage' },
-      { 
-        path: 'subtasks', 
+      {
+        path: 'subtasks',
         select: 'title isCompleted duration completedAt',
         options: { sort: { order: 1 } }
       },
@@ -358,8 +358,8 @@ export class TaskController extends GenericController<typeof Task, ITask> {
     (res as any).sendResponse({
       code: StatusCodes.OK,
       data: result,
-      message: result.isCompleted 
-        ? 'Subtask marked as completed' 
+      message: result.isCompleted
+        ? 'Subtask marked as completed'
         : 'Subtask marked as incomplete',
       success: true,
     });

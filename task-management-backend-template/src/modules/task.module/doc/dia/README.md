@@ -1,7 +1,8 @@
-# 📋 Task Module - Diagrams Index (v2.0)
+# Task Module Diagrams
 
-**Last Updated**: 12-03-26  
-**Version**: 2.0 - Complete  
+**Version:** V2 (Current)  
+**Last Updated:** 14-03-26  
+**Status:** Family-Based Architecture (No Group Dependencies)
 
 ---
 
@@ -9,138 +10,165 @@
 
 ```
 dia/
-├── 01-current-v2/          # Current v2.0 diagrams (ACTIVE)
-├── 02-legacy-v1/           # Legacy v1.0 diagrams (REFERENCE)
-└── README.md               # This index
+├── 01-current-v2/          ← Current V2 diagrams (family-based)
+│   ├── task-schema-V2-14-03-26.mermaid
+│   ├── task-system-architecture-V2-14-03-26.mermaid
+│   ├── task-user-flow-V2-14-03-26.mermaid
+│   ├── task-sequence-V2-14-03-26.mermaid
+│   ├── task-state-machine-V2-14-03-26.mermaid
+│   ├── task-component-architecture-V2-14-03-26.mermaid
+│   └── task-data-flow-V2-14-03-26.mermaid
+│
+├── 02-legacy-v1/           ← Legacy V1 diagrams (with group dependencies)
+│   └── (old diagrams moved here)
+│
+└── README.md               ← This file
 ```
 
 ---
 
-## 📋 Current Diagrams (v2.0) ⭐
+## 📊 Diagram Index (V2 - Current)
 
-**Folder**: `01-current-v2/`
+### 1. Schema Diagram
+**File:** `task-schema-V2-14-03-26.mermaid`  
+**Purpose:** Shows Task schema structure and relationships  
+**Key Entities:**
+- Task (main entity)
+- SubTask (embedded)
+- User (creator, owner, assignee)
+- ChildrenBusinessUser (family relationships)
+- TaskProgress (individual tracking)
+- Notification (alerts)
 
-**Contains**: 9 comprehensive diagrams updated with:
-- ✅ Socket.IO real-time integration
-- ✅ Family activity broadcasting
-- ✅ Real-time parent notifications
-- ✅ TaskProgress integration
-- ✅ Enhanced caching
-
-### Diagram List (9 of 9)
-
-| # | Diagram | File | Description |
-|---|---------|------|-------------|
-| 1 | **Schema** | `task-schema-v2.mermaid` | Task, SubTask, TaskProgress schemas |
-| 2 | **System Architecture** | `task-system-architecture-v2.mermaid` | Complete system architecture |
-| 3 | **Sequence** | `task-sequence-v2.mermaid` | 8 sequence scenarios |
-| 4 | **User Flow** | `task-user-flow-v2.mermaid` | Parent/Child flows |
-| 5 | **Swimlane** | `task-swimlane-v2.mermaid` | Responsibility swimlanes |
-| 6 | **State Machine** | `task-state-machine-v2.mermaid` | All state machines |
-| 7 | **Component Architecture** | `task-component-architecture-v2.mermaid` | Component architecture |
-| 8 | **Data Flow** | `task-data-flow-v2.mermaid` | Data flow diagram |
-| 9 | **Deployment** | `task-deployment-v2.mermaid` | Deployment architecture |
+**Changes from V1:**
+- ❌ Removed: Group entity
+- ✅ Added: ChildrenBusinessUser relationship model
+- ✅ Updated: Family-based permission system
 
 ---
 
-## 📚 Legacy Diagrams (v1.0)
-
-**Folder**: `02-legacy-v1/`
-
-**Contains**: Original v1.0 diagrams (kept for historical reference)
-
-**Note**: These diagrams are **outdated** and should only be used for:
-- Historical reference
-- Understanding migration path
-- Comparing v1.0 vs v2.0 changes
-
----
-
-## 🆕 What's New in v2.0 Diagrams
-
-### New Components
-- ✅ **Socket.IO Real-Time layer** - Instant task updates
-- ✅ **TaskProgress collection** - Per-child progress tracking
-- ✅ **Socket.IO State Cache** - 1 min TTL
-- ✅ **Family Rooms** - Activity broadcasting
-- ✅ **Task Rooms** - Task-specific updates
-
-### Updated Components
-- ✅ **Task Service** - Integrated Socket.IO
-- ✅ **Cache Structure** - Added Socket.IO state
-- ✅ **Service Layer** - Real-time with fallback
-
-### New Data Sources
-- ✅ **Socket.IO State** - Task subscribers, family rooms
-- ✅ **TaskProgress collection** - Per-child progress
+### 2. System Architecture
+**File:** `task-system-architecture-V2-14-03-26.mermaid`  
+**Purpose:** High-level system components and interactions  
+**Layers:**
+- Client Layer (Flutter, Web Dashboards)
+- API Layer (Routes, Controllers, Middleware)
+- Business Logic Layer (Services, Cache, Queue)
+- Data Layer (Models, MongoDB)
+- Real-time Layer (Socket.io)
+- Notification Layer
 
 ---
 
-## 🎨 Diagram Conventions (v2.0)
-
-### Color Coding
-
-| Color | Meaning | Component |
-|-------|---------|-----------|
-| 🔵 Blue | User/Frontend | Flutter, Web, Admin |
-| 🟢 Green | Business Logic | task.service, subtask.service |
-| 🟠 Orange | API Gateway | Routes, Middleware |
-| 🟣 Purple | Related Modules | User, CBU, Notification |
-| 🔴 Red | Data Layer | MongoDB, Redis |
-| 🟡 Yellow | Real-Time | Socket.IO, Events |
-| ⚪ Gray | Cache | Task, Statistics, Socket.IO state |
-| 🟢 Light Green | TaskProgress | taskProgress.service |
+### 3. User Flow
+**File:** `task-user-flow-V2-14-03-26.mermaid`  
+**Purpose:** End-to-end user journey for task operations  
+**Flows Covered:**
+- Authentication & Role Check
+- Task Creation (Personal, Single, Collaborative)
+- Task Management (View, Filter, Paginate)
+- Status Updates
+- Daily Progress Tracking
 
 ---
 
-## 📝 Usage Guide
+### 4. Sequence Diagram
+**File:** `task-sequence-V2-14-03-26.mermaid`  
+**Purpose:** Time-ordered interactions between components  
+**Sequences:**
+- Task Creation Flow
+- Task Status Update Flow
+- Get Tasks with Pagination
+- Daily Progress Flow
 
-### Find Current Diagrams
-```bash
-cd src/modules/task.module/doc/dia/01-current-v2/
-ls -1
-# All 9 current v2.0 diagrams
-```
+---
 
-### Find Legacy Diagrams
-```bash
-cd src/modules/task.module/doc/dia/02-legacy-v1/
-ls -1
-# All legacy v1.0 diagrams
-```
+### 5. State Machine
+**File:** `task-state-machine-V2-14-03-26.mermaid`  
+**Purpose:** Task status transitions and guards  
+**States:**
+- pending → inProgress → completed
+- Valid transitions only
+- Terminal state: completed
+
+---
+
+### 6. Component Architecture
+**File:** `task-component-architecture-V2-14-03-26.mermaid`  
+**Purpose:** Internal module structure and dependencies  
+**Components:**
+- Routes Layer
+- Middleware Layer
+- Controller Layer (Generic)
+- Service Layer (Generic)
+- Data Models
+- External Services
+
+---
+
+### 7. Data Flow
+**File:** `task-data-flow-V2-14-03-26.mermaid`  
+**Purpose:** Data transformation through the system  
+**Paths:**
+- Write Path (Create → Validate → Store → Cache Invalidation)
+- Read Path (Cache Check → DB Query → Transform → Response)
+- Async Path (Queue → Calculate → Update User)
+
+---
+
+## 🔄 V1 vs V2 Key Differences
+
+| Aspect | V1 (Legacy) | V2 (Current) |
+|--------|-------------|--------------|
+| **Structure** | Group-based | Family-based |
+| **Relationships** | GroupMember model | ChildrenBusinessUser model |
+| **Permissions** | Group membership | Secondary User flag |
+| **Activity Tracking** | Group activity | Family activity |
+| **Real-time** | Group broadcast | Family member broadcast |
+| **Schema** | groupId field | No groupId (uses assignedUserIds) |
+
+---
+
+## 🎯 Figma Alignment
+
+All V2 diagrams are aligned with these Figma screens:
+
+### App User (Mobile)
+- `app-user/group-children-user/home-flow.png`
+- `app-user/group-children-user/add-task-flow-for-permission-account-interface.png`
+- `app-user/group-children-user/status-section-flow-01.png`
+- `app-user/group-children-user/profile-permission-account-interface.png`
+
+### Teacher/Parent Dashboard (Web)
+- `teacher-parent-dashboard/dashboard/dashboard-flow-01.png`
+- `teacher-parent-dashboard/task-monitoring/task-monitoring-flow-01.png`
+- `teacher-parent-dashboard/team-members/team-member-flow-01.png`
+- `teacher-parent-dashboard/settings-permission-section/`
+
+---
+
+## 📈 Scale Considerations
+
+All diagrams reflect senior-level engineering patterns:
+
+- **Redis Caching:** Cache-aside pattern, TTL 2-5 minutes
+- **Indexing:** All query fields indexed (see schema diagram)
+- **Pagination:** Standard + Aggregation patterns
+- **Rate Limiting:** 20 req/hour for task creation
+- **BullMQ:** Async preferred time calculation
+- **Real-time:** Socket.io for family activity feed
+- **Horizontal Scaling:** Stateless design, Redis session storage
 
 ---
 
 ## 🔗 Related Documentation
 
-### Module Documentation
-- [Architecture Guide (v2.0)](../TASK_MODULE_ARCHITECTURE-v2.md)
-- [System Guide (v2.0)](../TASK_MODULE_SYSTEM_GUIDE-v2.md)
-- [API Documentation](../API_DOCUMENTATION.md)
-- [Update Summary](../COMPLETE_TASK_MODULE_V2_UPDATE_SUMMARY-12-03-26.md)
-
-### Related Modules
-- [TaskProgress Module](../../taskProgress.module/doc/)
-- [childrenBusinessUser Module](../../childrenBusinessUser.module/doc/)
-- [Notification Module](../../notification.module/doc/)
-- [Analytics Module](../../analytics.module/doc/)
-- [Socket.IO Guide](../../../../helpers/socket/SOCKET_IO_INTEGRATION.md)
-
-### Global Documentation
-- [Flow Documentation](../../../../flow/)
-- [Postman Collections](../../../../postman-collections/)
+- [API_DOCUMENTATION.md](../API_DOCUMENTATION.md) - Complete API reference
+- [TASK_MODULE_ARCHITECTURE.md](../TASK_MODULE_ARCHITECTURE.md) - Architecture deep dive
+- [TASK_MODULE_SYSTEM_GUIDE.md](../TASK_MODULE_SYSTEM_GUIDE.md) - System guide
+- [task-performance-report.md](../perf/task-performance-report.md) - Performance analysis
 
 ---
 
-## ✅ Status
-
-**Diagrams**: ✅ **100% COMPLETE (9/9)**  
-**Version**: ✅ **v2.0 Current**  
-**Organization**: ✅ **v1.0 vs v2.0 separated**  
-**Production Ready**: ✅ **YES**  
-
----
-
-**Last Updated**: 12-03-26  
-**Maintained By**: Backend Engineering Team  
-**Status**: ✅ **ALL TASK MODULE DIAGRAMS UPDATED TO v2.0**
+**Created:** 14-03-26  
+**Last Updated:** 14-03-26

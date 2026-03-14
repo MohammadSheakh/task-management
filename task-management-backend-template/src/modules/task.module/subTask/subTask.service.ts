@@ -41,7 +41,7 @@ export class SubTaskService extends GenericService<typeof SubTask, ISubTask> {
     return subtask;
   }
 
-  /**
+  /** ✔️
    * Get all subtasks for a task
    * @param taskId - Parent task ID
    * @param filters - Query filters
@@ -98,7 +98,7 @@ export class SubTaskService extends GenericService<typeof SubTask, ISubTask> {
     return updatedSubtask;
   }
 
-  /**
+  /** ✔️
    * Update subtask and recalculate parent task progress
    * @param subtaskId - SubTask ID
    * @param data - Update data
@@ -148,7 +148,7 @@ export class SubTaskService extends GenericService<typeof SubTask, ISubTask> {
     return deletedSubtask;
   }
 
-  /**
+  /** ✔️ 🔂
    * Update parent task's subtask statistics
    * @param taskId - Parent task ID
    */
@@ -164,7 +164,7 @@ export class SubTaskService extends GenericService<typeof SubTask, ISubTask> {
     });
   }
 
-  /**
+  /** 🔂
    * Get subtask statistics for a user
    * @param userId - User ID
    * @returns Subtask statistics
@@ -196,7 +196,7 @@ export class SubTaskService extends GenericService<typeof SubTask, ISubTask> {
     };
   }
 
-  /**
+  /** ✔️
    * Get subtasks with pagination
    * @param taskId - Parent task ID
    * @param filters - Query filters

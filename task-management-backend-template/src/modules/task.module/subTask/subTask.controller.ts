@@ -18,7 +18,7 @@ export class SubTaskController extends GenericController<typeof SubTask, ISubTas
     this.subTaskService = new SubTaskService();
   }
 
-  /**
+  /** ✔️
    * Create a new subtask
    */
   create = async (req: Request, res: Response) => {
@@ -39,7 +39,7 @@ export class SubTaskController extends GenericController<typeof SubTask, ISubTas
     });
   };
 
-  /**
+  /** ✔️
    * Get all subtasks for a specific task
    */
   getSubTasksByTask = async (req: Request, res: Response) => {
@@ -56,7 +56,7 @@ export class SubTaskController extends GenericController<typeof SubTask, ISubTas
     });
   };
 
-  /**
+  /** ✔️
    * Get subtasks with pagination
    */
   getSubTasksWithPagination = async (req: Request, res: Response) => {
@@ -112,7 +112,7 @@ export class SubTaskController extends GenericController<typeof SubTask, ISubTas
     });
   };
 
-  /**
+  /** 
    * Get subtask statistics for the logged-in user
    */
   getStatistics = async (req: Request, res: Response) => {
@@ -132,7 +132,7 @@ export class SubTaskController extends GenericController<typeof SubTask, ISubTas
     });
   };
 
-  /**
+  /** ✔️
    * Update a subtask
    * Overrides generic update to handle parent task updates
    */

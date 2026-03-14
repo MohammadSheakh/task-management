@@ -35,18 +35,18 @@ interface MessageData {
 }
 
 export interface IMessageToEmmit extends MessageData {
-  _id : Types.ObjectId,
-  senderId : Types.ObjectId,
-  name : string,
-  image : string,
-  createdAt : Date
+  _id: Types.ObjectId,
+  senderId: Types.ObjectId,
+  name: string,
+  image: string,
+  createdAt: Date
 }
 
 async function getConversationById(conversationId: string) {
   try {
     const conversationData = await Conversation.findById(conversationId)//.populate('users').exec();  // FIXME: user populate korar bishoy ta 
     // FIXME : check korte hobe  
-    
+
     const conversationParticipants = await ConversationParticipents.find({
       conversationId: conversationId
     });
@@ -54,7 +54,7 @@ async function getConversationById(conversationId: string) {
     if (!conversationData) {
       throw new Error(`Conversation with ID ${conversationId} not found`);
     }
-    return { 
+    return {
       conversationData: conversationData,
       conversationParticipants: conversationParticipants
     };
@@ -85,7 +85,7 @@ export class SocketService {
   private isInitializing = false;
   private redisStateManager!: RedisStateManager;
 
-  private constructor() {}
+  private constructor() { }
 
   public static getInstance(): SocketService {
     if (!SocketService.instance) {
@@ -97,12 +97,12 @@ export class SocketService {
   // 🥇
   public async initialize(
     socketPort: number,
-    server: http.Server, 
-    redisPubClient: any, 
+    server: http.Server,
+    redisPubClient: any,
     redisSubClient: any,
     redisStateClient: any
   ): Promise<SocketIOServer> {
-    
+
     // Prevent multiple initializations
     if (this.isInitialized) {
       logger.warn(`⚠️ Socket.IO already initialized in worker ${process.pid}`);
@@ -147,7 +147,7 @@ export class SocketService {
       // Setup middleware and event handlers
       await this.setupMiddleware();
       this.setupEventHandlers();
-      
+
       // Add connection error handlers
       this.setupErrorHandlers();
 
@@ -155,7 +155,7 @@ export class SocketService {
       this.isInitializing = false;
 
       logger.info(colors.green(`🚀 Socket.IO successfully initialized in worker ${process.pid}`));
-      
+
       return this.io;
 
     } catch (error) {
@@ -175,13 +175,13 @@ export class SocketService {
   // 🔗➡️ initialize function
   private async setupMiddleware() {
     if (!this.io) return;
-    
+
     this.io.use(async (socket, next) => {
       try {
-        const token = socket.handshake.auth.token || 
-                     socket.handshake.headers.token as string;
+        const token = socket.handshake.auth.token ||
+          socket.handshake.headers.token as string;
 
-                     
+
 
         if (!token) {
           return next(new Error('Authentication token required'));
@@ -196,7 +196,7 @@ export class SocketService {
           return next(new Error('Invalid authentication token'));
         }
 
-        const modifiedUser= {
+        const modifiedUser = {
           ...user,  // 🟡 issue  MUST BE RESOLVED
           _id: user._id.toString(), // 🔥 CRITICAL: Convert ObjectId to string
         };
@@ -220,7 +220,7 @@ export class SocketService {
     this.io.on('connection', async (socket: Socket) => {
       const user = socket.data.user; // 🟡 issue  MUST BE RESOLVED
 
-      
+
       const userId = user._id;
       const workerId = process.pid.toString();
 
@@ -237,9 +237,9 @@ export class SocketService {
 
         // Handle connection in Redis
         const oldSocketId = await this.redisStateManager.handleUserReconnection(
-          userId, 
-          socket.id, 
-          workerId, 
+          userId,
+          socket.id,
+          workerId,
           // { name: user.name, profileImage: userProfile?.profileImage }
           userProfile
         );
@@ -314,10 +314,10 @@ export class SocketService {
     //   Handle Returning all related online users not all online users ..   🟢working perfectly
     //--------------------------------- 
     // Get related online users
-    socket.on('only-related-online-users', async (data: {userId: string}, callback) => {
+    socket.on('only-related-online-users', async (data: { userId: string }, callback) => {
       try {
         const relatedOnlineUsers = await this.redisStateManager.getRelatedOnlineUsers(data.userId);
-        
+
         logger.info(`📊 Related online users for ${data.userId}: ${relatedOnlineUsers.length}`);
         callback?.({ success: true, data: relatedOnlineUsers });
       } catch (error) {
@@ -330,24 +330,24 @@ export class SocketService {
     //  Handle joining chat rooms  🟢working perfectly
     //--------------------------------- 
     // Join conversation
-    socket.on('join', async (conversationData: {conversationId: string}, callback) => {
+    socket.on('join', async (conversationData: { conversationId: string }, callback) => {
       if (!conversationData.conversationId) {
         return this.emitError(socket, 'conversationId is required');
       }
 
       const conversationId = conversationData.conversationId;
-      
+
       console.log(`User ${userProfile.name} joining chat ${conversationData.conversationId}`);
 
       // Join socket.io room
       socket.join(conversationId);
-      
+
       // Update Redis state
       await this.redisStateManager.joinRoom(userId, conversationId);
-      
+
       // Get room users from Redis
       const roomUsers = await this.redisStateManager.getRoomUsers(conversationId);
-      
+
       logger.info(`👥 Room ${conversationId} has ${roomUsers.length} users: ${roomUsers.join(', ')}`);
 
       // Notify others in the chat
@@ -363,19 +363,19 @@ export class SocketService {
     // Handle leaving conversation 🟢working perfectly 
     //---------------------------------
     // Leave conversation
-    socket.on('leave', async (conversationData: {conversationId: string}, callback) => {
+    socket.on('leave', async (conversationData: { conversationId: string }, callback) => {
       if (!conversationData.conversationId) {
         return callback?.({ success: false, message: 'conversationId is required' });
       }
 
       const conversationId = conversationData.conversationId;
-      
+
       // Leave socket.io room
       socket.leave(conversationId);
-      
+
       // Update Redis state
       await this.redisStateManager.leaveRoom(userId, conversationId);
-      
+
       socket.to(conversationId).emit('user-left-conversation', {
         userId,
         userName: userProfile?.name,
@@ -390,10 +390,10 @@ export class SocketService {
     //---------------------------------
     //   Handle fetching all conversations with pagination 🟢 working perfectly 
     //---------------------------------
-    socket.on('get-all-conversations-with-pagination', async( conversationData: {page: number, limit: number}, callback) =>{
-      try{
+    socket.on('get-all-conversations-with-pagination', async (conversationData: { page: number, limit: number }, callback) => {
+      try {
         const conversations = await new ConversationParticipentsService().getAllConversationByUserIdWithPagination(userId, conversationData);
-        callback?.({ success: true, data: conversations});
+        callback?.({ success: true, data: conversations });
       } catch (error) {
         console.error('Error fetching conversations:', error);
         callback?.({ success: false, message: 'Failed to fetch conversations' });
@@ -403,12 +403,12 @@ export class SocketService {
     //---------------------------------
     //   get all message by conversationId with pagination 🟢 working perfectly 
     //---------------------------------
-    socket.on('get-all-message-by-conversationId', async(conversationData: {
+    socket.on('get-all-message-by-conversationId', async (conversationData: {
       conversationId: string,
       page: number,
       limit: number
-    }, callback) =>{
-      
+    }, callback) => {
+
       let populateOptions = [
         {
           path: 'senderId',
@@ -420,15 +420,15 @@ export class SocketService {
         }
       ]
 
-      try{
+      try {
         const messages = await new MessagerService().getAllWithPagination(
           { conversationId: conversationData.conversationId, isDeleted: false }, // filters
-          { page: conversationData.page, limit: conversationData.limit ||  Number.MAX_SAFE_INTEGER, sortBy: '-createdAt'  }, // options
-          populateOptions, 
+          { page: conversationData.page, limit: conversationData.limit || Number.MAX_SAFE_INTEGER, sortBy: '-createdAt' }, // options
+          populateOptions,
           '' // select
         );
         console.log("messages: 🟢🟢 ", messages);
-        callback?.({ success: true, data: messages});
+        callback?.({ success: true, data: messages });
       } catch (error) {
         console.error('Error fetching conversations:', error);
         callback?.({ success: false, message: 'Failed to fetch conversations' });
@@ -441,7 +441,7 @@ export class SocketService {
 
     socket.on('send-new-message', async (messageData: MessageData, callback) => {
 
-      console.log("requested user Id 🟡🟡",  userId)
+      console.log("requested user Id 🟡🟡", userId)
       try {
         console.log('New message received:', messageData);
 
@@ -452,8 +452,8 @@ export class SocketService {
         }
 
         // Get chat details
-        const {conversationData, conversationParticipants} = await getConversationById(messageData.conversationId);
-        
+        const { conversationData, conversationParticipants } = await getConversationById(messageData.conversationId);
+
         // console.log('Conversation data:', conversationData);
         // console.log('Conversation participants:', conversationParticipants);
 
@@ -464,18 +464,18 @@ export class SocketService {
         let isExist = false;
         conversationParticipants.forEach((participant: any) => {
           const participantId = participant.userId?.toString();
-          
+
           if (participantId == userId.toString()) {
-              isExist = true;
-              return;
+            isExist = true;
+            return;
           }
         });
 
         console.log("isExist: 🟡", isExist);
 
-      if(!isExist){
+        if (!isExist) {
           emitError(socket, `You are not a participant in this conversation`);
-      }
+        }
 
         // Create message
         const newMessage = await Message.create({
@@ -484,10 +484,10 @@ export class SocketService {
           senderId: userId,
         });
 
-      //---------------------------------
-      //  TODO : event emitter er maddhome message create korar por
-      //  conversation er lastMessage update korte hobe ..
-      //---------------------------------
+        //---------------------------------
+        //  TODO : event emitter er maddhome message create korar por
+        //  conversation er lastMessage update korte hobe ..
+        //---------------------------------
         const updatedConversation = await Conversation.findByIdAndUpdate(messageData.conversationId, {
           lastMessage: newMessage._id,
         }); // .populate('lastMessage').exec()
@@ -504,48 +504,48 @@ export class SocketService {
 
         // Emit to chat room
         const eventName = `new-message-received::${messageData.conversationId}`; // ${messageData.conversationId}
-        
+
         // when you send everyone exclude the sender
         socket.to(messageData.conversationId).emit(eventName, messageToEmit);
-        
+
         // socket.emit(eventName, messageToEmit);
 
         //************************************************* */
 
         // 🟢 NEW: Notify all conversation participants about conversation list update
-      
+
         // Notify each participant (except the sender if excludeUserId is provided)
-        conversationParticipants.forEach(async(participant: any) => {
+        conversationParticipants.forEach(async (participant: any) => {
           const participantId = participant.userId?.toString();
-          
+
           console.log(`1️⃣ .forEach Participant ID: ${participantId}, User ID: ${userId}`);
 
           const isOnline = await socketService.isUserOnline(participantId);
-         
+
           // Check if participant is online
           //if (Array.from(onlineUsers).some(id => id.toString() === participantId)) {
 
-          if(isOnline){
-         
+          if (isOnline) {
+
             await socketService.emitToUser(
               participantId,
               `conversation-list-updated::${participantId}`,
               {
-              creatorId : updatedConversation?.creatorId,
-              type: updatedConversation?.type,
-              siteId: updatedConversation?.siteId,
-              canConversate: updatedConversation?.canConversate,
-              lastMessage: {
-                _id: newMessage._id,
-                text: messageData.text,
-                senderId: userId,
-                conversationId: messageData.conversationId,
-              },
-              isDeleted: false,
-              createdAt: "2025-07-19T12:06:00.287Z",
-              _conversationId: updatedConversation?._id,
-            }
-          );
+                creatorId: updatedConversation?.creatorId,
+                type: updatedConversation?.type,
+                siteId: updatedConversation?.siteId,
+                canConversate: updatedConversation?.canConversate,
+                lastMessage: {
+                  _id: newMessage._id,
+                  text: messageData.text,
+                  senderId: userId,
+                  conversationId: messageData.conversationId,
+                },
+                isDeleted: false,
+                createdAt: "2025-07-19T12:06:00.287Z",
+                _conversationId: updatedConversation?._id,
+              }
+            );
 
             /*********
 
@@ -567,8 +567,8 @@ export class SocketService {
             });
 
             ********** */
-            
-          }else{
+
+          } else {
             // TODO : MUST Push notification
             // .... TODO: push notification .. 
           }
@@ -580,8 +580,8 @@ export class SocketService {
         callback?.({
           success: true,
           message: "Message sent successfully",
-          messageDetails: { 
-            messageId : newMessage._id,
+          messageDetails: {
+            messageId: newMessage._id,
             conversationId: messageData.conversationId,
             senderId: userId,
             text: messageData.text,
@@ -599,7 +599,7 @@ export class SocketService {
         emitError(socket, errorMessage);
       }
     });
-    
+
 
     // Add other event handlers here (send-new-message, get-all-conversations, etc.)
     // ... (your existing event handlers remain the same)
@@ -699,14 +699,14 @@ export class SocketService {
   // 🔗➡️ setupEventHandlers
   private async handleUserDisconnection(socket: Socket, userId: string) {
     logger.info(colors.red(`🔌🔴 User disconnected: ${userId} Socket ${socket.id}`));
-    
+
     try {
       // Remove from Redis state
       await this.redisStateManager.removeOnlineUser(userId, socket.id);
-      
+
       // Notify related users about offline status
       await this.notifyRelatedUsersOnlineStatus(userId, null, false);
-      
+
     } catch (error) {
       logger.error('Error handling user disconnection:', error);
     }
@@ -806,7 +806,7 @@ export class SocketService {
   // =============================================
   // Public API Methods
   // =============================================
-  
+
   /*******
    * 🟢🟢 
    * This method helps us to send notification to any user based on his/her userId
@@ -821,30 +821,30 @@ export class SocketService {
       this.io.to(userId).emit(event, data);
       return true;
     }else{
-    ---------------------------*/   
+    ---------------------------*/
     // As Per Toky Vai .. we always send push notification .. 
 
-      // send notification via firebase push notification
+    // send notification via firebase push notification
 
-      console.log("Hit FCM TOKEN BLOCK ⚡")
-      // Fetch user's FCM token from DB
-      const user = await User.findById(userId, 'fcmToken');
-      if (user?.fcmToken) {
-        await sendPushNotification(
-          user.fcmToken,
-          data.title || 'You have a new notification',
-          userId
-        );
-      }
-
-      /*------------
+    console.log("Hit FCM TOKEN BLOCK ⚡")
+    // Fetch user's FCM token from DB
+    const user = await User.findById(userId, 'fcmToken');
+    if (user?.fcmToken) {
+      await sendPushNotification(
+        user.fcmToken,
+        data.title || 'You have a new notification',
+        userId
+      );
     }
-      ---------------------*/
+
+    /*------------
+  }
+    ---------------------*/
     return false;
   }
 
 
-  public async isUserInRoom(participantId : string, conversationId: string){
+  public async isUserInRoom(participantId: string, conversationId: string) {
     return await this.redisStateManager.isUserInRoom(participantId, conversationId);
   }
 
@@ -853,7 +853,7 @@ export class SocketService {
    * This method helps us to send notification to admin
    * 🔗➡️  bullmq.ts -> startNotificationWorker
    * ******* */
-// Add new method for role-based emission
+  // Add new method for role-based emission
   public emitToRole(role: string, event: string, data: INotification | any): boolean {
     if (!this.io) return false;
     this.io.to(`role::${role}`).emit(event, data);
@@ -862,8 +862,8 @@ export class SocketService {
   }
 
   public async emitToConversation(conversationId: string,
-     event: string,
-     data: any) {
+    event: string,
+    data: any) {
     if (!this.io) return;
     this.io.to(conversationId).emit(event, data);
   }
@@ -974,7 +974,7 @@ export class SocketService {
    * );
    */
   public async broadcastGroupActivity(
-    groupId: string,
+    groupId: string, // this is actually parentId .. actually i am not sure yet // 🔁
     activity: {
       type: string;
       actor: { userId: string; name: string; profileImage?: string };
@@ -1061,9 +1061,9 @@ export class SocketService {
     return await getUserDetailsFromToken(token);
   }
 
-  
+
   // 🟢🟢
-  private async getUserProfile(userId: string) : Promise<IUserProfile | null> {
+  private async getUserProfile(userId: string): Promise<IUserProfile | null> {
     return await User.findById(userId, 'id name email profileImage subscriptionType role fcmToken').lean();
   }
 
@@ -1075,16 +1075,16 @@ export class SocketService {
   public close(): void {
     if (this.io) {
       logger.info(colors.yellow(`🔌 Closing Socket.IO in worker ${process.pid}...`));
-      
+
       // Close all connections gracefully
       this.io.sockets.disconnectSockets(true);
-      
+
       // Close the server
       this.io.close();
-      
+
       this.io = null;
       this.isInitialized = false;
-      
+
       logger.info(colors.green(`✅ Socket.IO closed in worker ${process.pid}`));
     }
   }

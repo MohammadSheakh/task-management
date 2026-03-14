@@ -87,7 +87,7 @@ export class TaskProgressService extends GenericService<typeof TaskProgress, ITa
   private async invalidateCache(taskId?: string, userId?: string): Promise<void> {
     try {
       const keysToDelete: string[] = [];
-      
+
       if (taskId && userId) {
         keysToDelete.push(this.getCacheKey('detail', taskId, userId));
       }
@@ -98,7 +98,7 @@ export class TaskProgressService extends GenericService<typeof TaskProgress, ITa
       if (userId) {
         keysToDelete.push(this.getCacheKey('tasks', userId));
       }
-      
+
       if (keysToDelete.length > 0) {
         await redisClient.del(keysToDelete);
         logger.info(`Invalidated ${keysToDelete.length} cache keys`);
@@ -108,7 +108,7 @@ export class TaskProgressService extends GenericService<typeof TaskProgress, ITa
     }
   }
 
-  /**
+  /**✔️
    * Create or update task progress for a child
    * Called when child is assigned to a collaborative task
    */
@@ -173,7 +173,7 @@ export class TaskProgressService extends GenericService<typeof TaskProgress, ITa
     // Update status
     const oldStatus = progress.status;
     progress.status = status;
-    
+
     if (note) {
       progress.note = note;
     }
@@ -182,7 +182,7 @@ export class TaskProgressService extends GenericService<typeof TaskProgress, ITa
     if (status === TaskProgressStatus.IN_PROGRESS && !progress.startedAt) {
       progress.startedAt = new Date();
     }
-    
+
     if (status === TaskProgressStatus.COMPLETED && !progress.completedAt) {
       progress.completedAt = new Date();
     }
@@ -266,7 +266,7 @@ export class TaskProgressService extends GenericService<typeof TaskProgress, ITa
    */
   async getProgress(taskId: string, userId: string): Promise<ITaskProgressDocument | null> {
     const cacheKey = this.getCacheKey('detail', taskId, userId);
-    
+
     // Try cache first
     const cached = await this.getFromCache<ITaskProgressDocument>(cacheKey);
     if (cached) {
@@ -293,7 +293,7 @@ export class TaskProgressService extends GenericService<typeof TaskProgress, ITa
    */
   async getAllChildrenProgress(taskId: string): Promise<ITaskProgressSummary> {
     const cacheKey = this.getCacheKey('summary', taskId);
-    
+
     // Try cache first
     const cached = await this.getFromCache<ITaskProgressSummary>(cacheKey);
     if (cached) {
@@ -333,7 +333,7 @@ export class TaskProgressService extends GenericService<typeof TaskProgress, ITa
       notStarted: childrenProgress.filter(c => c.status === TaskProgressStatus.NOT_STARTED).length,
       inProgress: childrenProgress.filter(c => c.status === TaskProgressStatus.IN_PROGRESS).length,
       completed: childrenProgress.filter(c => c.status === TaskProgressStatus.COMPLETED).length,
-      completionRate: childrenProgress.length > 0 
+      completionRate: childrenProgress.length > 0
         ? Math.round((childrenProgress.filter(c => c.status === TaskProgressStatus.COMPLETED).length / childrenProgress.length) * 100)
         : 0,
       averageProgress: childrenProgress.length > 0
@@ -363,7 +363,7 @@ export class TaskProgressService extends GenericService<typeof TaskProgress, ITa
     options?: { status?: TTaskProgressStatus; taskType?: string }
   ): Promise<any[]> {
     const cacheKey = this.getCacheKey('tasks', userId);
-    
+
     // Try cache first
     const cached = await this.getFromCache(cacheKey);
     if (cached) {
@@ -570,7 +570,7 @@ export class TaskProgressService extends GenericService<typeof TaskProgress, ITa
     }
   }
 
-  /**
+  /**✔️
    * Bulk create progress records for all assigned children
    * Called when a new collaborative task is created
    */

@@ -1,10 +1,12 @@
+//@ts-ignore
 import { StatusCodes } from 'http-status-codes';
 import { Task } from './task.model';
 import { ITask } from './task.interface';
 import { GenericService } from '../../_generic-module/generic.services';
 import ApiError from '../../../errors/ApiError';
+//@ts-ignore
 import { Types } from 'mongoose';
-import { DAILY_TASK_LIMIT, TaskStatus, TASK_CACHE_CONFIG } from './task.constant';
+import { TaskStatus, TASK_CACHE_CONFIG, TTaskStatus, DAILY_TASK_LIMIT } from './task.constant';
 import { redisClient } from '../../../helpers/redis/redis';
 import { logger, errorLogger } from '../../../shared/logger';
 import { NotificationService } from '../../notification.module/notification/notification.service';
@@ -30,11 +32,13 @@ export class TaskService extends GenericService<typeof Task, ITask> {
     super(Task);
   }
 
-  /**
+  /**✔️
    * Cache Key Generator
    */
   private getCacheKey(type: string, id?: string, userId?: string): string {
+
     const prefix = TASK_CACHE_CONFIG.PREFIX;
+
     if (type === 'detail' && id) {
       return `${prefix}:detail:${id}`;
     }
@@ -50,7 +54,7 @@ export class TaskService extends GenericService<typeof Task, ITask> {
     return `${prefix}:unknown`;
   }
 
-  /**
+  /** ✔️
    * Get from Cache
    */
   private async getFromCache<T>(key: string): Promise<T | null> {
@@ -68,7 +72,7 @@ export class TaskService extends GenericService<typeof Task, ITask> {
     }
   }
 
-  /**
+  /** ✔️
    * Set in Cache
    */
   private async setInCache<T>(key: string, data: T, ttl: number): Promise<void> {
@@ -80,7 +84,7 @@ export class TaskService extends GenericService<typeof Task, ITask> {
     }
   }
 
-  /**
+  /** 🔁
    * Invalidate Cache
    */
   private async invalidateCache(userId: string, taskId?: string): Promise<void> {
@@ -162,7 +166,7 @@ export class TaskService extends GenericService<typeof Task, ITask> {
 
     // ✅ NEW: Auto-create TaskProgress records for all assigned children
     if (data.taskType === 'collaborative' && data.assignedUserIds && data.assignedUserIds.length > 0) {
-      await taskProgressService.bulkCreateForTask(
+      await taskProgressService.bulkCreateForTask( //✔️
         task._id.toString(),
         data.assignedUserIds.map(id => id.toString())
       );
@@ -171,50 +175,62 @@ export class TaskService extends GenericService<typeof Task, ITask> {
     // Invalidate cache after creating task
     await this.invalidateCache(userId.toString(), task._id.toString());
 
-    // ✨ NEW: Record activity for group tasks
-    if (data.groupId) {
-      await notificationService.recordGroupActivity(
-        data.groupId.toString(),
-        userId.toString(),
-        ACTIVITY_TYPE.TASK_CREATED,
-        { taskId: task._id.toString(), taskTitle: task.title }
-      );
-    }
+    // ✨ NEW: Record activity for collaborative/family tasks
+    // For family-based structure, we need to find the business user (team head)
+    if (data.taskType === 'collaborative' && data.assignedUserIds && data.assignedUserIds.length > 0) {
+      // Find the business user (parent) from the first assigned child
+      const { ChildrenBusinessUser } = await import('../../childrenBusinessUser.module/childrenBusinessUser.model');
+      const firstAssignedUser = data.assignedUserIds[0];
 
-    // 🚀 NEW: Emit real-time event to task subscribers
-    // This notifies all users who joined the task room about the new/updated task
-    await socketService.emitToTask(task._id.toString(), 'task:created', {
-      taskId: task._id.toString(),
-      title: task.title,
-      taskType: task.taskType,
-      status: task.status,
-      groupId: data.groupId?.toString(),
-      assignedUserIds: data.assignedUserIds?.map(id => id.toString()),
-      createdById: userId.toString(),
-      createdAt: task.createdAt,
-    });
+      const relationship = await ChildrenBusinessUser.findOne({
+        childUserId: firstAssignedUser,
+        isDeleted: false,
+      }).lean();
 
-    // 🚀 NEW: Emit to group room if this is a group/family task
-    if (data.groupId) {
-      await socketService.broadcastGroupActivity(data.groupId.toString(), {
-        type: ACTIVITY_TYPE.TASK_CREATED,
-        actor: {
-          userId: userId.toString(),
-          name: userId.toString(), // Will be populated by service
-          profileImage: undefined,
-        },
-        task: {
-          taskId: task._id.toString(),
-          title: task.title,
-        },
-        timestamp: new Date(),
+      if (relationship) {
+        // Record activity under the business user's "group"
+        await notificationService.recordGroupActivity(
+          relationship.parentBusinessUserId.toString(),
+          userId.toString(),
+          ACTIVITY_TYPE.TASK_CREATED,
+          { taskId: task._id.toString(), taskTitle: task.title }
+        );
+
+        // 🚀 NEW: Broadcast to family members via group activity
+        await socketService.broadcastGroupActivity(
+          relationship.parentBusinessUserId.toString(),
+          {
+            type: ACTIVITY_TYPE.TASK_CREATED,
+            actor: {
+              userId: userId.toString(),
+              name: userId.toString(), // Will be populated by service
+              profileImage: undefined,
+            },
+            task: {
+              taskId: task._id.toString(),
+              title: task.title,
+            },
+            timestamp: new Date(),
+          }
+        );
+      }
+    } else {
+      // For personal tasks or tasks without assigned users, just emit to task room
+      await socketService.emitToTask(task._id.toString(), 'task:created', {
+        taskId: task._id.toString(),
+        title: task.title,
+        taskType: task.taskType,
+        status: task.status,
+        assignedUserIds: data.assignedUserIds?.map(id => id.toString()),
+        createdById: userId.toString(),
+        createdAt: task.createdAt,
       });
     }
 
     return task;
   }
 
-  /**
+  /** ✔️
    * Get tasks for a user with filtering
    * @param userId - User ID
    * @param filters - Query filters
@@ -316,7 +332,7 @@ export class TaskService extends GenericService<typeof Task, ITask> {
     const updateData: any = { status };
 
     // Auto-set completedTime when status changes to completed
-    if (status === TaskStatus.completed) {
+    if (status === TaskStatus.COMPLETED) {
       updateData.completedTime = new Date();
     }
 
@@ -333,18 +349,48 @@ export class TaskService extends GenericService<typeof Task, ITask> {
     // Invalidate cache after updating task
     await this.invalidateCache(userId.toString(), taskId);
 
-    // ✨ NEW: Record activity for task status changes
-    if (updatedTask.groupId) {
-      const activityType = status === TaskStatus.completed
+    // ✨ NEW: Record activity for collaborative/family tasks
+    if (updatedTask.taskType === 'collaborative' && updatedTask.assignedUserIds) {
+      const activityType = status === TaskStatus.COMPLETED
         ? ACTIVITY_TYPE.TASK_COMPLETED
         : ACTIVITY_TYPE.TASK_STARTED;
 
-      await notificationService.recordGroupActivity(
-        updatedTask.groupId.toString(),
-        userId.toString(),
-        activityType,
-        { taskId: updatedTask._id.toString(), taskTitle: updatedTask.title }
-      );
+      // Find the business user (parent) from the first assigned child
+      const { ChildrenBusinessUser } = await import('../../childrenBusinessUser.module/childrenBusinessUser.model');
+      const firstAssignedUser = updatedTask.assignedUserIds[0];
+
+      const relationship = await ChildrenBusinessUser.findOne({
+        childUserId: firstAssignedUser,
+        isDeleted: false,
+      }).lean();
+
+      if (relationship) {
+        // Record activity under the business user's "group"
+        await notificationService.recordGroupActivity(
+          relationship.parentBusinessUserId.toString(),
+          userId.toString(),
+          activityType,
+          { taskId: updatedTask._id.toString(), taskTitle: updatedTask.title }
+        );
+
+        // 🚀 NEW: Broadcast to family members via group activity
+        await socketService.broadcastGroupActivity(
+          relationship.parentBusinessUserId.toString(),
+          {
+            type: activityType,
+            actor: {
+              userId: userId.toString(),
+              name: userId.toString(), // Will be populated
+              profileImage: undefined,
+            },
+            task: {
+              taskId: updatedTask._id.toString(),
+              title: updatedTask.title,
+            },
+            timestamp: new Date(),
+          }
+        );
+      }
     }
 
     // 🚀 NEW: Emit real-time status change to task subscribers
@@ -357,31 +403,10 @@ export class TaskService extends GenericService<typeof Task, ITask> {
       taskTitle: updatedTask.title,
     });
 
-    // 🚀 NEW: Broadcast to group room if group task
-    if (updatedTask.groupId) {
-      const activityType = status === TaskStatus.completed
-        ? ACTIVITY_TYPE.TASK_COMPLETED
-        : ACTIVITY_TYPE.TASK_STARTED;
-
-      await socketService.broadcastGroupActivity(updatedTask.groupId.toString(), {
-        type: activityType,
-        actor: {
-          userId: userId.toString(),
-          name: userId.toString(), // Will be populated
-          profileImage: undefined,
-        },
-        task: {
-          taskId: updatedTask._id.toString(),
-          title: updatedTask.title,
-        },
-        timestamp: new Date(),
-      });
-    }
-
     return updatedTask;
   }
 
-  /**
+  /** ✔️
    * Update subtask progress and recalculate completion
    * @param taskId - Task ID
    * @param subtaskUpdates - Array of subtask updates
@@ -401,7 +426,7 @@ export class TaskService extends GenericService<typeof Task, ITask> {
 
     // Auto-complete task if all subtasks are done
     if (totalSubtasks > 0 && completedSubtasks === totalSubtasks) {
-      updateData.status = TaskStatus.completed;
+      updateData.status = TaskStatus.COMPLETED;
       updateData.completedTime = new Date();
     }
 
@@ -418,14 +443,14 @@ export class TaskService extends GenericService<typeof Task, ITask> {
     return updatedTask;
   }
 
-  /**
+  /** ✔️
    * Get task statistics for a user
    * @param userId - User ID
    * @returns Task statistics
    */
   async getTaskStatistics(userId: Types.ObjectId) {
     const cacheKey = this.getCacheKey('statistics', undefined, userId.toString());
-    
+
     // Try cache first
     const cached = await this.getFromCache(cacheKey);
     if (cached) {
@@ -457,10 +482,12 @@ export class TaskService extends GenericService<typeof Task, ITask> {
       completed: 0,
     };
 
-    stats.forEach((stat) => {
+    stats.forEach((stat: any) => {
       result[stat._id as keyof typeof result] = stat.count;
       result.total += stat.count;
     });
+
+    console.log("task.service -> '/statistics' -> fn: getTaskStatistics =>", stats);
 
     // Cache the result
     await this.setInCache(cacheKey, result, TASK_CACHE_CONFIG.STATISTICS);
@@ -468,7 +495,7 @@ export class TaskService extends GenericService<typeof Task, ITask> {
     return result;
   }
 
-  /**
+  /** ✔️
    * Get daily progress for a user
    * Figma: home-flow.png (Daily Progress: 1/5)
    *
@@ -480,7 +507,7 @@ export class TaskService extends GenericService<typeof Task, ITask> {
     const targetDate = date || new Date();
     const dateKey = targetDate.toISOString().split('T')[0];
     const cacheKey = this.getCacheKey('daily-progress', dateKey, userId.toString());
-    
+
     // Try cache first
     const cached = await this.getFromCache(cacheKey);
     if (cached) {
@@ -505,9 +532,9 @@ export class TaskService extends GenericService<typeof Task, ITask> {
 
     // Calculate statistics
     const total = tasks.length;
-    const completed = tasks.filter(t => t.status === TaskStatus.completed).length;
-    const inProgress = tasks.filter(t => t.status === TaskStatus.inProgress).length;
-    const pending = tasks.filter(t => t.status === TaskStatus.pending).length;
+    const completed = tasks.filter((t: any) => t.status === TaskStatus.COMPLETED).length;
+    const inProgress = tasks.filter((t: any) => t.status === TaskStatus.IN_PROGRESS).length;
+    const pending = tasks.filter(t => t.status === TaskStatus.PENDING).length;
 
     // Build task list with subtask info
     const taskList = tasks.map(task => ({
@@ -522,7 +549,7 @@ export class TaskService extends GenericService<typeof Task, ITask> {
       } : undefined,
       progressPercentage: task.totalSubtasks && task.totalSubtasks > 0
         ? Math.round(((task.completedSubtasks || 0) / task.totalSubtasks) * 100)
-        : (task.status === TaskStatus.completed ? 100 : 0),
+        : (task.status === TaskStatus.COMPLETED ? 100 : 0),
     }));
 
     const result = {
@@ -560,7 +587,7 @@ export class TaskService extends GenericService<typeof Task, ITask> {
       // Get user's last 10 completed tasks
       const tasks = await Task.find({
         ownerUserId: userId,
-        status: TaskStatus.completed,
+        status: TaskStatus.COMPLETED,
         startTime: { $exists: true, $ne: null },
         isDeleted: false,
       })

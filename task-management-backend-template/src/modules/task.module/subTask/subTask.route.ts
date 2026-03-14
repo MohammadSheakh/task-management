@@ -26,7 +26,7 @@ const paginationOptions: Array<'sortBy' | 'page' | 'limit' | 'populate'> = [
 
 const controller = new SubTaskController();
 
-/*-─────────────────────────────────
+/*-───────────────────────────────── ✔️
 |  Child | Business | SubTask | edit-update-task-flow.png | Create a new subtask
 |  @desc Create a subtask under a parent task
 |  @auth All authenticated users (child, business)
@@ -38,7 +38,7 @@ router.route('/').post(
   controller.create
 );
 
-/*-─────────────────────────────────
+/*-───────────────────────────────── ✔️ 🐛 select and populate gula controller level e use kora hoy nai
 |  Child | Business | SubTask | task-details-with-subTasks.png | Get all subtasks for a task
 |  @desc Get all subtasks belonging to a specific task
 |  @auth All authenticated users (child, business)
@@ -57,7 +57,7 @@ router.route('/task/:taskId').get(
   controller.getSubTasksByTask
 );
 
-/*-─────────────────────────────────
+/*-─────────────────────────────────  🐛 select and populate gula controller level e use kora hoy nai
 |  Child | Business | SubTask | task-details-with-subTasks.png | Get subtasks with pagination
 |  @desc Paginated list of subtasks for a task
 |  @auth All authenticated users (child, business)
@@ -85,7 +85,7 @@ router.route('/statistics').get(
   controller.getStatistics
 );
 
-/*-─────────────────────────────────
+/*-───────────────────────────────── ✔️
 |  Child | Business | SubTask | task-details-with-subTasks.png | Get subtask by ID
 |  @desc Get single subtask details with populated user info
 |  @auth All authenticated users (child, business)
@@ -104,7 +104,7 @@ router.route('/:id').get(
   controller.getByIdV2
 );
 
-/*-─────────────────────────────────
+/*-───────────────────────────────── ✔️
 |  Child | Business | SubTask | edit-update-task-flow.png | Update subtask by ID
 |  @desc Update subtask details
 |  @auth All authenticated users (child, business)
@@ -116,7 +116,7 @@ router.route('/:id').put(
   controller.updateById
 );
 
-/*-─────────────────────────────────
+/*-───────────────────────────────── ✔️ 
 |  Child | Business | SubTask | edit-update-task-flow.png | Toggle subtask status
 |  @desc Toggle subtask completion status (auto-updates parent task completion)
 |  @auth All authenticated users (child, business)

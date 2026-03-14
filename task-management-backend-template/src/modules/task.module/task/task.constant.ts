@@ -52,6 +52,16 @@ export const T_TASK_TYPE = TaskType;
 export const T_TASK_PRIORITY = TaskPriority;
 
 /**
+ * Daily Task Limit
+ * Maximum number of personal tasks a user can create per day
+ * Prevents spam and ensures reasonable task load
+ */
+export const DAILY_TASK_LIMIT = {
+  max: 5,
+  message: 'Daily task limit reached',
+} as const;
+
+/**
  * Task Cache Configuration
  * TTL values for different task data types
  *
@@ -73,15 +83,13 @@ export const TASK_CACHE_CONFIG = {
   // User's Tasks TTL
   USER_TASKS: 180,          // 3 minutes - user's task list
   USER_TASKS_PAGINATED: 120,// 2 minutes - paginated tasks
-  
-  // Group Tasks TTL
-  GROUP_TASKS: 180,         // 3 minutes - group task list
-  
+
   // SubTask TTL
   SUBTASK_DETAIL: 300,      // 5 minutes - individual subtask
   SUBTASK_LIST: 180,        // 3 minutes - list of subtasks
   
   // Cache invalidation patterns
+  // Updated V2: Removed group-related patterns (group.module removed)
   INVALIDATION_PATTERNS: {
     TASK_CREATED: ['task:list', 'task:statistics', 'task:user:*'],
     TASK_UPDATED: ['task:detail:*', 'task:list', 'task:statistics'],

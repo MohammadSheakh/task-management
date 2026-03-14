@@ -63,7 +63,7 @@ const paginationOptions: Array<'sortBy' | 'page' | 'limit' | 'populate'> = [
 
 const controller = new TaskController();
 
-/*-─────────────────────────────────
+/*-───────────────────────────────── ✔️
 |  Child (Secondary) | Business | Task | edit-update-task-flow.png | Create a new task
 |  @desc Create personal, single assignment, or collaborative task
 |  @auth Business users always allowed
@@ -81,7 +81,7 @@ router.route('/').post(
   controller.create
 );
 
-/*-─────────────────────────────────
+/*-───────────────────────────────── ✔️
 |  Child | Business | Task | home-flow.png | Get all my tasks with filtering
 |  @desc Get tasks where user is creator, owner, or assigned
 |  @auth All authenticated users (child, business)
@@ -94,7 +94,7 @@ router.route('/').get(
   controller.getMyTasks
 );
 
-/*-─────────────────────────────────
+/*-─────────────────────────────────✔️
 |  Child | Business | Task | home-flow.png | Get all my tasks with pagination
 |  @desc Paginated list of tasks with advanced filtering
 |  @auth All authenticated users (child, business)
@@ -114,7 +114,7 @@ router.route('/paginate').get(
   controller.getMyTasksWithPagination
 );
 
-/*-─────────────────────────────────
+/*-───────────────────────────────── ✔️
 |  Child | Business | Task | status-section-flow-01.png | Get task statistics
 |  @desc Get count of tasks by status (pending, inProgress, completed)
 |  @auth All authenticated users (child, business)
@@ -148,7 +148,7 @@ router.route('/daily-progress').get(
 router.route('/:id').get(
   auth(TRole.commonUser),
   taskLimiter,
-  verifyTaskAccess,
+  verifyTaskAccess, // 🔁 need to verify this implementation
   setQueryOptions({
     populate: [
       { path: 'createdById', select: 'name email profileImage' },
@@ -177,7 +177,7 @@ router.route('/:id').put(
   controller.updateById
 );
 
-/*-─────────────────────────────────
+/*-───────────────────────────────── ✔️
 |  Child | Business | Task | edit-update-task-flow.png | Update task status
 |  @desc Update task status with automatic timestamp handling
 |  @auth All authenticated users (child, business)
@@ -192,7 +192,7 @@ router.route('/:id/status').put(
   controller.updateStatus
 );
 
-/*-─────────────────────────────────
+/*-───────────────────────────────── ✔️
 |  Child | Business | Task | edit-update-task-flow.png | Update subtask progress
 |  @desc Update subtask list and auto-calculate completion percentage
 |  @auth All authenticated users (child, business)

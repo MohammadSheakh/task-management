@@ -34,11 +34,6 @@ const taskSchema = new Schema<ITask>(
       },
     ],
 
-    groupId: {
-      type: Schema.Types.ObjectId,
-      ref: 'Group',
-    },
-
     // ─── Task Details ──────────────────────────────────────────────────
     title: {
       type: String,
@@ -141,11 +136,11 @@ const taskSchema = new Schema<ITask>(
 /**
  * Compound indexes for common query patterns
  * Updated: Added isDeleted to all indexes for soft delete filtering
+ * Updated V2: Removed groupId references (group.module removed)
  */
 taskSchema.index({ createdById: 1, status: 1, isDeleted: 1, startTime: -1 });
 taskSchema.index({ ownerUserId: 1, status: 1, isDeleted: 1, startTime: -1 });
 taskSchema.index({ assignedUserIds: 1, status: 1, isDeleted: 1 });
-taskSchema.index({ groupId: 1, status: 1, isDeleted: 1 });
 taskSchema.index({ startTime: 1, isDeleted: 1 });
 taskSchema.index({ dueDate: 1, isDeleted: 1 });
 
@@ -219,8 +214,8 @@ taskSchema.virtual('time').get(function () {
 });
 
 /**
- * Virtual: assignedBy for group tasks
- * Flutter group tasks need to show who assigned the task
+ * Virtual: assignedBy for collaborative tasks
+ * Flutter collaborative tasks need to show who assigned the task
  * Populated from createdById field
  */
 taskSchema.virtual('assignedBy').get(function () {
@@ -250,7 +245,7 @@ taskSchema.set('toJSON', {
         hour12: true
       });
     }
-    // Add 'assignedBy' for group tasks (Flutter needs this)
+    // Add 'assignedBy' for collaborative tasks (Flutter needs this)
     if (ret.createdById) {
       ret.assignedBy = ret.createdById;
     }

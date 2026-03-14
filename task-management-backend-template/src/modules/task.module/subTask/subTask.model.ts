@@ -1,7 +1,7 @@
 //@ts-ignore
 import { model, Schema } from 'mongoose';
 import paginate from '../../../common/plugins/paginate';
-import { ISubTask } from './subTask.interface';
+import { ISubTask, ISubTaskModel } from './subTask.interface';
 
 /**
  * SubTask Schema
@@ -102,12 +102,12 @@ subTaskSchema.set('toJSON', {
       isCompleted: ret.isCompleted,
       duration: ret.duration,
     };
-    
+
     // Include completedAt only if subtask is completed (for tracking)
     if (ret.isCompleted && ret.completedAt) {
       flutterModel.completedAt = ret.completedAt;
     }
-    
+
     // Delete all backend-only fields
     delete ret._id;
     delete ret.__v;
@@ -119,7 +119,7 @@ subTaskSchema.set('toJSON', {
     delete ret.updatedAt;
     delete ret.order;
     delete ret.description;
-    
+
     return flutterModel;
   },
 });

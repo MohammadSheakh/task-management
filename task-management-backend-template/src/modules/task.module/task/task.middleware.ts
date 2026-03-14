@@ -9,7 +9,7 @@ import { Types } from 'mongoose';
  * Custom validation and authorization checks for task operations
  */
 
-/**
+/** ✔️
  * Verify that the user has permission to access/modify a task
  * Checks if user is the creator, owner, or assigned user
  */
@@ -57,7 +57,7 @@ export const verifyTaskAccess = async (
   }
 };
 
-/**
+/** 🔁
  * Verify task ownership for modification
  * Only creator or owner can modify the task
  */
@@ -100,9 +100,14 @@ export const verifyTaskOwnership = async (
 
 /**
  * Check if user is Secondary User (has task management privileges)
- * Secondary User can create/assign tasks for family
+ * Secondary User can create/assign tasks for family members
  * Business users always have permission
- * 
+ *
+ * Family Structure (via ChildrenBusinessUser relationship):
+ * - Business User: Family owner/parent, full task management rights
+ * - Secondary User: Trusted child with permission to create/assign tasks
+ * - Regular Child: Can only create personal tasks for self
+ *
  * @figmaIndex dashboard-flow-03.png
  * @figmaIndex add-task-flow-for-permission-account-interface.png
  */
@@ -262,7 +267,7 @@ export const validateStatusTransition = async (
 };
 
 /**
- * Check if user has reached daily task limit
+ * - Check if user has reached daily task limit
  * Only applies to personal tasks
  */
 export const checkDailyTaskLimit = async (
