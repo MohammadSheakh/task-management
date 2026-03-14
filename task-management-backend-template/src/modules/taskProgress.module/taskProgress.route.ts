@@ -33,7 +33,7 @@ const updateProgressLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-/*-─────────────────────────────────
+/*-───────────────────────────────── ✔️
 |  Child | TaskProgress | status-section-flow-01.png | Get my progress on a task
 |  @desc Get personal progress on specific task (status, subtasks completed)
 |  @auth Child user (task assignee)
@@ -46,7 +46,7 @@ router.get(
   taskProgressController.getProgress
 );
 
-/*-─────────────────────────────────
+/*-───────────────────────────────── 🔂
 |  Business | TaskProgress | task-monitoring-flow-01.png | Get all children's progress on a task
 |  @desc View which children completed/started/not started a task
 |  @auth Business user (parent/teacher)
@@ -74,7 +74,7 @@ router.get(
   taskProgressController.getAllTasksProgress
 );
 
-/*-─────────────────────────────────
+/*-───────────────────────────────── 🔂
 |  Child | TaskProgress | edit-update-task-flow.png | Update progress status (start/complete)
 |  @desc Mark task as started or completed
 |  @auth Child user (task assignee)

@@ -255,7 +255,7 @@ export class ChildrenBusinessUserService extends GenericService<typeof ChildrenB
    */
   // private async addChildToGroup - REMOVED
 
-  /**
+  /** ✔️
    * Get all children of a business user
    */
   async getChildrenOfBusinessUser(
@@ -322,7 +322,7 @@ export class ChildrenBusinessUserService extends GenericService<typeof ChildrenB
     return children;
   }
 
-  /**
+  /** ✔️
    * Get children count for business user
    */
   async getChildrenCount(businessUserId: string): Promise<number> {
@@ -347,7 +347,7 @@ export class ChildrenBusinessUserService extends GenericService<typeof ChildrenB
     return count;
   }
 
-  /**
+  /** ✔️
    * Get parent business user for a child
    */
   async getParentBusinessUser(childUserId: string): Promise<any> {
@@ -360,7 +360,7 @@ export class ChildrenBusinessUserService extends GenericService<typeof ChildrenB
       return cached;
     }
 
-    const relationship = await this.model.findOne({
+    const relationship: IChildrenBusinessUser = await this.model.findOne({
       childUserId: new Types.ObjectId(childUserId),
       status: CHILDREN_BUSINESS_USER_STATUS.ACTIVE,
       isDeleted: false,
@@ -385,7 +385,7 @@ export class ChildrenBusinessUserService extends GenericService<typeof ChildrenB
     return parentInfo;
   }
 
-  /**
+  /** ✔️
    * Remove child from family (soft delete)
    */
   async removeChildFromFamily(
@@ -417,6 +417,10 @@ export class ChildrenBusinessUserService extends GenericService<typeof ChildrenB
 
     // REMOVED: No group integration
     // Parent-child relationship is direct via ChildrenBusinessUser model
+
+    /*-─────────────────────────────────
+    |  NEED TO THINK : what should be the flow after softDelete the relationship
+    └──────────────────────────────────*/
 
     // Invalidate cache
     await this.invalidateCache(businessUserId, childUserId);
@@ -456,7 +460,7 @@ export class ChildrenBusinessUserService extends GenericService<typeof ChildrenB
   // Only ONE child per business user can be Secondary User
   // ────────────────────────────────────────────────────────────────────────
 
-  /**
+  /**✔️
    * Set/Unset child as Secondary User
    * Only ONE child per business user can be Secondary User
    * 
@@ -520,7 +524,7 @@ export class ChildrenBusinessUserService extends GenericService<typeof ChildrenB
     };
   }
 
-  /**
+  /** ✔️
    * Get Secondary User for a business user
    * 
    * @param businessUserId - Business user ID
@@ -547,7 +551,7 @@ export class ChildrenBusinessUserService extends GenericService<typeof ChildrenB
     };
   }
 
-  /**
+  /**✔️
    * Check if a child is Secondary User
    * 
    * @param childUserId - Child user ID

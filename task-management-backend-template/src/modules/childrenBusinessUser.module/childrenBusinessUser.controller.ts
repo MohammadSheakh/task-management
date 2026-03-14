@@ -6,6 +6,7 @@ import { CHILDREN_BUSINESS_USER_STATUS } from './childrenBusinessUser.constant';
 import catchAsync from '../../shared/catchAsync';
 import ApiError from '../../errors/ApiError';
 import pick from '../../shared/pick';
+import { IUser } from '../token/token.interface';
 
 /**
  * Children Business User Controller
@@ -21,7 +22,7 @@ export class ChildrenBusinessUserController {
     this.service = new ChildrenBusinessUserService();
   }
 
-  /**
+  /** ✔️
    * Create child account
    * POST /children-business-users/children
    *
@@ -59,7 +60,7 @@ export class ChildrenBusinessUserController {
     });
   });
 
-  /**
+  /** ✔️
    * Get all children of business user
    * GET /children-business-users/my-children
    *
@@ -94,11 +95,11 @@ export class ChildrenBusinessUserController {
       options
     );
 
-    
+
     //  Step 4: Get children count
     const count = await this.service.getChildrenCount(businessUserId);
 
-    
+
     //  Step 5: Send success response
     (res as any).sendResponse({
       code: StatusCodes.OK,
@@ -111,7 +112,7 @@ export class ChildrenBusinessUserController {
     });
   });
 
-  /**
+  /** ✔️
    * Get parent business user (for children)
    * GET /children-business-users/my-parent
    *
@@ -126,11 +127,9 @@ export class ChildrenBusinessUserController {
       throw new ApiError(StatusCodes.UNAUTHORIZED, 'User not authenticated');
     }
 
-    
     // Step 2: Get parent business user
     const parentInfo = await this.service.getParentBusinessUser(childUserId);
 
-    
     (res as any).sendResponse({
       code: StatusCodes.OK,
       data: parentInfo,
@@ -139,7 +138,7 @@ export class ChildrenBusinessUserController {
     });
   });
 
-  /**
+  /** ✔️
    * Remove child from family
    * DELETE /children-business-users/children/:childId
    *
@@ -147,7 +146,7 @@ export class ChildrenBusinessUserController {
    * @auth Business user
    */
   removeChild = catchAsync(async (req: Request, res: Response) => {
-    
+
     //  Step 1: Get business user ID and child ID
     const businessUserId = req.user?.userId;
 
@@ -157,7 +156,7 @@ export class ChildrenBusinessUserController {
 
     const childUserId = req.params.childId;
 
-    
+
     //  Step 2: Extract optional note
     const note = req.body.note;
 
@@ -166,7 +165,7 @@ export class ChildrenBusinessUserController {
     └──────────────────────────────────*/
     await this.service.removeChildFromFamily(businessUserId, childUserId, note);
 
-    
+
     (res as any).sendResponse({
       code: StatusCodes.OK,
       data: null,
@@ -175,7 +174,7 @@ export class ChildrenBusinessUserController {
     });
   });
 
-  /**
+  /** ✔️
    * Reactivate child account
    * POST /children-business-users/children/:childId/reactivate
    *
@@ -276,7 +275,15 @@ export class ChildrenBusinessUserController {
     });
   });
 
-  /**
+
+  // ────────────────────────────────────────────────────────────────────────
+  // Secondary User Management
+  // Figma: dashboard-flow-03.png (Permissions section)
+  // Only ONE child per business user can be Secondary User
+  // ────────────────────────────────────────────────────────────────────────
+
+
+  /** ✔️
    * Set/Unset child as Secondary User
    * PUT /children-business-users/children/:childId/secondary-user
    *
@@ -297,7 +304,7 @@ export class ChildrenBusinessUserController {
     |  Step 2: Set/Unset as Secondary User
     └──────────────────────────────────*/
     const result = await this.service.setSecondaryUser(
-      businessUserId,
+      businessUserId as string,
       childId,
       isSecondaryUser
     );
@@ -315,7 +322,7 @@ export class ChildrenBusinessUserController {
     });
   });
 
-  /**
+  /** ✔️
    * Get Secondary User for current business user
    * GET /children-business-users/secondary-user
    *
@@ -332,7 +339,7 @@ export class ChildrenBusinessUserController {
     /*-─────────────────────────────────
     |  Step 2: Get Secondary User
     └──────────────────────────────────*/
-    const result = await this.service.getSecondaryUser(businessUserId);
+    const result = await this.service.getSecondaryUser(businessUserId as string);
 
     /*-─────────────────────────────────
     |  Step 3: Send success response

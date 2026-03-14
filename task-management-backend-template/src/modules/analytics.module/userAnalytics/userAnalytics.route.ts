@@ -8,7 +8,7 @@ const router = express.Router();
 
 const controller = new UserAnalyticsController();
 
-/*-─────────────────────────────────
+/*-───────────────────────────────── ✔️
 |  Child | Individual | User Analytics | home-flow.png | Get complete user analytics overview
 |  @desc Returns: overview, today's progress, weekly/monthly stats, streak, productivity score
 └──────────────────────────────────*/
@@ -17,7 +17,7 @@ router.get('/user/my/overview',
   controller.getUserOverview
 );
 
-/*-─────────────────────────────────
+/*-───────────────────────────────── ✔️
 |  Child | Individual | User Analytics | home-flow.png | Get today's task progress
 |  @desc Returns: X/Y completed format, completion rate
 └──────────────────────────────────*/
@@ -44,7 +44,7 @@ router.get('/user/my/productivity-score',
   controller.getProductivityScore
 );
 
-/*-─────────────────────────────────
+/*-───────────────────────────────── 🔁 MUST NEED IMPLEMENTATION || HARD CODE VALUE FOUND 
 |  Child | Individual | User Analytics | profile-permission-account-interface.png | Get user's completion rate analytics
 |  @desc Returns: overall rate, by time range, trend
 └──────────────────────────────────*/
@@ -53,7 +53,7 @@ router.get('/user/my/completion-rate',
   controller.getCompletionRate
 );
 
-/*-─────────────────────────────────
+/*-───────────────────────────────── 🔁 MUST NEED IMPLEMENTATION || HARD CODE VALUE FOUND 
 |  Child | Individual | User Analytics | status-section-flow-01.png | Get user's task statistics
 |  @desc Returns: tasks by status, priority, task type
 └──────────────────────────────────*/
@@ -62,7 +62,7 @@ router.get('/user/my/task-statistics',
   controller.getTaskStatistics
 );
 
-/*-─────────────────────────────────
+/*-───────────────────────────────── 🔁 MUST NEED IMPLEMENTATION || HARD CODE VALUE FOUND 
 |  Child | Individual | User Analytics | history_screen.dart | Get user's trend analytics
 |  @desc Returns: daily/weekly/monthly trend data
 └──────────────────────────────────*/

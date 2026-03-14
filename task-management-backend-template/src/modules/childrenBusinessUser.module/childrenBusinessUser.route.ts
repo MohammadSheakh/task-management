@@ -56,7 +56,7 @@ router.post(
   controller.createChild
 );
 
-/*-─────────────────────────────────
+/*-───────────────────────────────── ✔️
 |  Business | ChildrenBusinessUser | team-member-flow-01.png | Get all my children
 |  @desc Get all children accounts with pagination
 |  @auth Business user (parent/teacher)
@@ -70,7 +70,7 @@ router.get(
   controller.getMyChildren
 );
 
-/*-─────────────────────────────────
+/*-───────────────────────────────── ✔️
 |  Child | ChildrenBusinessUser | profile-permission-account-interface.png | Get my parent business user
 |  @desc Child user retrieves their parent business user details
 |  @auth Child user (commonUser role)
@@ -83,7 +83,7 @@ router.get(
   controller.getParentBusinessUser
 );
 
-/*-─────────────────────────────────
+/*-───────────────────────────────── ✔️
 |  Business | ChildrenBusinessUser | edit-child-flow.png | Remove child from family
 |  @desc Remove a child account from family (soft delete)
 |  @auth Business user (parent/teacher)
@@ -97,7 +97,7 @@ router.delete(
   controller.removeChild
 );
 
-/*-─────────────────────────────────
+/*-───────────────────────────────── ✔️
 |  Business | ChildrenBusinessUser | edit-child-flow.png | Reactivate child account
 |  @desc Reactivate a previously removed child account
 |  @auth Business user (parent/teacher)
@@ -123,7 +123,7 @@ router.get(
   controller.getStatistics
 );
 
-/*-─────────────────────────────────
+/*-───────────────────────────────── ✔️
 |  Business | ChildrenBusinessUser | dashboard-flow-03.png | Set Secondary User
 |  @desc Designate a child as Secondary User (Task Manager)
 |        Only ONE child per business user can be Secondary User
@@ -139,7 +139,7 @@ router.put(
   controller.setSecondaryUser
 );
 
-/*-─────────────────────────────────
+/*-───────────────────────────────── ✔️
 |  Business | ChildrenBusinessUser | dashboard-flow-03.png | Get Secondary User
 |  @desc Get the current Secondary User (Task Manager) for this business user
 |  @auth Business user (parent/teacher) only

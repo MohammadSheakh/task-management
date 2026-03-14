@@ -8,27 +8,27 @@
 export const ANALYTICS_CACHE_CONFIG = {
   // Cache key prefix for all analytics
   PREFIX: 'analytics',
-  
+
   // User Analytics TTL (in seconds)
   USER_OVERVIEW: 300,        // 5 minutes
   USER_DAILY_PROGRESS: 120,  // 2 minutes
   USER_STREAK: 900,          // 15 minutes
   USER_PRODUCTIVITY: 600,    // 10 minutes
   USER_COMPLETION_RATE: 600, // 10 minutes
-  
+
   // Task Analytics TTL (in seconds)
   TASK_OVERVIEW: 300,        // 5 minutes
   TASK_STATUS_DIST: 300,     // 5 minutes
   TASK_COMPLETION_TREND: 600,// 10 minutes
   TASK_DAILY_SUMMARY: 120,   // 2 minutes
-  
+
   // Group Analytics TTL (in seconds)
   GROUP_OVERVIEW: 300,       // 5 minutes
   GROUP_MEMBERS: 600,        // 10 minutes
   GROUP_ACTIVITY: 120,       // 2 minutes
   GROUP_LEADERBOARD: 900,    // 15 minutes
   GROUP_PERFORMANCE: 600,    // 10 minutes
-  
+
   // Admin Analytics TTL (in seconds)
   ADMIN_DASHBOARD: 600,      // 10 minutes
   ADMIN_REVENUE: 900,        // 15 minutes
@@ -43,15 +43,15 @@ export const ANALYTICS_CACHE_CONFIG = {
  */
 export const ANALYTICS_QUEUE_CONFIG = {
   QUEUE_NAME: 'analytics-jobs',
-  
+
   // Job retry configuration
   JOB_ATTEMPTS: 3,
   BACKOFF_DELAY: 5000,  // 5 seconds
-  
+
   // Job cleanup configuration
   REMOVE_ON_COMPLETE: { count: 100 },
   REMOVE_ON_FAIL: { count: 500 },
-  
+
   // Concurrency limits
   CONCURRENCY: 5,  // Max 5 concurrent analytics jobs
 } as const;
@@ -66,7 +66,7 @@ export type TAnalyticsTimeRange = 'today' | 'yesterday' | 'thisWeek' | 'lastWeek
  * Analytics Data Types
  * Types of analytics that can be requested
  */
-export type TAnalyticsType = 
+export type TAnalyticsType =
   | 'overview'
   | 'progress'
   | 'streak'

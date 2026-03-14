@@ -17,7 +17,7 @@ export class TaskProgressController {
     this.service = new TaskProgressService();
   }
 
-  /**
+  /** ✔️
    * Get progress for a specific task and user
    * GET /task-progress/:taskId/user/:userId
    */
@@ -39,7 +39,7 @@ export class TaskProgressController {
     });
   };
 
-  /**
+  /**✔️
    * Get all children's progress for a task (Parent Dashboard)
    * GET /task-progress/:taskId/children
    */

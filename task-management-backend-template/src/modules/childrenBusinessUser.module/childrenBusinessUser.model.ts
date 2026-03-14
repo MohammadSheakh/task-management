@@ -45,7 +45,7 @@ const childrenBusinessUserSchema = new Schema<IChildrenBusinessUser>(
       ],
       default: CHILDREN_BUSINESS_USER_STATUS.ACTIVE,
     },
-    
+
     /*-─────────────────────────────────
     |  Secondary User Flag
     |  Figma: dashboard-flow-03.png (Permissions section)
@@ -59,7 +59,7 @@ const childrenBusinessUserSchema = new Schema<IChildrenBusinessUser>(
       type: Boolean,
       default: false,  // Default: Not secondary user
     },
-    
+
     note: {
       type: String,
       maxlength: [500, 'Note cannot exceed 500 characters'],

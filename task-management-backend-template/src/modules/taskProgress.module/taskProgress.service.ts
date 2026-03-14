@@ -261,7 +261,7 @@ export class TaskProgressService extends GenericService<typeof TaskProgress, ITa
     return progress;
   }
 
-  /**
+  /** ✔️
    * Get progress for a specific task and user
    */
   async getProgress(taskId: string, userId: string): Promise<ITaskProgressDocument | null> {
@@ -288,7 +288,7 @@ export class TaskProgressService extends GenericService<typeof TaskProgress, ITa
     return progress;
   }
 
-  /**
+  /** 🔂
    * Get all children's progress for a task (for parent dashboard)
    */
   async getAllChildrenProgress(taskId: string): Promise<ITaskProgressSummary> {
@@ -307,7 +307,7 @@ export class TaskProgressService extends GenericService<typeof TaskProgress, ITa
     }
 
     // Get all children's progress
-    const progressRecords = await this.model.find({
+    const progressRecords: ITaskProgress[] = await this.model.find({
       taskId: new Types.ObjectId(taskId),
       isDeleted: false,
     }).populate('userId', 'name email profileImage');
@@ -355,7 +355,7 @@ export class TaskProgressService extends GenericService<typeof TaskProgress, ITa
     return result;
   }
 
-  /**
+  /** 🔂
    * Get all tasks progress for a child
    */
   async getAllTasksProgress(
@@ -389,7 +389,7 @@ export class TaskProgressService extends GenericService<typeof TaskProgress, ITa
       .sort({ updatedAt: -1 });
 
     // Format results
-    const tasks = progressRecords.map(record => {
+    const tasks = progressRecords.map((record: ITaskProgress) => {
       const taskDoc = record.taskId as any;
       return {
         taskId: record.taskId,
