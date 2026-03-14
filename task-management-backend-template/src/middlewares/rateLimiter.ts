@@ -1,18 +1,15 @@
 /**
  * Rate Limiter Middleware
- * Centralized rate limiting solution using express-rate-limit + rate-limit-redis
+ * Centralized rate limiting solution using express-rate-limit
  *
- * Strategies Available:
- * 1. Memory Store (Default) - Simple, works for single-instance deployments
- * 2. Redis Store (Recommended) - For multi-instance/cluster deployments
+ * Uses MemoryStore (built-in to express-rate-limit)
+ * For production with Redis, see: RATE_LIMITING_REDIS_IMPLEMENTATION_COMPLETE-14-03-26.md
  *
  * @see masterSystemPrompt.md Section 10: Rate Limiting Rules
- * @version 2.0.0 - Updated to use rate-limit-redis
+ * @version 2.1.0 - Simplified MemoryStore implementation
  */
 
 import rateLimit, { RateLimitRequestHandler } from 'express-rate-limit';
-import RedisStore from 'rate-limit-redis';
-import { redisClient } from '../helpers/redis/redis';
 import { errorLogger, logger } from '../shared/logger';
 
 /**
@@ -23,19 +20,8 @@ export type TRateLimitType = 'user' | 'admin' | 'auth' | 'api' | 'strict';
 /**
  * Rate Limit Presets
  * Pre-configured rate limits for different use cases
- *
- * Based on masterSystemPrompt.md Section 10:
- * - Auth endpoints: Strict limits (prevent brute force)
- * - API endpoints: Moderate limits (prevent abuse)
- * - Admin endpoints: Higher limits (trusted users)
- * - User endpoints: Standard limits (normal usage)
  */
 export const RATE_LIMIT_PRESETS = {
-  /**
-   * User Rate Limit
-   * For general user-facing endpoints (analytics, tasks, etc.)
-   * 30 requests per minute
-   */
   user: {
     windowMs: 60 * 1000,       // 1 minute
     max: 30,                    // 30 requests per minute
@@ -45,11 +31,6 @@ export const RATE_LIMIT_PRESETS = {
     },
   },
 
-  /**
-   * Admin Rate Limit
-   * For admin dashboard endpoints
-   * 100 requests per minute (higher for dashboard charts)
-   */
   admin: {
     windowMs: 60 * 1000,       // 1 minute
     max: 100,                   // 100 requests per minute
@@ -59,11 +40,6 @@ export const RATE_LIMIT_PRESETS = {
     },
   },
 
-  /**
-   * Auth Rate Limit
-   * For authentication endpoints (login, register, etc.)
-   * Very strict to prevent brute force attacks
-   */
   auth: {
     windowMs: 15 * 60 * 1000,  // 15 minutes
     max: 5,                     // 5 attempts per 15 minutes
@@ -73,11 +49,6 @@ export const RATE_LIMIT_PRESETS = {
     },
   },
 
-  /**
-   * API Rate Limit
-   * For general API endpoints
-   * 60 requests per minute
-   */
   api: {
     windowMs: 60 * 1000,       // 1 minute
     max: 60,                    // 60 requests per minute
@@ -87,11 +58,6 @@ export const RATE_LIMIT_PRESETS = {
     },
   },
 
-  /**
-   * Strict Rate Limit
-   * For sensitive operations (password reset, OTP, etc.)
-   * Very restrictive
-   */
   strict: {
     windowMs: 60 * 60 * 1000,  // 1 hour
     max: 3,                     // 3 requests per hour
@@ -103,83 +69,17 @@ export const RATE_LIMIT_PRESETS = {
 } as const;
 
 /**
- * Create Redis Store for Rate Limiting
- * Uses official rate-limit-redis package for atomic operations
- *
- * @param windowMs - Time window in milliseconds
- * @returns RedisStore instance
- */
-function createRedisStore(windowMs: number) {
-  return new RedisStore({
-    // Send command to Redis
-    sendCommand: (...args: string[]) => redisClient.sendCommand(args),
-    
-    // Prefix for Redis keys
-    prefix: 'ratelimit:',
-  });
-}
-
-/**
  * Create Rate Limiter
  * Factory function to create rate limiters with different configurations
  *
  * @param type - Rate limit type (user, admin, auth, api, strict)
- * @param useRedis - Whether to use Redis store (default: true for production)
  * @returns Rate limit middleware
- *
- * @example
- * // Use in routes
- * router.get('/analytics', rateLimiter('user'), controller);
- * router.post('/login', rateLimiter('auth'), controller);
  */
 export function rateLimiter(
-  type: TRateLimitType = 'user',
-  useRedis: boolean = true  // ✅ Default to true for production
+  type: TRateLimitType = 'user'
 ): RateLimitRequestHandler {
   const preset = RATE_LIMIT_PRESETS[type];
 
-  // Use Redis store if enabled and available
-  if (useRedis) {
-    try {
-      // Test Redis connection
-      const redisStatus = redisClient.isReady;
-      if (redisStatus) {
-        const store = createRedisStore(preset.windowMs);
-
-        logger.info(`✅ Rate limiter '${type}' using Redis store`);
-
-        return rateLimit({
-          store,
-          windowMs: preset.windowMs,
-          max: preset.max,
-          message: preset.message,
-          standardHeaders: true,  // Return rate limit info in headers
-          legacyHeaders: false,   // Disable X-RateLimit-* headers
-          keyGenerator: (req: any) => {
-            // Use user ID if authenticated, otherwise IP
-            return req.user?.userId || req.ip || 'unknown';
-          },
-          handler: (req: any, res: any) => {
-            res.status(429).json({
-              success: false,
-              message: preset.message.message,
-              retryAfter: Math.ceil(preset.windowMs / 1000),
-            });
-          },
-          // Skip rate limiting for health checks
-          skip: (req: any) => {
-            return req.path === '/health' || req.path === '/api/v1/health';
-          },
-        });
-      }
-    } catch (error) {
-      errorLogger.error('Redis rate limiter initialization failed, falling back to memory:', error);
-    }
-  }
-
-  // Fallback: Use Memory Store
-  logger.warn(`⚠️ Rate limiter '${type}' using Memory store (Redis unavailable)`);
-  
   return rateLimit({
     windowMs: preset.windowMs,
     max: preset.max,
@@ -212,57 +112,15 @@ export function rateLimiter(
  * @param windowMs - Time window in milliseconds
  * @param max - Maximum requests allowed
  * @param message - Error message when limit exceeded
- * @param useRedis - Whether to use Redis store (default: true)
  * @returns Rate limit middleware
- *
- * @example
- * // Custom limiter for file uploads
- * const uploadLimiter = createCustomRateLimiter(60000, 5, 'Too many uploads');
- * router.post('/upload', uploadLimiter, uploadController);
  */
 export function createCustomRateLimiter(
   windowMs: number,
   max: number,
-  message?: string,
-  useRedis: boolean = true
+  message?: string
 ): RateLimitRequestHandler {
   const errorMessage = message || 'Too many requests, please try again later';
 
-  // Use Redis if enabled
-  if (useRedis) {
-    try {
-      const redisStatus = redisClient.isReady;
-      if (redisStatus) {
-        const store = createRedisStore(windowMs);
-
-        return rateLimit({
-          store,
-          windowMs,
-          max,
-          message: {
-            success: false,
-            message: errorMessage,
-          },
-          standardHeaders: true,
-          legacyHeaders: false,
-          keyGenerator: (req: any) => {
-            return req.user?.userId || req.ip || 'unknown';
-          },
-          handler: (req: any, res: any) => {
-            res.status(429).json({
-              success: false,
-              message: errorMessage,
-              retryAfter: Math.ceil(windowMs / 1000),
-            });
-          },
-        });
-      }
-    } catch (error) {
-      errorLogger.error('Custom Redis rate limiter failed, falling back to memory:', error);
-    }
-  }
-
-  // Fallback to memory store
   return rateLimit({
     windowMs,
     max,
@@ -284,54 +142,6 @@ export function createCustomRateLimiter(
     },
   });
 }
-
-/**
- * Rate Limit Headers Middleware
- * Adds rate limit information to response headers
- *
- * Headers added:
- * - X-RateLimit-Limit: Maximum requests allowed
- * - X-RateLimit-Remaining: Requests remaining
- * - X-RateLimit-Reset: Time when limit resets (Unix timestamp)
- *
- * @deprecated Use standardHeaders: true in rateLimiter options instead
- */
-export function rateLimitHeaders() {
-  return (req: any, res: any, next: () => void) => {
-    // Headers are automatically added by express-rate-limit when standardHeaders: true
-    next();
-  };
-}
-
-/**
- * Rate Limit Utility Functions
- */
-export const rateLimitUtils = {
-  /**
-   * Get rate limit key from request
-   * Uses user ID if authenticated, otherwise IP address
-   */
-  getKey: (req: any): string => {
-    return req.user?.id || req.ip || 'unknown';
-  },
-
-  /**
-   * Check if request should be rate limited
-   * Can be used for custom rate limiting logic
-   */
-  shouldLimit: (req: any, count: number, max: number): boolean => {
-    return count >= max;
-  },
-
-  /**
-   * Format rate limit error response
-   */
-  formatError: (retryAfter: number) => ({
-    success: false,
-    message: 'Too many requests, please try again later',
-    retryAfter,
-  }),
-};
 
 // Export default rate limiter (user type)
 export default rateLimiter;

@@ -250,6 +250,7 @@ taskReminderSchema.methods.markAsSent = async function (): Promise<void> {
   doc.status = TaskReminderStatus.SENT;
   doc.sentCount += 1;
 
+  /*--------------- 🧹🪄🎩
   if (doc.isRecurring && doc.sentCount < doc.maxOccurrences!) {
     const nextOccurrence = doc.calculateNextOccurrence();
     if (nextOccurrence) {
@@ -258,6 +259,7 @@ taskReminderSchema.methods.markAsSent = async function (): Promise<void> {
       doc.status = TaskReminderStatus.PENDING;
     }
   }
+  ----------------*/
 
   await this.save();
 };

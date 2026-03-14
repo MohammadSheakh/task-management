@@ -574,7 +574,7 @@ export class TaskService extends GenericService<typeof Task, ITask> {
   // Automatic Preferred Time Calculation
   // ────────────────────────────────────────────────────────────────────────
 
-  /**
+  /** 
    * Calculate and update user's preferred time based on task history
    * Analyzes last 10 completed tasks to find pattern
    * Updates user.preferredTime automatically

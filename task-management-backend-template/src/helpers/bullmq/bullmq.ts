@@ -145,7 +145,6 @@ export const startNotificationWorker = () => {
   );
 };
 
-
 /*-─────────────────────────────────
 |  Update Conversations Last Message Queue
 └──────────────────────────────────*/
@@ -199,15 +198,6 @@ export const startUpdateConversationsLastMessageWorker = () => {
   );
 };
 
-
-/*-─────────────────────────────────
-|  ❌ REMOVED: Group Invitation Queue
-|  Group module not needed - using childrenBusinessUser instead
-└──────────────────────────────────*/
-
-// export const groupInvitationQueue = new Queue(...);
-// export const startGroupInvitationWorker = () => { ... };
-
 /*-─────────────────────────────────
 |  Task Reminders Queue
 └──────────────────────────────────*/
@@ -237,7 +227,7 @@ export const startTaskRemindersWorker = () => {
 
       try {
         // Import service here to avoid circular dependency
-        const { TaskReminderService } = await import('../modules/notification.module/taskReminder/taskReminder.service');
+        const { TaskReminderService } = await import('../../modules/notification.module/taskReminder/taskReminder.service');
         const taskReminderService = new TaskReminderService();
 
         // Process the reminder (sends notification and marks as sent)

@@ -206,7 +206,7 @@ export class TaskReminderService extends GenericService<typeof TaskReminder, ITa
     return count;
   }
 
-  /**
+  /**✔️
    * Process a due reminder (called by BullMQ worker)
    *
    * @param reminderId - Reminder ID
@@ -246,7 +246,7 @@ export class TaskReminderService extends GenericService<typeof TaskReminder, ITa
       },
     });
 
-    // Mark as sent (and reschedule if recurring)
+    // Mark as sent (and reschedule if recurring) // 🔂 Need to remove recurring feature .. client dont want that 
     await reminder.markAsSent();
 
     logger.info(`✅ Task reminder processed: ${reminderId}`);
