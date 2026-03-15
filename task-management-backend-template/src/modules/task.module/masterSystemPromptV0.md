@@ -244,3 +244,8 @@ for task.module you generate API_DOCUMENTATION.md .. i think as a backend develo
 Instruction #24:
 
 kokhono ami vul bolle sheta mene niba na .. ei rokom ekta instruction likhte hobe
+
+when you generate any postman collection .. for a endpoint .. if any id needs to be passed in request params .. then dont right that like
+{{taskId}}.. write like :taskId //⛺ 📜 
+bad way : {{baseUrl}}/v1/tasks/{{taskId}}
+good way : {{baseUrl}}/v1/tasks/:taskId

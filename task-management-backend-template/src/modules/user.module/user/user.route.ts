@@ -15,7 +15,7 @@ import { setRequestFiltersV2, setRequstFilterAndValue } from '../../../middlewar
 import { imageUploadPipelineForUpdateUserProfile } from './user.middleware';
 import { IsProviderRejected } from '../../../middlewares/provider/IsProviderRejected';
 
-export const optionValidationChecking = <T extends keyof IUser | 'sortBy' | 'page' | 'limit' | 'populate'| 'from' | 'to' | 'providerApprovalStatus'>(
+export const optionValidationChecking = <T extends keyof IUser | 'sortBy' | 'page' | 'limit' | 'populate' | 'from' | 'to' | 'providerApprovalStatus'>(
   filters: T[]
 ) => {
   return filters;
@@ -38,7 +38,7 @@ const controller = new UserController();
 //---------------------------------
 router.route('/paginate').get(
   auth(TRole.admin),
-  validateFiltersForQuery(optionValidationChecking(['_id', 'name', 'createdAt', ...paginationOptions])),
+  validateFiltersForQuery(optionValidationChecking(['_id', 'name', 'createdAt', 'role', ...paginationOptions])),
   setRequstFilterAndValue('role', 'user'),
   controller.getAllWithPaginationV2WithStatistics
 );
@@ -69,9 +69,9 @@ router.route('/paginate/for-mentor').get(
 router.route('/paginate/for-sub-admin').get(
   auth(TRole.admin),
   validateFiltersForQuery(optionValidationChecking(['_id', 'name', 'createdAt', 'from', 'to', ...paginationOptions])),
-  
+
   setRequstFilterAndValue('role', 'subAdmin'),
-  
+
   // setRequestFiltersV2(
   //   { 
   //     isDeleted: false,
@@ -112,7 +112,7 @@ router.route('/paginate/for-provider').get(
   auth(TRole.admin),
   // providerApprovalStatus must pass kora lagbe .. 
   // from and to is for date range filter
-  validateFiltersForQuery(optionValidationChecking(['_id', 'name', 'email', 'phoneNumber','role', 'providerApprovalStatus', 'from', 'to', ...paginationOptions])),
+  validateFiltersForQuery(optionValidationChecking(['_id', 'name', 'email', 'phoneNumber', 'role', 'providerApprovalStatus', 'from', 'to', ...paginationOptions])),
   // setRequstFilterAndValue('role', 'provider'),
   controller.getAllWithPaginationV3
 );
@@ -138,7 +138,7 @@ router.route('/notification-test').get(
 |  Admin | Get Profile Information by Id  to approve doctor / specialist 
 └──────────────────────────────────*/
 router.route('/profile/for-admin').get(
- auth(TRole.admin),
+  auth(TRole.admin),
   validateFiltersForQuery(optionValidationChecking(['_id',
     ...paginationOptions])),
   controller.getAllWithPagination
