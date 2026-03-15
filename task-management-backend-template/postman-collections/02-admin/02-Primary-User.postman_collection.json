@@ -1,13 +1,13 @@
 {
   "info": {
-    "_postman_id": "task-management-primary-user-v1",
-    "name": "02 - Primary User Role (Teacher/Parent)",
-    "description": "Group Owner - Manage Team & Assign Tasks\n\n## Responsibilities\n- Create and manage groups (families, classrooms)\n- Add/remove team members (children, students)\n- Create and assign tasks to members\n- Monitor task progress and activity\n- Set permissions for secondary users\n- View live activity feed\n\n## Figma Reference\n- Teacher/Parent Dashboard\n- Team Overview\n- Task Monitoring\n- Team Members Management\n- Settings → Permissions\n\n## Variables\n- BASE_URL: http://localhost:5000/api/v1\n- PRIMARY_USER_TOKEN: Your JWT token\n- GROUP_ID: Your test group ID\n- USER_ID: Team member ID\n- TASK_ID: Test task ID",
+    "_postman_id": "task-management-primary-user-v1-deprecated",
+    "name": "02 - Primary User Role (Teacher/Parent) [DEPRECATED]",
+    "description": "⚠️ **DEPRECATED - DO NOT USE** ⚠️\n\n## This Collection is Deprecated\n\nThe Groups module referenced in this collection has been **REMOVED** from the backend and replaced with the **ChildrenBusinessUser** module.\n\n## What Changed?\n\n**Old Architecture (Groups Module):**\n- Primary users created \"groups\" (families, classrooms)\n- Members were added to groups\n- Tasks were assigned to groups\n\n**New Architecture (ChildrenBusinessUser Module):**\n- Business users (parents/teachers) create \"children\" accounts\n- Children are linked directly to business users\n- Tasks are assigned collaboratively\n- Simpler hierarchy, better for family/classroom management\n\n## Migration Guide\n\n| Old Endpoint (Groups) | New Endpoint (ChildrenBusinessUser) |\n|----------------------|-------------------------------------|\n| `GET /groups/my` | `GET /children-business-users/my-children` |\n| `POST /groups` | `POST /children-business-users/children` |\n| `GET /groups/:id/members` | Use task progress endpoints |\n| `POST /groups/:id/members` | `PUT /children-business-users/children/:childId/secondary-user` |\n\n## Use This Instead\n\nRefer to the following collections for updated endpoints:\n- **01-User-Common-Part2-Charts-Progress.postman_collection.json** - ChildrenBusinessUser endpoints\n- **03-Secondary-User-UPDATED-v2.postman_collection.json** - Secondary user (child) endpoints\n\n## Original Purpose (Historical Reference)\n\nGroup Owner - Manage Team & Assign Tasks\n\n### Responsibilities\n- Create and manage groups (families, classrooms)\n- Add/remove team members (children, students)\n- Create and assign tasks to members\n- Monitor task progress and activity\n- Set permissions for secondary users\n- View live activity feed\n\n### Figma Reference\n- Teacher/Parent Dashboard\n- Team Overview\n- Task Monitoring\n- Team Members Management\n- Settings → Permissions\n\n### Variables\n- BASE_URL: http://localhost:5000/api/v1\n- PRIMARY_USER_TOKEN: Your JWT token\n- GROUP_ID: Your test group ID\n- USER_ID: Team member ID\n- TASK_ID: Test task ID\n\n---\n\n**Deprecated:** 15-03-26\n**Reason:** Groups module replaced with ChildrenBusinessUser module\n**Migration:** Use ChildrenBusinessUser endpoints instead",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "version": "1.0.0"
+    "version": "1.0.0-deprecated"
   },
   "variable": [
-    {"key": "BASE_URL", "value": "http://localhost:5000/api/v1", "type": "string"},
+    {"key": "BASE_URL", "value": "http://localhost:5000", "type": "string"},
     {"key": "PRIMARY_USER_TOKEN", "value": "", "type": "string"},
     {"key": "GROUP_ID", "value": "", "type": "string"},
     {"key": "USER_ID", "value": "", "type": "string"},
