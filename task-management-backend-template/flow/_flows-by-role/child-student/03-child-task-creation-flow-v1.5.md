@@ -15,7 +15,7 @@
 | Item | v1.0 | v1.5 |
 |------|------|------|
 | Base Path | `/api/v1/` | `/v1/` |
-| Group Endpoints | `/groups/` | `/children-business-user/` |
+| Group Endpoints | `/groups/` | `/children-business-users/` |
 | Permission Logic | Group-based | childrenBusinessUser (Secondary User) |
 | TaskProgress | ❌ Missing | ✅ Added reference |
 | Chart Endpoints | ❌ Missing | ✅ Added reference |
@@ -74,7 +74,7 @@ Authorization: Bearer {{accessToken}}
 ### Step 2: Check Secondary User Status ⭐ NEW!
 
 ```http
-GET /v1/children-business-user/children
+GET /v1/children-business-users/my-children
 Authorization: Bearer {{parentAccessToken}}
 ```
 
@@ -133,7 +133,7 @@ function canCreateTask(user, taskType) {
 
 // Check Secondary User Status
 async function checkSecondaryUserStatus(childUserId) {
-  const response = await fetch('/v1/children-business-user/children', {
+  const response = await fetch('/v1/children-business-users/my-children', {
     headers: { Authorization: `Bearer ${parentToken}` }
   });
   const data = await response.json();
@@ -403,7 +403,7 @@ try {
 
 ### Step 1: Child Requests Permission
 ```http
-POST /v1/children-business-user/request-secondary-permission
+POST /v1/children-business-users/request-secondary-permission
 Authorization: Bearer {{childToken}}
 Content-Type: application/json
 ```
@@ -420,7 +420,7 @@ Content-Type: application/json
 
 ### Step 2: Parent Reviews Request
 ```http
-GET /v1/children-business-user/permission-requests
+GET /v1/children-business-users/permission-requests
 Authorization: Bearer {{parentToken}}
 ```
 
@@ -446,7 +446,7 @@ Authorization: Bearer {{parentToken}}
 
 ### Step 3: Parent Grants Permission
 ```http
-PUT /v1/children-business-user/set-secondary-user
+PUT /v1/children-business-users/children/:childId/secondary-user
 Authorization: Bearer {{parentToken}}
 Content-Type: application/json
 ```
@@ -660,14 +660,14 @@ class PermissionService {
   }
   
   Future<void> requestSecondaryPermission(String reason) async {
-    await fetch('/children-business-user/request-secondary-permission', {
+    await fetch('/children-business-users/request-secondary-permission', {
       method: 'POST',
       body: {'reason': reason},
     });
   }
   
   Future<void> grantSecondaryPermission(String childUserId) async {
-    await fetch('/children-business-user/set-secondary-user', {
+    await fetch('/children-business-users/children/:childId/secondary-user', {
       method: 'PUT',
       body: {
         'childUserId': childUserId,
@@ -758,7 +758,7 @@ Test each flow with:
 
 ### v1.5 (12-03-26) - Updated HTTP Only
 - ✅ Fixed base path: `/api/v1/` → `/v1/`
-- ✅ Replaced `/groups/` → `/children-business-user/`
+- ✅ Replaced `/groups/` → `/children-business-users/`
 - ✅ Updated permission logic for Secondary User
 - ✅ Added Secondary User permission flow
 - ✅ Added TaskProgress endpoints reference

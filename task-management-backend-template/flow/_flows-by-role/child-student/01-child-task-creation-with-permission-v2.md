@@ -513,7 +513,7 @@ class TaskCreationService {
   /// Check if user can create tasks for others
   Future<bool> canCreateTasksForOthers() async {
     final response = await http.get(
-      Uri.parse('$baseUrl/children-business-user/my-permissions'),
+      Uri.parse('$baseUrl/children-business-users/my-permissions'),
       headers: {'Authorization': 'Bearer $accessToken'},
     );
     

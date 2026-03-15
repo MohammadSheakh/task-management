@@ -15,7 +15,7 @@
 | Item | v1.0 | v1.5 |
 |------|------|------|
 | Base Path | `/api/v1/` | `/v1/` |
-| Group Endpoints | `/groups/` | `/children-business-user/` |
+| Group Endpoints | `/groups/` | `/children-business-users/` |
 | Permission Logic | Group-based | childrenBusinessUser (Secondary User) |
 | TaskProgress | ❌ Missing | ✅ Added (6 endpoints) |
 | Chart Endpoints | ❌ Missing | ✅ Added (10 endpoints) |
@@ -73,7 +73,7 @@ Authorization: Bearer {{accessToken}}
 
 #### 1.2 Get Children/Students Overview ⭐ UPDATED
 ```http
-GET /v1/children-business-user/children?page=1&limit=10
+GET /v1/children-business-users/my-children?page=1&limit=10
 Authorization: Bearer {{accessToken}}
 ```
 
@@ -552,7 +552,7 @@ Content-Type: application/json
 
 #### 7.1 Get My Children
 ```http
-GET /v1/children-business-user/children?page=1&limit=10
+GET /v1/children-business-users/my-children?page=1&limit=10
 Authorization: Bearer {{accessToken}}
 ```
 
@@ -582,7 +582,7 @@ Authorization: Bearer {{accessToken}}
 
 #### 7.2 Create Child Account
 ```http
-POST /v1/children-business-user/create-child
+POST /v1/children-business-users/children
 Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 ```
@@ -600,7 +600,7 @@ Content-Type: application/json
 
 #### 7.3 Set Secondary User Permission ⭐ NEW!
 ```http
-PUT /v1/children-business-user/set-secondary-user
+PUT /v1/children-business-users/children/:childId/secondary-user
 Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 ```
@@ -619,7 +619,7 @@ Content-Type: application/json
 
 #### 7.4 Update Child
 ```http
-PUT /v1/children-business-user/:id
+PUT /v1/children-business-users/:id
 Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 ```
@@ -628,7 +628,7 @@ Content-Type: application/json
 
 #### 7.5 Remove Child
 ```http
-DELETE /v1/children-business-user/:id
+DELETE /v1/children-business-users/:id
 Authorization: Bearer {{accessToken}}
 ```
 
@@ -795,7 +795,7 @@ sequenceDiagram
     Backend API-->>Dashboard: Access token
     
     Dashboard->>Backend API: GET /tasks/statistics
-    Dashboard->>Backend API: GET /children-business-user/children
+    Dashboard->>Backend API: GET /children-business-users/my-children
     Dashboard->>Backend API: GET /tasks/daily-progress
     Backend API-->>Dashboard: Dashboard data
     Dashboard->>Parent: Display overview
@@ -1007,7 +1007,7 @@ Test each flow with:
 
 ### v1.5 (12-03-26) - Updated HTTP Only
 - ✅ Fixed base path: `/api/v1/` → `/v1/`
-- ✅ Replaced `/groups/` → `/children-business-user/`
+- ✅ Replaced `/groups/` → `/children-business-users/`
 - ✅ Added TaskProgress endpoints (6 endpoints)
 - ✅ Added Chart aggregation endpoints (10 endpoints)
 - ✅ Updated permission logic for Secondary User

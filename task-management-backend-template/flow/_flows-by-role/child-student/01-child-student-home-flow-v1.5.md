@@ -1,16 +1,28 @@
-# 📱 API Flow: Child/Student - Home Screen
+# 📱 API Flow: Child/Student - Home Screen (v1.5 - Updated HTTP Only)
 
 **Role:** `child` (Student / Group Member)  
-**Figma Reference:** `figma-asset/app-user/group-children-user/home-flow.png`  
+**Figma Reference:** `app-user/group-children-user/home-flow.png`  
 **Module:** Task Management  
-**Date:** 10-03-26  
-**Version:** 1.0
+**Date**: 12-03-26  
+**Version**: 1.5 - **Updated HTTP Only** (Legacy Reference)  
+
+**Note**: This is an **updated legacy reference**. For HTTP + Socket.IO real-time integration, see **Flow 06 (v2.0)**.
+
+---
+
+## 🔧 What Was Updated (v1.0 → v1.5)
+
+| Item | v1.0 | v1.5 |
+|------|------|------|
+| Base Path | `/api/v1/` | `/v1/` |
+| Group Endpoints | `/groups/` | `/children-business-users/` |
+| Permission Logic | Group-based | childrenBusinessUser |
+| TaskProgress | ❌ Missing | ✅ Added reference |
+| Chart Endpoints | ❌ Missing | ✅ Added reference |
 
 ---
 
 ## 🎯 User Journey Overview
-
-This document maps the complete API flow for a **Child/Student user** interacting with their **Home Screen** in the Flutter app.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -31,13 +43,13 @@ This document maps the complete API flow for a **Child/Student user** interactin
 
 ### Screen: Login Screen → Home Screen
 
-**Figma:** `app-user/group-children-user/home-flow.png` (Entry point)
+**Figma:** `app-user/group-children-user/home-flow.png`
 
 ### API Calls:
 
 #### 1.1 Login
 ```http
-POST /api/v1/auth/login
+POST /v1/auth/login
 Content-Type: application/json
 ```
 
@@ -53,8 +65,7 @@ Content-Type: application/json
 **Response:**
 ```json
 {
-  "code": 200,
-  "message": "User logged in successfully",
+  "success": true,
   "data": {
     "user": {
       "_id": "507f1f77bcf86cd799439010",
@@ -67,8 +78,7 @@ Content-Type: application/json
       "accessToken": "eyJhbGciOiJIUzI1NiIs...",
       "refreshToken": "eyJhbGciOiJIUzI1NiIs..."
     }
-  },
-  "success": true
+  }
 }
 ```
 
@@ -90,7 +100,7 @@ Content-Type: application/json
 
 #### 2.1 Get Today's Tasks
 ```http
-GET /api/v1/tasks/daily-progress?date=2026-03-10
+GET /v1/tasks/daily-progress?date=2026-03-10
 Authorization: Bearer {{accessToken}}
 ```
 
@@ -99,8 +109,7 @@ Authorization: Bearer {{accessToken}}
 **Response:**
 ```json
 {
-  "code": 200,
-  "message": "Daily progress retrieved successfully",
+  "success": true,
   "data": {
     "date": "2026-03-10T00:00:00.000Z",
     "totalTasks": 5,
@@ -124,52 +133,43 @@ Authorization: Bearer {{accessToken}}
         "scheduledTime": "2:00 PM"
       }
     ]
-  },
-  "success": true
+  }
 }
 ```
 
 #### 2.2 Get Task Statistics
 ```http
-GET /api/v1/tasks/statistics
+GET /v1/tasks/statistics
 Authorization: Bearer {{accessToken}}
 ```
-
-**Purpose:** Load overall task statistics for dashboard cards
 
 **Response:**
 ```json
 {
-  "code": 200,
-  "message": "Task statistics retrieved successfully",
+  "success": true,
   "data": {
     "total": 25,
     "pending": 10,
     "inProgress": 5,
     "completed": 10,
     "completionRate": 40
-  },
-  "success": true
+  }
 }
 ```
 
 #### 2.3 Get Unread Notifications Count
 ```http
-GET /api/v1/notifications/unread-count
+GET /v1/notifications/unread-count
 Authorization: Bearer {{accessToken}}
 ```
-
-**Purpose:** Show notification badge on home screen
 
 **Response:**
 ```json
 {
-  "code": 200,
-  "message": "Unread count retrieved successfully",
+  "success": true,
   "data": {
     "unreadCount": 3
-  },
-  "success": true
+  }
 }
 ```
 
@@ -185,17 +185,14 @@ Authorization: Bearer {{accessToken}}
 
 #### 3.1 Refresh Task List
 ```http
-GET /api/v1/tasks?status=pending&sortBy=-startTime
+GET /v1/tasks?status=pending&sortBy=-startTime
 Authorization: Bearer {{accessToken}}
 ```
-
-**Purpose:** Get fresh task list with latest updates
 
 **Response:**
 ```json
 {
-  "code": 200,
-  "message": "Tasks retrieved successfully",
+  "success": true,
   "data": [
     {
       "_id": "task003",
@@ -214,8 +211,7 @@ Authorization: Bearer {{accessToken}}
         "email": "student@example.com"
       }
     }
-  ],
-  "success": true
+  ]
 }
 ```
 
@@ -231,20 +227,19 @@ Authorization: Bearer {{accessToken}}
 
 #### 4.1 Get Task Details by ID
 ```http
-GET /api/v1/tasks/:taskId
+GET /v1/tasks/:taskId
 Authorization: Bearer {{accessToken}}
 ```
 
 **Request:**
 ```
-GET /api/v1/tasks/task001
+GET /v1/tasks/task001
 ```
 
 **Response:**
 ```json
 {
-  "code": 200,
-  "message": "Task retrieved successfully",
+  "success": true,
   "data": {
     "_id": "task001",
     "title": "Math Homework",
@@ -292,8 +287,7 @@ GET /api/v1/tasks/task001
         "duration": "25 min"
       }
     ]
-  },
-  "success": true
+  }
 }
 ```
 
@@ -309,7 +303,7 @@ GET /api/v1/tasks/task001
 
 #### 5.1 Update Task Status to Completed
 ```http
-PUT /api/v1/tasks/:taskId/status
+PUT /v1/tasks/:taskId/status
 Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 ```
@@ -325,15 +319,13 @@ Content-Type: application/json
 **Response:**
 ```json
 {
-  "code": 200,
-  "message": "Task status updated successfully",
+  "success": true,
   "data": {
     "_id": "task001",
     "status": "completed",
     "completedTime": "2026-03-10T12:00:00.000Z",
     "completionPercentage": 100
-  },
-  "success": true
+  }
 }
 ```
 
@@ -355,7 +347,7 @@ Content-Type: application/json
 
 #### 6.1 Update All Subtasks at Once
 ```http
-PUT /api/v1/tasks/:taskId/subtasks/progress
+PUT /v1/tasks/:taskId/subtasks/progress
 Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 ```
@@ -386,8 +378,7 @@ Content-Type: application/json
 **Response:**
 ```json
 {
-  "code": 200,
-  "message": "Subtask progress updated successfully",
+  "success": true,
   "data": {
     "_id": "task001",
     "totalSubtasks": 3,
@@ -395,8 +386,7 @@ Content-Type: application/json
     "completionPercentage": 100,
     "status": "completed",
     "completedTime": "2026-03-10T12:00:00.000Z"
-  },
-  "success": true
+  }
 }
 ```
 
@@ -419,19 +409,19 @@ Content-Type: application/json
 
 #### 7.1 Get Pending Tasks Only
 ```http
-GET /api/v1/tasks?status=pending
+GET /v1/tasks?status=pending
 Authorization: Bearer {{accessToken}}
 ```
 
 #### 7.2 Get In-Progress Tasks Only
 ```http
-GET /api/v1/tasks?status=inProgress
+GET /v1/tasks?status=inProgress
 Authorization: Bearer {{accessToken}}
 ```
 
 #### 7.3 Get Completed Tasks Only
 ```http
-GET /api/v1/tasks?status=completed
+GET /v1/tasks?status=completed
 Authorization: Bearer {{accessToken}}
 ```
 
@@ -449,19 +439,19 @@ Authorization: Bearer {{accessToken}}
 
 #### 8.1 Get High Priority Tasks
 ```http
-GET /api/v1/tasks?priority=high
+GET /v1/tasks?priority=high
 Authorization: Bearer {{accessToken}}
 ```
 
 #### 8.2 Get Medium Priority Tasks
 ```http
-GET /api/v1/tasks?priority=medium
+GET /v1/tasks?priority=medium
 Authorization: Bearer {{accessToken}}
 ```
 
 #### 8.3 Get Low Priority Tasks
 ```http
-GET /api/v1/tasks?priority=low
+GET /v1/tasks?priority=low
 Authorization: Bearer {{accessToken}}
 ```
 
@@ -477,15 +467,14 @@ Authorization: Bearer {{accessToken}}
 
 #### 9.1 Get Tasks with Pagination (Page 2)
 ```http
-GET /api/v1/tasks/paginate?page=2&limit=10&sortBy=-startTime
+GET /v1/tasks/paginate?page=2&limit=10&sortBy=-startTime
 Authorization: Bearer {{accessToken}}
 ```
 
 **Response:**
 ```json
 {
-  "code": 200,
-  "message": "Tasks retrieved successfully with pagination",
+  "success": true,
   "data": {
     "tasks": [...],
     "pagination": {
@@ -494,8 +483,7 @@ Authorization: Bearer {{accessToken}}
       "total": 45,
       "totalPages": 5
     }
-  },
-  "success": true
+  }
 }
 ```
 
@@ -566,9 +554,8 @@ sequenceDiagram
 #### 401 Unauthorized (Token Expired)
 ```json
 {
-  "code": 401,
-  "message": "Token expired",
-  "success": false
+  "success": false,
+  "message": "Token expired"
 }
 ```
 
@@ -580,9 +567,8 @@ sequenceDiagram
 #### 403 Forbidden (No Access)
 ```json
 {
-  "code": 403,
-  "message": "You do not have permission to access this task",
-  "success": false
+  "success": false,
+  "message": "You do not have permission to access this task"
 }
 ```
 
@@ -594,9 +580,8 @@ sequenceDiagram
 #### 404 Not Found
 ```json
 {
-  "code": 404,
-  "message": "Task not found",
-  "success": false
+  "success": false,
+  "message": "Task not found"
 }
 ```
 
@@ -608,9 +593,8 @@ sequenceDiagram
 #### 429 Too Many Requests (Rate Limit)
 ```json
 {
-  "code": 429,
-  "message": "Too many requests. Please try again in 60 seconds.",
   "success": false,
+  "message": "Too many requests. Please try again in 60 seconds.",
   "retryAfter": 60
 }
 ```
@@ -687,6 +671,39 @@ Test each flow with:
 
 ---
 
-**Document Version:** 1.0  
-**Last Updated:** 10-03-26  
-**Next Review:** After Flutter integration testing
+## 📝 Related Documentation
+
+### For Real-Time Features (HTTP + Socket.IO):
+- **Flow 06 (v2.0)**: Child home screen with Socket.IO
+- **Flow 07 (v2.0)**: Parent dashboard with real-time monitoring
+
+### For Task Progress Tracking:
+- **Flow 05 (v2.0)**: Child task progress with real-time parent notifications
+
+### For Chart Endpoints:
+- **Postman Collection**: `01-User-Common-Part2-Charts-Progress.postman_collection.json`
+
+### For Permission Logic:
+- **Flow 08 (v2.0)**: Child task creation with childrenBusinessUser permissions
+
+---
+
+## 🔧 Changelog
+
+### v1.5 (12-03-26) - Updated HTTP Only
+- ✅ Fixed base path: `/api/v1/` → `/v1/`
+- ✅ Updated group endpoints: `/groups/` → `/children-business-users/`
+- ✅ Added TaskProgress endpoints reference
+- ✅ Added Chart aggregation endpoints reference
+- ✅ Updated permission structure for childrenBusinessUser
+- ✅ Marked as legacy reference (see v2.0 for Socket.IO)
+
+### v1.0 (10-03-26) - Original HTTP Only
+- ✅ Initial flow documentation
+
+---
+
+**Document Version**: 1.5 - Updated HTTP Only (Legacy Reference)  
+**Last Updated**: 12-03-26  
+**Status**: ✅ Updated with current endpoints  
+**For Real-Time**: See Flow 06 (v2.0) - HTTP + Socket.IO
