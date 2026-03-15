@@ -52,4 +52,13 @@ router.get('/admin/engagement',
   controller.getEngagementMetrics
 );
 
+/*-─────────────────────────────────
+|  Admin | Admin Analytics | dashboard-section-flow.png | Get user ratio chart data
+|  @desc Returns: user activity ratios for charts (daily/weekly/monthly/yearly)
+└──────────────────────────────────*/
+router.get('/admin/user-ratio',
+  auth(TRole.admin),
+  controller.getUserRatioChartData
+);
+
 export const AdminAnalyticsRoutes = router;

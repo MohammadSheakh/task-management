@@ -175,6 +175,26 @@ export interface IPredictiveAnalytics {
   }[];
 }
 
+// User Ratio Chart Data (for dashboard visualization)
+export interface IUserRatioChartData {
+  type: 'daily' | 'weekly' | 'monthly' | 'yearly';
+  data: {
+    period: string;  // Format depends on type: "HH:mm" | "EEEE" | "MMM dd" | "MMM yyyy"
+    totalUsers: number;
+    activeUsers: number;
+    newUsers: number;
+    inactiveUsers: number;
+    activityRate: number;  // percentage of active users
+  }[];
+  summary: {
+    totalUsers: number;
+    averageActiveUsers: number;
+    averageActivityRate: number;
+    trend: 'increasing' | 'decreasing' | 'stable';
+    percentageChange: number;
+  };
+}
+
 // Service Response Types
 export interface IAdminAnalyticsService {
   getDashboardOverview(): Promise<IAdminDashboardAnalytics>;
@@ -182,6 +202,7 @@ export interface IAdminAnalyticsService {
   getRevenueAnalytics(): Promise<IRevenueAnalytics>;
   getTaskMetrics(): Promise<IPlatformTaskMetrics>;
   getEngagementMetrics(): Promise<IUserEngagementMetrics>;
+  getUserRatioChartData(type?: 'daily' | 'weekly' | 'monthly' | 'yearly'): Promise<IUserRatioChartData>;
   getCohortAnalysis(months?: number): Promise<ICohortData[]>;
   getChurnAnalytics(period?: 'month' | 'quarter' | 'year'): Promise<IChurnAnalytics>;
   getPredictiveAnalytics(months?: number): Promise<IPredictiveAnalytics>;

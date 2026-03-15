@@ -9,8 +9,7 @@ import { PaymentTransactionRoute } from '../modules/payment.module/paymentTransa
 import stripeAccountRoutes from '../modules/payment.module/stripeAccount/stripeAccount.route';
 import { UserRoutes } from '../modules/user.module/user/user.route';
 import { SettingsRoutes } from '../modules/settings.module/settings/settings.routes';
-import { FaqCategoryRoute } from '../modules/settings.module/faqCategory/faqCategory.route';
-import { FaqRoute } from '../modules/settings.module/faq/faq.route';
+
 import { TaskRoute } from '../modules/task.module/task/task.route';
 // ❌ REMOVED: Group module not needed (using childrenBusinessUser instead)
 // import { GroupRoute } from '../modules/group.module/group/group.route';

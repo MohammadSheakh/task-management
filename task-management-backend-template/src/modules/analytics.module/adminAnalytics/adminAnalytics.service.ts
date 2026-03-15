@@ -13,6 +13,7 @@ import {
   IRevenueAnalytics,
   IPlatformTaskMetrics,
   IUserEngagementMetrics,
+  IUserRatioChartData,
 } from './adminAnalytics.interface';
 import { ANALYTICS_CACHE_CONFIG, ADMIN_METRICS_CONFIG } from '../analytics.constant';
 import {
@@ -70,15 +71,14 @@ export class AdminAnalyticsService {
     const monthStart = startOfMonth(now);
 
     // Get platform overview
-    const [totalUsers, totalGroups, totalTasks] = await Promise.all([
+    const [totalUsers, totalTasks] = await Promise.all([
       User.countDocuments({ isDeleted: false }),
-      Group.countDocuments({ isDeleted: false }),
       Task.countDocuments({ isDeleted: false }),
     ]);
 
     const overview: IPlatformOverview = {
       totalUsers,
-      totalGroups,
+      totalGroups: 0, // ❌ REMOVED: Group module not needed
       totalTasks,
       activeUsersToday: 0,
       activeUsersThisWeek: 0,
@@ -104,6 +104,7 @@ export class AdminAnalyticsService {
   async getUserGrowth(): Promise<IUserGrowthAnalytics> {
     const now = new Date();
     const todayStart = startOfDay(now);
+    const todayEnd = endOfDay(now);
     const weekStart = startOfWeek(now);
     const monthStart = startOfMonth(now);
 
@@ -248,6 +249,138 @@ export class AdminAnalyticsService {
         day1: 0,
         day7: 0,
         day30: 0,
+      },
+    };
+  }
+
+  async getUserRatioChartData(
+    type: 'daily' | 'weekly' | 'monthly' | 'yearly' = 'monthly'
+  ): Promise<IUserRatioChartData> {
+    const now = new Date();
+    let startDate: Date;
+    let dateFormat: string;
+    let groupBy: any;
+
+    // Determine date range and grouping based on type
+    switch (type) {
+      case 'daily':
+        startDate = subDays(now, 7);
+        dateFormat = 'HH:mm';
+        groupBy = {
+          hour: { $hour: '$createdAt' },
+          minute: { $minute: '$createdAt' },
+        };
+        break;
+      case 'weekly':
+        startDate = subDays(now, 28); // 4 weeks
+        dateFormat = 'EEEE';
+        groupBy = {
+          dayOfWeek: { $dayOfWeek: '$createdAt' },
+        };
+        break;
+      case 'yearly':
+        startDate = subMonths(now, 12);
+        dateFormat = 'MMM yyyy';
+        groupBy = {
+          year: { $year: '$createdAt' },
+          month: { $month: '$createdAt' },
+        };
+        break;
+      case 'monthly':
+      default:
+        startDate = subMonths(now, 6); // 6 months
+        dateFormat = 'MMM dd';
+        groupBy = {
+          year: { $year: '$createdAt' },
+          month: { $month: '$createdAt' },
+          day: { $dayOfMonth: '$createdAt' },
+        };
+        break;
+    }
+
+    // Aggregate user data
+    const aggregationPipeline = await User.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: startDate, $lte: now },
+          isDeleted: false,
+        },
+      },
+      {
+        $group: {
+          _id: groupBy,
+          totalUsers: { $sum: 1 },
+          activeUsers: {
+            $sum: { $cond: [{ $gt: ['$lastActiveAt', startDate] }, 1, 0] },
+          },
+          newUsers: { $sum: 1 },
+        },
+      },
+      { $sort: { '_id.year': 1, '_id.month': 1, '_id.day': 1, '_id.hour': 1 } },
+    ]);
+
+    // Transform aggregation results
+    const data = aggregationPipeline.map((item: any) => {
+      const date = new Date(
+        item._id.year || now.getFullYear(),
+        item._id.month ? item._id.month - 1 : now.getMonth(),
+        item._id.day || now.getDate(),
+        item._id.hour || 0,
+        item._id.minute || 0
+      );
+
+      const totalUsers = item.totalUsers || 0;
+      const activeUsers = item.activeUsers || 0;
+      const inactiveUsers = totalUsers - activeUsers;
+      const activityRate = totalUsers > 0 ? (activeUsers / totalUsers) * 100 : 0;
+
+      return {
+        period: format(date, dateFormat),
+        totalUsers,
+        activeUsers,
+        newUsers: item.newUsers || 0,
+        inactiveUsers,
+        activityRate: Math.round(activityRate * 100) / 100,
+      };
+    });
+
+    // Calculate summary statistics
+    const totalUsers = data.reduce((sum, item) => sum + item.totalUsers, 0);
+    const avgActiveUsers =
+      data.length > 0
+        ? data.reduce((sum, item) => sum + item.activeUsers, 0) / data.length
+        : 0;
+    const avgActivityRate =
+      data.length > 0
+        ? data.reduce((sum, item) => sum + item.activityRate, 0) / data.length
+        : 0;
+
+    // Determine trend (compare first half vs second half)
+    const midpoint = Math.floor(data.length / 2);
+    const firstHalfAvg =
+      midpoint > 0
+        ? data.slice(0, midpoint).reduce((sum, item) => sum + item.activityRate, 0) / midpoint
+        : 0;
+    const secondHalfAvg =
+      midpoint > 0
+        ? data.slice(midpoint).reduce((sum, item) => sum + item.activityRate, 0) /
+          (data.length - midpoint)
+        : avgActivityRate;
+
+    const percentageChange =
+      firstHalfAvg > 0 ? ((secondHalfAvg - firstHalfAvg) / firstHalfAvg) * 100 : 0;
+    const trend: 'increasing' | 'decreasing' | 'stable' =
+      percentageChange > 5 ? 'increasing' : percentageChange < -5 ? 'decreasing' : 'stable';
+
+    return {
+      type,
+      data,
+      summary: {
+        totalUsers,
+        averageActiveUsers: Math.round(avgActiveUsers * 100) / 100,
+        averageActivityRate: Math.round(avgActivityRate * 100) / 100,
+        trend,
+        percentageChange: Math.round(percentageChange * 100) / 100,
       },
     };
   }

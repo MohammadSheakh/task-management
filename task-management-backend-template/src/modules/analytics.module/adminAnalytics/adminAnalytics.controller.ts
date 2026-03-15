@@ -65,6 +65,20 @@ export class AdminAnalyticsController {
       success: true,
     });
   });
+
+  getUserRatioChartData = catchAsync(async (req: Request, res: Response) => {
+    const { type = 'monthly' } = req.query;
+    const result = await adminAnalyticsService.getUserRatioChartData(
+      type as 'daily' | 'weekly' | 'monthly' | 'yearly'
+    );
+
+    sendResponse(res, {
+      code: StatusCodes.OK,
+      data: result,
+      message: 'User ratio chart data retrieved successfully',
+      success: true,
+    });
+  });
 }
 
 export const adminAnalyticsController = new AdminAnalyticsController();

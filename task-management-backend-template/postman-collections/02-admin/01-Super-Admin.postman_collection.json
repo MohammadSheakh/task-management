@@ -92,41 +92,63 @@
             "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{ADMIN_TOKEN}}"}]},
             "header": [],
             "url": {
-              "raw": "{{BASE_URL}}/admin/dashboard",
+              "raw": "{{BASE_URL}}/analytics/admin/dashboard",
               "host": ["{{BASE_URL}}"],
-              "path": ["admin", "dashboard"]
+              "path": ["analytics", "admin", "dashboard"]
             },
-            "description": "Get complete dashboard overview with all statistics"
+            "description": "Get complete dashboard overview with all statistics\n\n**Response includes:**\n- Platform overview (total users, groups, tasks)\n- User growth analytics\n- Revenue metrics\n- Task metrics\n- Engagement metrics\n\n**Cache**: 5 minutes"
           }
         },
         {
-          "name": "Get User Statistics",
+          "name": "Get User Growth Analytics",
           "request": {
             "method": "GET",
             "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{ADMIN_TOKEN}}"}]},
             "url": {
-              "raw": "{{BASE_URL}}/admin/statistics",
+              "raw": "{{BASE_URL}}/analytics/admin/user-growth",
               "host": ["{{BASE_URL}}"],
-              "path": ["admin", "statistics"]
+              "path": ["analytics", "admin", "user-growth"]
             },
-            "description": "Get detailed user statistics (total users, growth, etc.)"
+            "description": "Get detailed user growth statistics\n\n**Response includes:**\n- Today/week/month new user counts\n- Growth rates (daily/weekly/monthly)\n- 30-day historical trend\n\n**Cache**: 10 minutes"
           }
         },
         {
-          "name": "Get Monthly Income Report",
+          "name": "Get Revenue Analytics",
           "request": {
             "method": "GET",
             "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{ADMIN_TOKEN}}"}]},
             "url": {
-              "raw": "{{BASE_URL}}/admin/earnings?from=2026-01-01&to=2026-12-31",
+              "raw": "{{BASE_URL}}/analytics/admin/revenue",
               "host": ["{{BASE_URL}}"],
-              "path": ["admin", "earnings"],
-              "query": [
-                {"key": "from", "value": "2026-01-01", "description": "Start date (YYYY-MM-DD)"},
-                {"key": "to", "value": "2026-12-31", "description": "End date (YYYY-MM-DD)"}
-              ]
+              "path": ["analytics", "admin", "revenue"]
             },
-            "description": "Get monthly income report with date range filtering"
+            "description": "Get revenue and subscription analytics\n\n**Response includes:**\n- MRR (Monthly Recurring Revenue)\n- ARR (Annual Recurring Revenue)\n- Revenue by subscription type\n- Historical revenue trends\n\n**Cache**: 15 minutes"
+          }
+        },
+        {
+          "name": "Get Task Metrics",
+          "request": {
+            "method": "GET",
+            "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{ADMIN_TOKEN}}"}]},
+            "url": {
+              "raw": "{{BASE_URL}}/analytics/admin/task-metrics",
+              "host": ["{{BASE_URL}}"],
+              "path": ["analytics", "admin", "task-metrics"]
+            },
+            "description": "Get platform-wide task statistics\n\n**Response includes:**\n- Tasks created/completed today\n- Overall completion rate\n- Tasks by status and type\n- Trend analysis\n\n**Cache**: 5 minutes"
+          }
+        },
+        {
+          "name": "Get Engagement Metrics",
+          "request": {
+            "method": "GET",
+            "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{ADMIN_TOKEN}}"}]},
+            "url": {
+              "raw": "{{BASE_URL}}/analytics/admin/engagement",
+              "host": ["{{BASE_URL}}"],
+              "path": ["analytics", "admin", "engagement"]
+            },
+            "description": "Get user engagement analytics\n\n**Response includes:**\n- DAU/MAU (Daily/Monthly Active Users)\n- Stickiness ratio (DAU/MAU)\n- Average session duration\n- Retention rates (Day 1, 7, 30)\n\n**Cache**: 10 minutes"
           }
         },
         {
@@ -135,12 +157,12 @@
             "method": "GET",
             "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{ADMIN_TOKEN}}"}]},
             "url": {
-              "raw": "{{BASE_URL}}/admin/user-ratio?type=monthly",
+              "raw": "{{BASE_URL}}/analytics/admin/user-ratio?type=monthly",
               "host": ["{{BASE_URL}}"],
-              "path": ["admin", "user-ratio"],
-              "query": [{"key": "type", "value": "monthly", "description": "monthly, weekly, yearly"}]
+              "path": ["analytics", "admin", "user-ratio"],
+              "query": [{"key": "type", "value": "monthly", "description": "Type: daily, weekly, monthly, yearly"}]
             },
-            "description": "Get user ratio data for charts (monthly/weekly/yearly)"
+            "description": "Get user ratio data for dashboard charts\n\n**Query Parameters:**\n- type: daily | weekly | monthly | yearly (default: monthly)\n\n**Response includes:**\n- Time-series data with active/inactive users\n- Activity rates\n- Summary statistics with trend analysis\n\n**Use Case**: Dashboard visualization charts\n**Cache**: 10 minutes"
           }
         }
       ]
