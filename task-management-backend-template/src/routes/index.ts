@@ -2,7 +2,7 @@
 import express from 'express';
 import { AuthRoutes } from '../modules/auth/auth.routes';
 import { AttachmentRoutes } from '../modules/attachments/attachment.route';
-import { NotificationRoutes } from '../modules/notification/notification.routes';
+// import { NotificationRoutes } from '../modules/notification/notification.routes';
 import { ConversationRoute } from '../modules/chatting.module/conversation/conversation.route';
 import { MessageRoute } from '../modules/chatting.module/message/message.route';
 import { PaymentTransactionRoute } from '../modules/payment.module/paymentTransaction/paymentTransaction.route';
@@ -14,7 +14,9 @@ import { TaskRoute } from '../modules/task.module/task/task.route';
 // ❌ REMOVED: Group module not needed (using childrenBusinessUser instead)
 // import { GroupRoute } from '../modules/group.module/group/group.route';
 // import { GroupMemberRoute } from '../modules/group.module/groupMember/groupMember.route';
-import { NotificationRoute } from '../modules/notification.module/notification/notification.route';
+
+
+import { NotificationFixedRoute } from '../modules/notification.module/notification/notification.route';
 import { TaskReminderRoute } from '../modules/notification.module/taskReminder/taskReminder.route';
 import { AnalyticsRoutes } from '../modules/analytics.module/analytics.route';
 import { ChildrenBusinessUserRoute } from '../modules/childrenBusinessUser.module/childrenBusinessUser.route';
@@ -36,7 +38,7 @@ const apiRoutes = [
   },
   {
     path: '/notifications',
-    route: NotificationRoutes,
+    route: NotificationFixedRoute,
   },
 
   /////////////////////////////////////////  Task Management
@@ -61,10 +63,10 @@ const apiRoutes = [
   // },
 
   /////////////////////////////////////////  Notification & Reminders
-  { // 🟢
-    path: '/notifications',
-    route: NotificationRoute,
-  },
+  // { // 🟢 //--------------------------------------------------------------
+  //   path: '/notifications',
+  //   route: NotificationRoute,
+  // },
   { // 🟢
     path: '/task-reminders',
     route: TaskReminderRoute,
@@ -109,7 +111,7 @@ const apiRoutes = [
   },
   {
     path: '/activitys',
-    route: NotificationRoutes,
+    route: NotificationFixedRoute,
   },
 
   {

@@ -4,9 +4,14 @@
 
 Complete API documentation for the Task Management Module with support for **Individual** and **Group/Collaborative** task management.
 
-**Base URL:** `{{baseUrl}}/v1`  
-**Last Updated:** 10-03-26  
-**Version:** 2.0
+**Base URL:** `{{baseUrl}}/v1`
+**Last Updated:** 16-03-26
+**Version:** 2.1 - Parent Dashboard API Added
+
+**New in v2.1:**
+- ✅ Added `GET /tasks/dashboard/children-tasks` endpoint for parent dashboard
+- ✅ Status filtering: All | Not Started | In Progress | Completed | Personal Task
+- ✅ Includes embedded subtask details and child assignment information
 
 ---
 
@@ -472,6 +477,211 @@ Rate Limit: 100 requests per minute
 ```
 
 **Figma Reference:** `dashboard-section-flow.png`
+
+---
+
+### 12. Get Children Tasks For Dashboard (Parent/Teacher Only)
+```http
+GET /tasks/dashboard/children-tasks
+Authorization: Bearer <token>
+Role: business
+Rate Limit: 100 requests per minute
+```
+
+**Figma Reference:** 
+- `teacher-parent-dashboard/dashboard/dashboard-flow-01.png`
+- `teacher-parent-dashboard/dashboard/dashboard-flow-02.png`
+
+**Description:**
+Dedicated endpoint for parent dashboard to fetch all children's tasks with status filtering. 
+Supports filtering by status tabs: All | Not Started | In Progress | Completed | Personal Task
+
+**Query Parameters:**
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `status` | string | `'all'` | Filter by status: `'all'`, `'pending'`, `'inProgress'`, `'completed'` |
+| `taskType` | string | `'children'` | Filter by ownership: `'children'` (children's tasks) or `'personal'` (parent's own tasks) |
+| `page` | number | `1` | Page number for pagination |
+| `limit` | number | `20` | Items per page |
+| `sortBy` | string | `'-startTime'` | Sort field (prefix with `-` for descending) |
+| `from` | date | - | Filter tasks from this date (ISO format) |
+| `to` | date | - | Filter tasks until this date (ISO format) |
+
+**Request Example:**
+```http
+GET /tasks/dashboard/children-tasks?status=all&taskType=children&page=1&limit=20&sortBy=-startTime
+Authorization: Bearer {{accessToken}}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "tasks": [
+      {
+        "_id": "task001",
+        "title": "Complete Math Homework",
+        "description": "Finish exercises 1-10 from chapter 5",
+        "status": "pending",
+        "priority": "high",
+        "taskType": "singleAssignment",
+        "scheduledTime": "08:30 AM",
+        "startTime": "2026-12-10T08:30:00.000Z",
+        "dueDate": "2026-12-10T23:59:59.000Z",
+        "totalSubtasks": 3,
+        "completedSubtasks": 0,
+        "completionPercentage": 0,
+        "subtasks": [
+          {
+            "_id": "subtask001",
+            "title": "Call with design team",
+            "isCompleted": false,
+            "order": 1
+          },
+          {
+            "_id": "subtask002",
+            "title": "Review project milestones",
+            "isCompleted": true,
+            "order": 2
+          },
+          {
+            "_id": "subtask003",
+            "title": "Update client on progress",
+            "isCompleted": false,
+            "order": 3
+          }
+        ],
+        "assignedTo": {
+          "_id": "child001",
+          "name": "Alex Morgan",
+          "email": "alex@example.com",
+          "profileImage": "https://example.com/images/alex.jpg"
+        },
+        "createdById": {
+          "_id": "user002",
+          "name": "Mr. Tom Alax",
+          "email": "tom@example.com",
+          "profileImage": "https://example.com/images/tom.jpg"
+        },
+        "ownerUserId": {
+          "_id": "child001",
+          "name": "Alex Morgan",
+          "email": "alex@example.com"
+        },
+        "assignedUserIds": [
+          {
+            "_id": "child001",
+            "name": "Alex Morgan",
+            "email": "alex@example.com",
+            "profileImage": "https://example.com/images/alex.jpg"
+          }
+        ]
+      },
+      {
+        "_id": "task002",
+        "title": "Science Project",
+        "description": "Build a working model of a volcano",
+        "status": "inProgress",
+        "priority": "medium",
+        "taskType": "singleAssignment",
+        "scheduledTime": "02:00 PM",
+        "startTime": "2026-12-10T14:00:00.000Z",
+        "dueDate": "2026-12-15T23:59:59.000Z",
+        "totalSubtasks": 3,
+        "completedSubtasks": 2,
+        "completionPercentage": 67,
+        "subtasks": [
+          {
+            "_id": "subtask004",
+            "title": "Research volcano structure",
+            "isCompleted": true,
+            "order": 1
+          },
+          {
+            "_id": "subtask005",
+            "title": "Build model base",
+            "isCompleted": true,
+            "order": 2
+          },
+          {
+            "_id": "subtask006",
+            "title": "Paint and decorate",
+            "isCompleted": false,
+            "order": 3
+          }
+        ],
+        "assignedTo": {
+          "_id": "child002",
+          "name": "Jamie Chen",
+          "email": "jamie@example.com",
+          "profileImage": "https://example.com/images/jamie.jpg"
+        },
+        "createdById": {
+          "_id": "user001",
+          "name": "Bashar Islam",
+          "email": "bashar@example.com",
+          "profileImage": "https://example.com/images/bashar.jpg"
+        },
+        "ownerUserId": {
+          "_id": "child002",
+          "name": "Jamie Chen",
+          "email": "jamie@example.com"
+        },
+        "assignedUserIds": [
+          {
+            "_id": "child002",
+            "name": "Jamie Chen",
+            "email": "jamie@example.com",
+            "profileImage": "https://example.com/images/jamie.jpg"
+          }
+        ]
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "limit": 20,
+      "total": 6,
+      "totalPages": 1
+    },
+    "filters": {
+      "status": "all",
+      "taskType": "children"
+    }
+  },
+  "message": "Children tasks retrieved successfully for dashboard"
+}
+```
+
+**Frontend Usage Examples:**
+```javascript
+// Get all children's tasks (All tab)
+const allTasks = await api.get('/tasks/dashboard/children-tasks?status=all');
+
+// Get Not Started tasks (Not Started tab)
+const notStartedTasks = await api.get('/tasks/dashboard/children-tasks?status=pending');
+
+// Get In Progress tasks (In Progress tab)
+const inProgressTasks = await api.get('/tasks/dashboard/children-tasks?status=inProgress');
+
+// Get Completed tasks (Completed tab)
+const completedTasks = await api.get('/tasks/dashboard/children-tasks?status=completed');
+
+// Get parent's personal tasks (Personal Task tab)
+const personalTasks = await api.get('/tasks/dashboard/children-tasks?taskType=personal');
+```
+
+**Authorization:**
+- **Role:** `business` (Parent/Teacher) only
+- **Permission:** Must have active children in the system
+
+**Notes:**
+- Returns tasks assigned to all active children of the business user
+- Includes embedded subtask details for each task
+- Shows completion percentage calculated from subtasks
+- Response includes `assignedTo` field showing which child the task is assigned to
+- Personal task filter returns parent's own tasks (taskType: personal)
+- Cached for 2 minutes for performance
 
 ---
 

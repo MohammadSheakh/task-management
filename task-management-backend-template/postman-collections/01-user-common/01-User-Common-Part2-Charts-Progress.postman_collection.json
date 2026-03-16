@@ -647,6 +647,37 @@
 						"description": "Remove child from family (soft delete)\n\n**Note**: Sets status to 'removed' and isDeleted to true"
 					},
 					"response": []
+				},
+				{
+					"name": "🎯 Get Live Activity Feed For Parent Dashboard",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/v1/notifications/dashboard/activity-feed?limit=10",
+							"host": ["{{baseUrl}}"],
+							"path": ["v1", "notifications", "dashboard", "activity-feed"],
+							"query": [
+								{
+									"key": "limit",
+									"value": "10",
+									"description": "Number of activities to return (default: 10)"
+								}
+							]
+						},
+						"description": "🎯 PARENT DASHBOARD - Live Activity Feed\n\n**Figma**: teacher-parent-dashboard/dashboard/dashboard-flow-01.png (Live Activity section)\n\n**Use Case**: Display real-time updates from all children in the parent dashboard\n\n**Description**:\nReturns recent task-related activities from all children of the business user.\nNo groupId required - automatically fetches from business user's children.\n\n**Activities Include**:\n- Task completions\n- Task starts\n- Subtask completions\n- Task creations\n- Task assignments\n\n**Query Parameters**:\n- `limit`: Number of activities to return (default: 10)\n\n**Response**:\n```json\n{\n  \"success\": true,\n  \"data\": [\n    {\n      \"_id\": \"activity001\",\n      \"type\": \"task_completed\",\n      \"actor\": {\n        \"_id\": \"child001\",\n        \"name\": \"Alex Morgan\",\n        \"profileImage\": \"https://...\"\n      },\n      \"task\": {\n        \"_id\": \"task001\",\n        \"title\": \"Complete Math Homework\"\n      },\n      \"timestamp\": \"2026-03-16T10:28:00.000Z\",\n      \"timeAgo\": \"2 minutes ago\",\n      \"message\": \"Alex Morgan completed 'Complete Math Homework'\"\n    },\n    {\n      \"_id\": \"activity002\",\n      \"type\": \"subtask_completed\",\n      \"actor\": {\n        \"_id\": \"child002\",\n        \"name\": \"Jamie Chen\",\n        \"profileImage\": \"https://...\"\n      },\n      \"task\": {\n        \"_id\": \"task002\",\n        \"title\": \"Science Project\"\n      },\n      \"timestamp\": \"2026-03-16T10:25:00.000Z\",\n      \"timeAgo\": \"5 minutes ago\",\n      \"message\": \"Jamie Chen completed a subtask in 'Science Project'\"\n    }\n  ],\n  \"message\": \"Live activity feed retrieved successfully for parent dashboard\"\n}\n```\n\n**Frontend Usage**:\n```javascript\n// Fetch live activity feed\nconst { data } = await api.get('/notifications/dashboard/activity-feed?limit=10');\n\n// Display activities\ndata.forEach(activity => {\n  renderActivityItem({\n    profileImage: activity.actor.profileImage,\n    name: activity.actor.name,\n    message: activity.message,\n    timeAgo: activity.timeAgo\n  });\n});\n```\n\n**Authorization**: Business role (Parent/Teacher) only\n\n**Caching**: 30 seconds for real-time feel"
+					},
+					"response": []
 				}
 			]
 		}

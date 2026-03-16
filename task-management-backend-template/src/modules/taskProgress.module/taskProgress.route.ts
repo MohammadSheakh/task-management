@@ -5,7 +5,7 @@ import auth from '../../middlewares/auth';
 import { TRole } from '../../middlewares/roles';
 import validateRequest from '../../shared/validateRequest';
 import * as validation from './taskProgress.validation';
-import { rateLimiter } from '../../middlewares/rateLimiter';
+import { rateLimiter } from '../../middlewares/rateLimiterRedis';
 
 const router = express.Router();
 

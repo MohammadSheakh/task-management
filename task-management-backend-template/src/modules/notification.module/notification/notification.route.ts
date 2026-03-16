@@ -6,9 +6,9 @@ import { validateFiltersForQuery } from '../../../middlewares/queryValidation/pa
 import auth from '../../../middlewares/auth';
 import { TRole } from '../../../middlewares/roles';
 import { setQueryOptions } from '../../../middlewares/setQueryOptions';
-import rateLimit from 'express-rate-limit';
 import validateRequest from '../../../shared/validateRequest';
 import { z } from 'zod';
+import { rateLimiter, createCustomRateLimiter } from '../../../middlewares/rateLimiterRedis';
 
 const router = express.Router();
 
@@ -27,35 +27,23 @@ const paginationOptions: Array<'sortBy' | 'page' | 'limit' | 'populate'> = [
 
 const controller = new NotificationController();
 
-// ─── Rate Limiters ─────────────────────────────────────────────────────
+// ─── Rate Limiters (Redis-based) ─────────────────────────────────────────────────────
 /**
  * Rate limiter for sending notifications
- * Prevents spam
+ * Prevents spam - 10 requests per minute
  */
-const sendNotificationLimiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: 10,
-  message: {
-    success: false,
-    message: 'Too many notification attempts, please try again later',
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
+const sendNotificationLimiter = createCustomRateLimiter(
+  60 * 1000,    // 1 minute
+  10,           // 10 requests
+  'Too many notification attempts, please try again later',
+  'notification-send'
+);
 
 /**
  * Rate limiter for general notification operations
+ * 100 requests per minute
  */
-const notificationLimiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: 100,
-  message: {
-    success: false,
-    message: 'Too many requests, please try again later',
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
+const notificationLimiter = rateLimiter('user');
 
 // ─── Validation Schemas ────────────────────────────────────────────────
 /**
@@ -193,4 +181,23 @@ router.route('/activity-feed/:groupId').get(
   controller.getLiveActivityFeed
 );
 
-export const NotificationRoute = router;
+// ────────────────────────────────────────────────────────────────────────
+// Parent Dashboard: Live Activity Feed
+// Figma: teacher-parent-dashboard/dashboard/dashboard-flow-01.png
+// ────────────────────────────────────────────────────────────────────────
+
+/*-─────────────────────────────────
+|  Business (Parent/Teacher) | Notification | dashboard-flow-01.png | Get live activity feed for parent dashboard
+|  @desc Real-time feed showing all children's task activities (completions, starts, subtask completions)
+|  @desc No groupId required - automatically fetches from business user's children
+|  @auth Business users only (Parent/Teacher)
+|  @rateLimit 100 requests per minute
+|  @query limit - Number of activities to return (default: 10)
+└──────────────────────────────────*/
+router.route('/dashboard/activity-feed').get(
+  auth(TRole.business),
+  notificationLimiter,
+  controller.getLiveActivityFeedForParentDashboard
+);
+
+export const NotificationFixedRoute = router;

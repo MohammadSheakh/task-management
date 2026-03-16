@@ -638,13 +638,171 @@ export class TaskService extends GenericService<typeof Task, ITask> {
   }
 
   // ────────────────────────────────────────────────────────────────────────
+  // Parent Dashboard: Get All Children's Tasks
+  // ────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Get all children's tasks for parent dashboard
+   * Figma: teacher-parent-dashboard/dashboard/dashboard-flow-01.png
+   *
+   * @param businessUserId - Parent/Teacher business user ID
+   * @param filters - Query filters (status, taskType, etc.)
+   * @param options - Pagination options
+   * @returns Paginated list of all children's tasks with subtask details
+   *
+   * @description
+   * This endpoint is designed for the parent dashboard to display all tasks
+   * belonging to the business user's children. It supports filtering by:
+   * - status: 'all' | 'pending' | 'inProgress' | 'completed'
+   * - taskType: 'children' | 'personal' (personal shows parent's own tasks)
+   *
+   * Response includes:
+   * - Full task details with embedded subtasks
+   * - Assigned child user information
+   * - Creator information
+   * - Completion statistics
+   */
+  async getChildrenTasksForDashboard(
+    businessUserId: Types.ObjectId,
+    filters: any,
+    options: any
+  ) {
+    const cacheKey = `${TASK_CACHE_CONFIG.PREFIX}:dashboard:children-tasks:${businessUserId.toString()}:${filters.status || 'all'}:${filters.taskType || 'children'}:page:${options.page || 1}`;
+
+    // Try cache first
+    const cached = await this.getFromCache(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    // Get all active children for this business user
+    const { ChildrenBusinessUser } = await import('../../childrenBusinessUser.module/childrenBusinessUser.model');
+
+    const childrenRelations = await ChildrenBusinessUser.find({
+      parentBusinessUserId: businessUserId,
+      status: 'active',
+      isDeleted: false,
+    }).select('childUserId').lean();
+
+    console.log("childrenRelations :: ", childrenRelations )
+
+    const childUserIds = childrenRelations.map((rel: any) => rel.childUserId);
+
+    console.log("childUserIds :: ", childUserIds )
+
+    // Build query based on taskType filter
+    const taskType = filters.taskType || 'children';
+
+    let query: any = {
+      isDeleted: false,
+    };
+
+    if (taskType === 'personal') {
+      // Parent's personal tasks only
+      query.ownerUserId = businessUserId;
+      query.taskType = 'personal';
+    } else {
+      // Children's tasks (assigned to any child)
+      query.assignedUserIds = { $in: childUserIds };
+    }
+
+    // Apply status filter
+    if (filters.status && filters.status !== 'all') {
+      query.status = filters.status;
+    }
+
+    // Date range filter
+    if (filters.from || filters.to) {
+      query.startTime = {};
+      if (filters.from) query.startTime.$gte = new Date(filters.from);
+      if (filters.to) query.startTime.$lte = new Date(filters.to);
+    }
+
+    // Execute paginated query with population
+    const result = await this.model.paginate(query, {
+      ...options,
+      populate: [
+        {
+          path: 'assignedUserIds',
+          select: 'name email profileImage',
+        },
+        {
+          path: 'createdById',
+          select: 'name email profileImage',
+        },
+        {
+          path: 'ownerUserId',
+          select: 'name email profileImage',
+        },
+      ],
+    });
+
+    console.log("getChildrenTasksForDashboard -> result :: ", result)
+
+    // Transform response to include child-focused information
+    const tasks = result?.docs?.map((task: any) => {
+      const assignedChild = task.assignedUserIds?.[0];
+      return {
+        _id: task._id,
+        title: task.title,
+        description: task.description,
+        status: task.status,
+        priority: task.priority,
+        taskType: task.taskType,
+        scheduledTime: task.scheduledTime,
+        startTime: task.startTime,
+        dueDate: task.dueDate,
+        totalSubtasks: task.totalSubtasks || 0,
+        completedSubtasks: task.completedSubtasks || 0,
+        completionPercentage: task.totalSubtasks > 0
+          ? Math.round((task.completedSubtasks / task.totalSubtasks) * 100)
+          : task.status === 'completed' ? 100 : 0,
+        subtasks: task.subtasks?.map((st: any, idx: number) => ({
+          _id: st._id,
+          title: st.title,
+          isCompleted: st.isCompleted,
+          order: st.order || idx + 1,
+        })) || [],
+        assignedTo: assignedChild ? {
+          _id: assignedChild._id,
+          name: assignedChild.name,
+          email: assignedChild.email,
+          profileImage: assignedChild.profileImage,
+        } : null,
+        createdById: task.createdById,
+        ownerUserId: task.ownerUserId,
+        assignedUserIds: task.assignedUserIds,
+      };
+    });
+
+    const response = {
+      tasks,
+      pagination: {
+        page: result.page,
+        limit: result.limit,
+        total: result.total,
+        totalPages: result.totalPages,
+      },
+      filters: {
+        status: filters.status || 'all',
+        taskType: filters.taskType || 'children',
+      },
+    };
+
+    // Cache the result (2 minutes for task lists)
+    await this.setInCache(cacheKey, response, 120);
+
+    return response;
+  }
+
+  // ────────────────────────────────────────────────────────────────────────
   // Preferred Time Suggestion for Task Scheduling
   // ────────────────────────────────────────────────────────────────────────
 
   /**
    * Get preferred time suggestion for task scheduling
    * Returns suggested time based on user's or assignee's preferred time
-   * 
+   *
    * @param userId - User creating the task
    * @param assignedUserIds - Optional: Array of assigned user IDs (for parent creating for child)
    * @returns Suggested time with confidence level and explanation

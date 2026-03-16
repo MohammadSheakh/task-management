@@ -295,4 +295,34 @@ export class NotificationController extends GenericController<typeof Notificatio
       success: true,
     });
   };
+
+  /** ----------------------------------------------
+   * @role Business (Parent/Teacher)
+   * @Section Dashboard
+   * @module Notification
+   * @figmaIndex dashboard-flow-01.png (Live Activity section)
+   * @desc Get live activity feed for parent dashboard - shows all children's activities
+   * @query limit - Number of activities to return (default: 10)
+   *----------------------------------------------*/
+  getLiveActivityFeedForParentDashboard = async (req: Request, res: Response) => {
+    const businessUserId = req.user?.userId;
+
+    if (!businessUserId) {
+      throw new ApiError(StatusCodes.UNAUTHORIZED, 'User not authenticated');
+    }
+
+    const limit = parseInt(req.query.limit as string) || 10;
+
+    const result = await this.notificationService.getLiveActivityFeedForParentDashboard(
+      new Types.ObjectId(businessUserId),
+      limit
+    );
+
+    sendResponse(res, {
+      code: StatusCodes.OK,
+      data: result,
+      message: 'Live activity feed retrieved successfully for parent dashboard',
+      success: true,
+    });
+  };
 }

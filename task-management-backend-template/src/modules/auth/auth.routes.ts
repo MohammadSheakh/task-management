@@ -7,7 +7,7 @@ import auth from '../../middlewares/auth';
 //@ts-ignore
 import multer from "multer";
 import { TRole } from '../../middlewares/roles';
-import { rateLimiter } from '../../middlewares/rateLimiter';
+import { rateLimiter } from '../../middlewares/rateLimiterRedis';
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 const router = Router();

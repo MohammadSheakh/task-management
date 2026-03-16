@@ -441,6 +441,56 @@ export class TaskController extends GenericController<typeof Task, ITask> {
   };
 
   // ────────────────────────────────────────────────────────────────────────
+  // Parent Dashboard: Get All Children's Tasks
+  // ────────────────────────────────────────────────────────────────────────
+
+  /** ----------------------------------------------
+   * @role Business (Parent/Teacher)
+   * @Section Dashboard
+   * @module Task
+   * @figmaIndex dashboard-flow-01.png, dashboard-flow-02.png
+   * @desc Get all children's tasks for parent dashboard with status filtering
+   * @query status - Filter by status: 'all' | 'pending' | 'inProgress' | 'completed'
+   * @query taskType - Filter by type: 'children' | 'personal'
+   * @query page - Page number (default: 1)
+   * @query limit - Items per page (default: 20)
+   * @query sortBy - Sort field (default: -startTime)
+   *----------------------------------------------*/
+  getChildrenTasksForDashboard = async (req: Request, res: Response) => {
+    const businessUserId = req.user?.userId;
+
+    if (!businessUserId) {
+      throw new ApiError(StatusCodes.UNAUTHORIZED, 'User not authenticated');
+    }
+
+    const filters = {
+      status: req.query.status as string || 'all',
+      taskType: req.query.taskType as string || 'children',
+      from: req.query.from as string,
+      to: req.query.to as string,
+    };
+
+    const options = {
+      page: parseInt(req.query.page as string) || 1,
+      limit: parseInt(req.query.limit as string) || 20,
+      sortBy: req.query.sortBy as string || '-startTime',
+    };
+
+    const result = await this.taskService.getChildrenTasksForDashboard(
+      new Types.ObjectId(businessUserId),
+      filters,
+      options
+    );
+
+    sendResponse(res, {
+      code: StatusCodes.OK,
+      data: result,
+      message: 'Children tasks retrieved successfully for dashboard',
+      success: true,
+    });
+  };
+
+  // ────────────────────────────────────────────────────────────────────────
   // Preferred Time Suggestion for Task Scheduling
   // ────────────────────────────────────────────────────────────────────────
 

@@ -249,3 +249,8 @@ when you generate any postman collection .. for a endpoint .. if any id needs to
 {{taskId}}.. write like :taskId //⛺ 📜 
 bad way : {{baseUrl}}/v1/tasks/{{taskId}}
 good way : {{baseUrl}}/v1/tasks/:taskId
+
+
+====================>
+
+make sure your any docs contains VISUAL SUMMARY.. its actually easier to understand anything .. 

@@ -110,17 +110,20 @@ class ChartAggregationControllerClass {
   /**
    * Get Child Progress Comparison
    * GET /analytics/charts/child-progress/:businessUserId
+   * 
+   * Updated: 16-03-26 - Now returns full task statistics for Team Overview cards
+   * Figma: teacher-parent-dashboard/dashboard/dashboard-flow-01.png
    */
   getChildProgressComparison = catchAsync(async (req: Request, res: Response) => {
     const { businessUserId } = req.params;
 
-    const chartData = await chartAggregationService.getChildProgressComparison(businessUserId);
+    const result = await chartAggregationService.getChildProgressComparison(businessUserId);
 
     sendResponse(res, {
       code: StatusCodes.OK,
       success: true,
-      message: 'Child progress comparison retrieved successfully',
-      data: chartData,
+      message: 'Child progress comparison with full statistics retrieved successfully',
+      data: result,
     });
   });
 

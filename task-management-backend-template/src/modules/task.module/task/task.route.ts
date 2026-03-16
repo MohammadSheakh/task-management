@@ -10,7 +10,7 @@ import { setQueryOptions } from '../../../middlewares/setQueryOptions';
 import { getLoggedInUserAndSetReferenceToUser } from '../../../middlewares/getLoggedInUserAndSetReferenceToUser';
 import * as validation from './task.validation';
 import { verifyTaskAccess, verifyTaskOwnership, validateTaskTypeConsistency, validateStatusTransition, checkDailyTaskLimit, checkSecondaryUserPermission } from './task.middleware';
-import { rateLimiter } from '../../../middlewares/rateLimiter';
+import { rateLimiter } from '../../../middlewares/rateLimiterRedis';
 import { SubTaskRoute } from '../subTask/subTask.route';
 
 const router = express.Router();
@@ -37,6 +37,25 @@ const paginationOptions: Array<'sortBy' | 'page' | 'limit' | 'populate'> = [
 ];
 
 const controller = new TaskController();
+
+/*-─────────────────────────────────
+|  Business (Parent/Teacher) | Task | dashboard-flow-01.png | Get all children's tasks for dashboard
+|  @desc Get paginated list of all children's tasks with status filtering for parent dashboard
+|  @desc Supports filters: All | Not Started | In Progress | Completed | Personal Task
+|  @auth Business users only (Parent/Teacher)
+|  @rateLimit 100 requests per minute
+|  @query status - Filter by status: 'all' | 'pending' | 'inProgress' | 'completed' (default: 'all')
+|  @query taskType - Filter by type: 'children' | 'personal' (default: 'children')
+|  @query page - Page number (default: 1)
+|  @query limit - Items per page (default: 20)
+|  @query sortBy - Sort field (default: -startTime)
+└──────────────────────────────────*/
+router.route('/dashboard/children-tasks').get(
+  auth(TRole.business),
+  taskLimiter,
+  validateFiltersForQuery(optionValidationChecking(['status', 'taskType', 'from', 'to', ...paginationOptions])),
+  controller.getChildrenTasksForDashboard
+);
 
 /*-───────────────────────────────── ✔️
 |  Child (Secondary) | Business | Task | edit-update-task-flow.png | Create a new task
@@ -245,5 +264,13 @@ router.route('/suggest-preferred-time').get(
   auth(TRole.commonUser),
   controller.getPreferredTimeSuggestion
 );
+
+// ────────────────────────────────────────────────────────────────────────
+// Parent Dashboard: Children's Tasks
+// Figma: teacher-parent-dashboard/dashboard/dashboard-flow-01.png
+//        teacher-parent-dashboard/dashboard/dashboard-flow-02.png
+// ────────────────────────────────────────────────────────────────────────
+
+
 
 export const TaskRoute = router;

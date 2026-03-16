@@ -15,7 +15,7 @@
 import express from 'express';
 import auth from '../../../middlewares/auth';
 import { TRole } from '../../../middlewares/roles';
-import { rateLimiter } from '../../../middlewares/rateLimiter';
+import { rateLimiter } from '../../../middlewares/rateLimiterRedis';
 import { ChartAggregationController } from './chartAggregation.controller';
 
 const router = express.Router();

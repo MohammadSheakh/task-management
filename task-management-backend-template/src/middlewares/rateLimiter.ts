@@ -6,7 +6,7 @@
  * For production with Redis, see: RATE_LIMITING_REDIS_IMPLEMENTATION_COMPLETE-14-03-26.md
  *
  * @see masterSystemPrompt.md Section 10: Rate Limiting Rules
- * @version 2.1.0 - Simplified MemoryStore implementation
+ * @version 2.2.0 - Fixed express-rate-limit@7.x validation issues
  */
 
 import rateLimit, { RateLimitRequestHandler } from 'express-rate-limit';
@@ -84,11 +84,17 @@ export function rateLimiter(
     windowMs: preset.windowMs,
     max: preset.max,
     message: preset.message,
+    trustProxy: false,        // Explicitly disable trust proxy to avoid X-Forwarded-For validation
     standardHeaders: true,    // Return rate limit info in RateLimit-* headers
     legacyHeaders: false,     // Disable X-RateLimit-* headers
     keyGenerator: (req: any) => {
-      // Use user ID if authenticated, otherwise IP
-      return req.user?.userId || req.ip || 'unknown';
+      // Use user ID if authenticated, otherwise use socket address
+      // This bypasses X-Forwarded-For entirely for authenticated users
+      if (req.user?.userId) {
+        return `user:${req.user.userId}`;
+      }
+      // For unauthenticated requests, use direct IP (not X-Forwarded-For)
+      return req.socket?.remoteAddress || 'unknown';
     },
     // Skip rate limiting for health checks
     skip: (req: any) => {
@@ -128,10 +134,15 @@ export function createCustomRateLimiter(
       success: false,
       message: errorMessage,
     },
+    trustProxy: false,        // Explicitly disable trust proxy to avoid X-Forwarded-For validation
     standardHeaders: true,
     legacyHeaders: false,
     keyGenerator: (req: any) => {
-      return req.user?.userId || req.ip || 'unknown';
+      // Use user ID if authenticated, otherwise use socket address
+      if (req.user?.userId) {
+        return `user:${req.user.userId}`;
+      }
+      return req.socket?.remoteAddress || 'unknown';
     },
     handler: (req: any, res: any) => {
       res.status(429).json({

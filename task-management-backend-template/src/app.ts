@@ -24,9 +24,9 @@ import './modules/payment.module/payment/payment.bootstrap.ts';
 
 const app = express();
 
-//---------------------------------
-// for payment related thing.. we need to use view engine .. 
-//---------------------------------
+//=================================
+// Payment - EJS View Setup
+//=================================
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 

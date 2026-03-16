@@ -4,9 +4,14 @@
 
 Complete API documentation for the Notification and Task Reminder Module with support for **multi-channel notifications**, **live activity feeds**, and **scheduled task reminders**.
 
-**Base URL:** `{{baseUrl}}/v1`  
-**Last Updated:** 10-03-26  
-**Version:** 2.0
+**Base URL:** `{{baseUrl}}/v1`
+**Last Updated:** 16-03-26
+**Version:** 2.1 - Parent Dashboard Activity Feed Added
+
+**New in v2.1:**
+- ✅ Added `GET /notifications/dashboard/activity-feed` endpoint for parent dashboard
+- ✅ Automatically fetches activities from all children without groupId
+- ✅ Includes timeAgo formatting for user-friendly display
 
 ---
 
@@ -428,6 +433,118 @@ Access: Group members only
 | `member_left` | Member left group |
 | `comment_added` | Comment was added |
 | `attachment_added` | Attachment was added |
+
+---
+
+### 9. Get Live Activity Feed For Parent Dashboard
+```http
+GET /notifications/dashboard/activity-feed?limit=10
+Authorization: Bearer <token>
+Role: business (Parent/Teacher)
+Rate Limit: 100 requests per minute
+```
+
+**Figma Reference:** `teacher-parent-dashboard/dashboard/dashboard-flow-01.png` (Live Activity section)
+
+**Description:**
+Dedicated endpoint for parent dashboard to fetch recent task-related activities from all children.
+No groupId required - automatically fetches from business user's children.
+
+**Query Parameters:**
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `limit` | number | `10` | Number of activities to return (max: 50) |
+
+**Request Example:**
+```http
+GET /notifications/dashboard/activity-feed?limit=10
+Authorization: Bearer {{accessToken}}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "_id": "activity001",
+      "type": "task_completed",
+      "actor": {
+        "_id": "child001",
+        "name": "Alex Morgan",
+        "profileImage": "https://example.com/images/alex.jpg"
+      },
+      "task": {
+        "_id": "task001",
+        "title": "Complete Math Homework"
+      },
+      "timestamp": "2026-03-16T10:28:00.000Z",
+      "timeAgo": "2 minutes ago",
+      "message": "Alex Morgan completed 'Complete Math Homework'"
+    },
+    {
+      "_id": "activity002",
+      "type": "subtask_completed",
+      "actor": {
+        "_id": "child002",
+        "name": "Jamie Chen",
+        "profileImage": "https://example.com/images/jamie.jpg"
+      },
+      "task": {
+        "_id": "task002",
+        "title": "Science Project"
+      },
+      "timestamp": "2026-03-16T10:25:00.000Z",
+      "timeAgo": "5 minutes ago",
+      "message": "Jamie Chen completed a subtask in 'Science Project'"
+    },
+    {
+      "_id": "activity003",
+      "type": "task_started",
+      "actor": {
+        "_id": "child001",
+        "name": "Alex Morgan",
+        "profileImage": "https://example.com/images/alex.jpg"
+      },
+      "task": {
+        "_id": "task003",
+        "title": "History Essay"
+      },
+      "timestamp": "2026-03-16T09:15:00.000Z",
+      "timeAgo": "1 hour ago",
+      "message": "Alex Morgan started 'History Essay'"
+    }
+  ],
+  "message": "Live activity feed retrieved successfully for parent dashboard"
+}
+```
+
+**Frontend Usage Examples:**
+```javascript
+// Fetch live activity feed for dashboard
+const { data } = await api.get('/notifications/dashboard/activity-feed?limit=10');
+
+// Display activities in Live Activity section
+data.forEach(activity => {
+  renderActivityItem({
+    profileImage: activity.actor.profileImage,
+    name: activity.actor.name,
+    message: activity.message,
+    timeAgo: activity.timeAgo
+  });
+});
+```
+
+**Authorization:**
+- **Role:** `business` (Parent/Teacher) only
+- **Permission:** Must have active children in the system
+
+**Notes:**
+- Returns activities from all active children of the business user
+- Activities include: task completions, task starts, subtask completions, task creations
+- Response includes `timeAgo` field for user-friendly display
+- Cached for 30 seconds for real-time feel
+- Sorted by most recent first
 
 ---
 
