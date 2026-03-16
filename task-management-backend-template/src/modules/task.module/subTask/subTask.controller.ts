@@ -5,6 +5,7 @@ import { SubTask } from './subTask.model';
 import { ISubTask } from './subTask.interface';
 import ApiError from '../../../errors/ApiError';
 import { SubTaskService } from './subTask.service';
+import sendResponse from '../../../shared/sendResponse';
 
 /**
  * SubTask Controller
@@ -31,7 +32,7 @@ export class SubTaskController extends GenericController<typeof SubTask, ISubTas
     const subTaskData = req.body;
     const result = await this.subTaskService.createSubTask(subTaskData, userId);
 
-    (res as any).sendResponse({
+    sendResponse(res, {
       code: StatusCodes.CREATED,
       data: result,
       message: 'Subtask created successfully',
@@ -48,7 +49,7 @@ export class SubTaskController extends GenericController<typeof SubTask, ISubTas
 
     const result = await this.subTaskService.getSubTasksByTaskId(taskId, filters);
 
-    (res as any).sendResponse({
+    sendResponse(res, {
       code: StatusCodes.OK,
       data: result,
       message: 'Subtasks retrieved successfully',
@@ -74,7 +75,7 @@ export class SubTaskController extends GenericController<typeof SubTask, ISubTas
       options
     );
 
-    (res as any).sendResponse({
+    sendResponse(res, {
       code: StatusCodes.OK,
       data: result,
       message: 'Subtasks retrieved successfully with pagination',
@@ -104,7 +105,7 @@ export class SubTaskController extends GenericController<typeof SubTask, ISubTas
       userId
     );
 
-    (res as any).sendResponse({
+    sendResponse(res, {
       code: StatusCodes.OK,
       data: result,
       message: 'Subtask status updated successfully',
@@ -124,7 +125,7 @@ export class SubTaskController extends GenericController<typeof SubTask, ISubTas
 
     const result = await this.subTaskService.getUserSubTaskStatistics(userId);
 
-    (res as any).sendResponse({
+    sendResponse(res, {
       code: StatusCodes.OK,
       data: result,
       message: 'Subtask statistics retrieved successfully',
@@ -147,7 +148,7 @@ export class SubTaskController extends GenericController<typeof SubTask, ISubTas
 
     const result = await this.subTaskService.updateSubTask(subtaskId, updateData);
 
-    (res as any).sendResponse({
+    sendResponse(res, {
       code: StatusCodes.OK,
       data: result,
       message: 'Subtask updated successfully',
@@ -163,7 +164,7 @@ export class SubTaskController extends GenericController<typeof SubTask, ISubTas
 
     const result = await this.subTaskService.deleteSubTask(subtaskId);
 
-    (res as any).sendResponse({
+    sendResponse(res, {
       code: StatusCodes.OK,
       data: result,
       message: 'Subtask deleted successfully',

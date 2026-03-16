@@ -130,48 +130,50 @@ export class ChildrenBusinessUserService extends GenericService<typeof ChildrenB
     /*-─────────────────────────────────
     |  Step 2: Check if business user has active business subscription
     └──────────────────────────────────*/
-    const subscription = await UserSubscription.findOne({
-      userId: new Types.ObjectId(businessUserId),
-      status: UserSubscriptionStatusType.active,
-      isDeleted: false,
-    });
+    // const subscription = await UserSubscription.findOne({
+    //   userId: new Types.ObjectId(businessUserId),
+    //   status: UserSubscriptionStatusType.active,
+    //   isDeleted: false,
+    // });
 
-    if (!subscription) {
-      throw new ApiError(
-        StatusCodes.BAD_REQUEST,
-        'You must have an active business subscription to add children accounts'
-      );
-    }
+    // if (!subscription) {
+    //   throw new ApiError(
+    //     StatusCodes.BAD_REQUEST,
+    //     'You must have an active business subscription to add children accounts'
+    //   );
+    // }
 
     /*-─────────────────────────────────
     |  Step 3: Get subscription plan to check max children limit
     └──────────────────────────────────*/
-    const plan = await SubscriptionPlan.findById(subscription.subscriptionPlanId);
+    // const plan = await SubscriptionPlan.findById(subscription.subscriptionPlanId);
 
-    if (!plan) {
-      throw new ApiError(StatusCodes.NOT_FOUND, 'Subscription plan not found');
-    }
+    // if (!plan) {
+    //   throw new ApiError(StatusCodes.NOT_FOUND, 'Subscription plan not found');
+    // }
 
-    // Verify this is a business subscription
-    const businessSubscriptionTypes = ['business_starter', 'business_level1', 'business_level2'];
-    if (!businessSubscriptionTypes.includes(plan.subscriptionType)) {
-      throw new ApiError(
-        StatusCodes.BAD_REQUEST,
-        'Only business subscriptions can add children accounts'
-      );
-    }
+    // // Verify this is a business subscription
+    // const businessSubscriptionTypes = ['business_starter', 'business_level1', 'business_level2'];
+    // if (!businessSubscriptionTypes.includes(plan.subscriptionType)) {
+    //   throw new ApiError(
+    //     StatusCodes.BAD_REQUEST,
+    //     'Only business subscriptions can add children accounts'
+    //   );
+    // }
+
+
 
     /*-─────────────────────────────────
     |  Step 4: Check current children count against subscription limit
     └──────────────────────────────────*/
-    const currentChildrenCount = await this.getChildrenCount(businessUserId);
+    // const currentChildrenCount = await this.getChildrenCount(businessUserId);
 
-    if (currentChildrenCount >= plan.maxChildrenAccount) {
-      throw new ApiError(
-        StatusCodes.BAD_REQUEST,
-        `You have reached the maximum limit of ${plan.maxChildrenAccount} children accounts for your ${plan.subscriptionName} subscription. Please upgrade your subscription to add more children.`
-      );
-    }
+    // if (currentChildrenCount >= plan.maxChildrenAccount) {
+    //   throw new ApiError(
+    //     StatusCodes.BAD_REQUEST,
+    //     `You have reached the maximum limit of ${plan.maxChildrenAccount} children accounts for your ${plan.subscriptionName} subscription. Please upgrade your subscription to add more children.`
+    //   );
+    // }
 
     /*-─────────────────────────────────
     |  Step 5: Check if email already exists
@@ -199,7 +201,7 @@ export class ChildrenBusinessUserService extends GenericService<typeof ChildrenB
       email: childData.email.toLowerCase(),
       password: hashedPassword,
       phoneNumber: childData.phoneNumber,
-      role: 'commonUser', // Child is a common user
+      role: 'child',
       accountCreatorId: new Types.ObjectId(businessUserId), // ✅ KEY FIELD
       profileId: businessUser.profileId, // Use same profile template
       subscriptionType: 'none', // Children don't need individual subscription
@@ -478,6 +480,9 @@ export class ChildrenBusinessUserService extends GenericService<typeof ChildrenB
     isSecondaryUser: boolean;
     updatedAt: Date;
   }> {
+
+    console.log("childId :: ", childUserId);
+
     // If setting as secondary user, ensure no other child is already secondary
     if (isSecondaryUser) {
       const existingSecondary = await this.model.findOne({

@@ -9,7 +9,6 @@ import { TaskStatus, TaskType, TaskPriority } from './task.constant';
  * class SubTask {
  *   final String title;
  *   final bool isCompleted;
- *   final String? duration;
  * }
  * ```
  */
@@ -17,7 +16,6 @@ export interface ISubTask {
   _id?: Types.ObjectId;
   title: string;
   isCompleted: boolean;
-  duration?: string;
   completedAt?: Date;
   order: number;
 }

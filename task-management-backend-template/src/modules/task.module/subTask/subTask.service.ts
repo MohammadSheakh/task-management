@@ -168,12 +168,15 @@ export class SubTaskService extends GenericService<typeof SubTask, ISubTask> {
    * Get subtask statistics for a user
    * @param userId - User ID
    * @returns Subtask statistics
+   * 
+   * Note: This counts subtasks created by the user, not assigned to them
+   * because subtasks don't have individual assignments - they belong to the task
    */
   async getUserSubTaskStatistics(userId: Types.ObjectId) {
     const stats = await this.model.aggregate([
       {
         $match: {
-          assignedToUserId: new Types.ObjectId(userId),
+          createdById: new Types.ObjectId(userId),
           isDeleted: false,
         },
       },

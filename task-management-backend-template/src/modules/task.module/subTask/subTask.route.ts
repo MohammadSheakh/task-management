@@ -50,7 +50,6 @@ router.route('/task/:taskId').get(
   setQueryOptions({
     populate: [
       { path: 'createdById', select: 'name email' },
-      { path: 'assignedToUserId', select: 'name email' },
     ],
     select: '-__v'
   }),
@@ -69,7 +68,6 @@ router.route('/task/:taskId/paginate').get(
   setQueryOptions({
     populate: [
       { path: 'createdById', select: 'name email' },
-      { path: 'assignedToUserId', select: 'name email' },
     ],
   }),
   controller.getSubTasksWithPagination
@@ -96,7 +94,6 @@ router.route('/:id').get(
   setQueryOptions({
     populate: [
       { path: 'createdById', select: 'name email' },
-      { path: 'assignedToUserId', select: 'name email' },
       { path: 'taskId', select: 'title status' },
     ],
     select: '-__v'

@@ -23,7 +23,7 @@ subTaskSchema.set('toJSON', {
 });
 ```
 
-**Impact**: Flutter received unwanted fields like `taskId`, `createdById`, `assignedToUserId`, `description`, `order`, `isDeleted`, etc.
+**Impact**: Flutter received unwanted fields like `taskId`, `createdById`, `assignedToUserId`, `order`, `isDeleted`, etc.
 
 ---
 
@@ -41,14 +41,13 @@ subTaskSchema.set('toJSON', {
       _subTaskId: ret._id,
       title: ret.title,
       isCompleted: ret.isCompleted,
-      duration: ret.duration,
     };
-    
+
     // Include completedAt only if completed (for tracking)
     if (ret.isCompleted && ret.completedAt) {
       flutterModel.completedAt = ret.completedAt;
     }
-    
+
     // Delete ALL backend-only fields
     delete ret._id;
     delete ret.__v;
@@ -59,8 +58,7 @@ subTaskSchema.set('toJSON', {
     delete ret.createdAt;
     delete ret.updatedAt;
     delete ret.order;
-    delete ret.description;
-    
+
     return flutterModel;
   },
 });
@@ -108,9 +106,9 @@ const populateOptions = [
   { path: 'createdById', select: 'name email profileImage' },
   { path: 'ownerUserId', select: 'name email profileImage' },
   { path: 'assignedUserIds', select: 'name email profileImage' },
-  { 
+  {
     path: 'subtasks',  // ✅ Now populates subtasks automatically
-    select: 'title isCompleted duration completedAt',
+    select: 'title isCompleted completedAt',
     options: { sort: { order: 1 } }
   },
 ];
@@ -145,9 +143,8 @@ const populateOptions = [
       "_subTaskId": "64f5a1b2c3d4e5f6g7h8i9j1",
       "title": "Call with team",
       "isCompleted": false,
-      "duration": null,
       // ❌ Extra backend fields:
-      // taskId, createdById, assignedToUserId, order, description, etc.
+      // taskId, createdById, assignedToUserId, order, etc.
     }
   ]
 }
@@ -168,8 +165,7 @@ const populateOptions = [
     {
       "_subTaskId": "64f5a1b2c3d4e5f6g7h8i9j1",
       "title": "Call with team",
-      "isCompleted": false,
-      "duration": null
+      "isCompleted": false
       // ✅ Clean model - only Flutter fields
     },
     {
@@ -191,8 +187,7 @@ const populateOptions = [
     {
       "_subTaskId": "64f5a1b2c3d4e5f6g7h8i9j1",
       "title": "Call with team",
-      "isCompleted": false,
-      "duration": null
+      "isCompleted": false
       // ✅ Clean model - no backend fields
     }
   ]
@@ -230,12 +225,10 @@ flowchart TD
 class SubTask {
   final String title;
   final bool isCompleted;
-  final String? duration;
-  
+
   SubTask({
     required this.title,
     this.isCompleted = false,
-    this.duration,
   });
 }
 ```
@@ -245,8 +238,7 @@ class SubTask {
 {
   "_subTaskId": "64f5a1b2c3d4e5f6g7h8i9j1",
   "title": "Call with team",
-  "isCompleted": false,
-  "duration": null
+  "isCompleted": false
 }
 ```
 

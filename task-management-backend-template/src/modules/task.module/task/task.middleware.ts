@@ -136,11 +136,12 @@ export const checkSecondaryUserPermission = async (
     }
 
     // If child user → check if they are Secondary User
-    if (user.role === 'commonUser') {
+    if (user.role === 'child') {
       const { ChildrenBusinessUser } = await import(
         '../../childrenBusinessUser.module/childrenBusinessUser.model'
       );
 
+      /*----------- comment by sheakh .. need to recheck this logic .. 
       const relationship = await ChildrenBusinessUser.findOne({
         childUserId: new Types.ObjectId(userId),
         isSecondaryUser: true,
@@ -154,6 +155,8 @@ export const checkSecondaryUserPermission = async (
           'Only Secondary Users can create tasks. Ask your parent to grant permission.'
         );
       }
+      ----------------*/
+
 
       // User is Secondary User → allow
       return next();

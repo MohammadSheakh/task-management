@@ -8,6 +8,8 @@ import ApiError from '../../errors/ApiError';
 import pick from '../../shared/pick';
 import { IUser } from '../token/token.interface';
 
+import sendResponse from '../../shared/sendResponse';
+
 /**
  * Children Business User Controller
  * Handles HTTP requests for children business user operations
@@ -52,7 +54,7 @@ export class ChildrenBusinessUserController {
     /*-─────────────────────────────────
     |  Step 4: Send success response
     └──────────────────────────────────*/
-    (res as any).sendResponse({
+    sendResponse(res, {
       code: StatusCodes.CREATED,
       data: result,
       message: 'Child account created successfully and added to family',
@@ -101,7 +103,7 @@ export class ChildrenBusinessUserController {
 
 
     //  Step 5: Send success response
-    (res as any).sendResponse({
+    sendResponse(res, {
       code: StatusCodes.OK,
       data: {
         children,
@@ -130,7 +132,7 @@ export class ChildrenBusinessUserController {
     // Step 2: Get parent business user
     const parentInfo = await this.service.getParentBusinessUser(childUserId);
 
-    (res as any).sendResponse({
+    sendResponse(res, {
       code: StatusCodes.OK,
       data: parentInfo,
       message: 'Parent business user retrieved successfully',
@@ -156,7 +158,6 @@ export class ChildrenBusinessUserController {
 
     const childUserId = req.params.childId;
 
-
     //  Step 2: Extract optional note
     const note = req.body.note;
 
@@ -165,8 +166,7 @@ export class ChildrenBusinessUserController {
     └──────────────────────────────────*/
     await this.service.removeChildFromFamily(businessUserId, childUserId, note);
 
-
-    (res as any).sendResponse({
+    sendResponse(res, {
       code: StatusCodes.OK,
       data: null,
       message: 'Child removed from family successfully',
@@ -201,7 +201,7 @@ export class ChildrenBusinessUserController {
     /*-─────────────────────────────────
     |  Step 3: Send success response
     └──────────────────────────────────*/
-    (res as any).sendResponse({
+    sendResponse(res, {
       code: StatusCodes.OK,
       data: null,
       message: 'Child account reactivated successfully',
@@ -246,8 +246,7 @@ export class ChildrenBusinessUserController {
     /*-─────────────────────────────────
     |  Step 3: Get subscription limit
     └──────────────────────────────────*/
-    const { UserSubscription } = await import('../../subscription.module/userSubscription/userSubscription.model');
-    const { SubscriptionPlan } = await import('../../subscription.module/subscriptionPlan/subscriptionPlan.model');
+    const { UserSubscription } = await import('../../modules/subscription.module/userSubscription/userSubscription.model');
 
     const subscription = await UserSubscription.findOne({
       userId: businessUserId,
@@ -260,7 +259,7 @@ export class ChildrenBusinessUserController {
     /*-─────────────────────────────────
     |  Step 4: Send success response
     └──────────────────────────────────*/
-    (res as any).sendResponse({
+    sendResponse(res, {
       code: StatusCodes.OK,
       data: {
         active: activeCount,
@@ -312,7 +311,7 @@ export class ChildrenBusinessUserController {
     /*-─────────────────────────────────
     |  Step 3: Send success response
     └──────────────────────────────────*/
-    (res as any).sendResponse({
+    sendResponse(res, {
       code: StatusCodes.OK,
       data: result,
       message: isSecondaryUser
@@ -344,7 +343,7 @@ export class ChildrenBusinessUserController {
     /*-─────────────────────────────────
     |  Step 3: Send success response
     └──────────────────────────────────*/
-    (res as any).sendResponse({
+    sendResponse(res, {
       code: StatusCodes.OK,
       data: result || { childUserId: null, isSecondaryUser: false },
       message: 'Secondary user retrieved successfully',

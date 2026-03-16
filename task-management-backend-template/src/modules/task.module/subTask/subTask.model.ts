@@ -22,26 +22,11 @@ const subTaskSchema = new Schema<ISubTask>(
       required: [true, 'Creator ID is required'],
     },
 
-    assignedToUserId: {
-      type: Schema.Types.ObjectId,
-      ref: 'User',
-    },
-
     title: {
       type: String,
       required: [true, 'Subtask title is required'],
       trim: true,
       maxlength: [200, 'Title cannot exceed 200 characters'],
-    },
-
-    description: {
-      type: String,
-      trim: true,
-      maxlength: [1000, 'Description cannot exceed 1000 characters'],
-    },
-
-    duration: {
-      type: String,
     },
 
     isCompleted: {
@@ -70,10 +55,10 @@ const subTaskSchema = new Schema<ISubTask>(
 /**
  * Compound indexes optimized for common query patterns
  * Updated: Added isDeleted to all indexes for soft delete filtering
+ * Updated V2: Removed assignedToUserId index (field removed - not needed)
  */
 subTaskSchema.index({ taskId: 1, isCompleted: 1, isDeleted: 1 });
 subTaskSchema.index({ taskId: 1, order: 1, isDeleted: 1 });
-subTaskSchema.index({ assignedToUserId: 1, isCompleted: 1, isDeleted: 1 });
 
 // ─── Plugins ─────────────────────────────────────────────────────────
 subTaskSchema.plugin(paginate);
@@ -82,13 +67,12 @@ subTaskSchema.plugin(paginate);
 /**
  * Transform schema output for API responses
  * Matches Flutter model structure exactly
- * 
+ *
  * Flutter Model:
  * ```dart
  * class SubTask {
  *   final String title;
  *   final bool isCompleted;
- *   final String? duration;
  * }
  * ```
  */
@@ -100,7 +84,6 @@ subTaskSchema.set('toJSON', {
       _subTaskId: ret._id,
       title: ret.title,
       isCompleted: ret.isCompleted,
-      duration: ret.duration,
     };
 
     // Include completedAt only if subtask is completed (for tracking)
@@ -113,12 +96,10 @@ subTaskSchema.set('toJSON', {
     delete ret.__v;
     delete ret.taskId;
     delete ret.createdById;
-    delete ret.assignedToUserId;
     delete ret.isDeleted;
     delete ret.createdAt;
     delete ret.updatedAt;
     delete ret.order;
-    delete ret.description;
 
     return flutterModel;
   },

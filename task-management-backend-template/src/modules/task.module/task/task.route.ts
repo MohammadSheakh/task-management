@@ -113,7 +113,7 @@ router.route('/daily-progress').get(
   controller.getDailyProgress
 );
 
-/*-─────────────────────────────────
+/*-───────────────────────────────── ✔️
 |  Child | Business | Task | task-details-with-subTasks.png | Get task details by ID
 |  @desc Get single task with populated user details and subtasks
 |  @auth All authenticated users (child, business)

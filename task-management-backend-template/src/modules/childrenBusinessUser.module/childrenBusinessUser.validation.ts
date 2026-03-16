@@ -27,10 +27,11 @@ export const createChildValidationSchema = z.object({
       })
       .min(8, 'Password must be at least 8 characters long')
       .max(128, 'Password cannot exceed 128 characters')
-      .regex(
-        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/,
-        'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character'
-      ),
+    //   .regex(
+    //     /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/,
+    //     'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character'
+    // )
+    ,
 
     phoneNumber: z
       .string()
@@ -122,7 +123,7 @@ export const updateChildPermissionsValidationSchema = z.object({
     isSecondaryUser: z.boolean(),
   }),
   params: z.object({
-    childId: z.string().uuid('Invalid child ID format'),
+    childId: z.string(), // .uuid('Invalid child ID format') 🔂
   }),
 });
 

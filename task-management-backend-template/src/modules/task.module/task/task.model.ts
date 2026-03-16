@@ -78,7 +78,7 @@ const taskSchema = new Schema<ITask>(
     // ─── Subtasks (Embedded) ───────────────────────────────────────────
     /**
      * Subtasks list
-     * Matches Flutter model: SubTask { title, isCompleted, duration }
+     * Matches Flutter model: SubTask { title, isCompleted }
      */
     subtasks: [
       {
@@ -92,11 +92,6 @@ const taskSchema = new Schema<ITask>(
           type: Boolean,
           required: [true, 'isCompleted is required'],
           default: false,
-        },
-        duration: {
-          type: String,
-          trim: true,
-          maxlength: [50, 'Duration cannot exceed 50 characters'],
         },
         completedAt: {
           type: Date,
@@ -153,7 +148,7 @@ taskSchema.index({ title: 'text', description: 'text', tags: 'text' });
  */
 taskSchema.pre('save', function (next) {
   const task = this as any;
-  
+
   if (task.subtasks && task.subtasks.length > 0) {
     task.totalSubtasks = task.subtasks.length;
     task.completedSubtasks = task.subtasks.filter((s: any) => s.isCompleted).length;
@@ -161,7 +156,7 @@ taskSchema.pre('save', function (next) {
     task.totalSubtasks = 0;
     task.completedSubtasks = 0;
   }
-  
+
   next();
 });
 

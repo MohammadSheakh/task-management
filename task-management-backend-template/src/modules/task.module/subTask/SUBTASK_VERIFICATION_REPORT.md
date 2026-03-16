@@ -13,7 +13,6 @@
 class SubTask {
   final String title;        // ✅ Required
   final bool isCompleted;    // ✅ Required, default: false
-  final String? duration;    // ✅ Optional
 }
 ```
 
@@ -25,12 +24,10 @@ interface ISubTask {
   createdById: Types.ObjectId; // ⚠️ Not in Flutter model
   assignedToUserId?: Types.ObjectId; // ⚠️ Not in Flutter model
   title: string;             // ✅ Matches
-  description?: string;      // ⚠️ Extra field (not in Flutter)
-  duration?: string;         // ✅ Matches
   isCompleted: boolean;      // ✅ Matches
-  completedAt?: Date;        // ⚠️ Extra field (not in Flutter)
-  order?: number;            // ⚠️ Extra field (not in Flutter)
-  isDeleted?: boolean;       // ⚠️ Extra field (not in Flutter)
+  completedAt?: Date;        // ⚠️ Extra field (for tracking)
+  order?: number;            // ⚠️ Extra field (for sorting)
+  isDeleted?: boolean;       // ⚠️ Extra field (soft delete)
   createdAt?: Date;          // ⚠️ Extra field (not in Flutter)
   updatedAt?: Date;          // ⚠️ Extra field (not in Flutter)
 }
@@ -54,7 +51,7 @@ subTaskSchema.set('toJSON', {
 
 ### Problem:
 - ❌ Returns `taskId`, `createdById`, `assignedToUserId` (Flutter doesn't need these)
-- ❌ Returns `description`, `completedAt`, `order` (Flutter doesn't need these)
+- ❌ Returns `completedAt`, `order` (Flutter doesn't need these)
 - ❌ Returns `isDeleted`, `createdAt`, `updatedAt` (internal fields)
 - ❌ Does NOT rename `_id` to match Flutter pattern
 
@@ -155,11 +152,10 @@ subTaskSchema.set('toJSON', {
       _subTaskId: ret._id,
       title: ret.title,
       isCompleted: ret.isCompleted,
-      duration: ret.duration,
       // Optional: completedAt for tracking
       completedAt: ret.completedAt,
     };
-    
+
     // Delete internal fields
     delete ret._id;
     delete ret.__v;
@@ -170,8 +166,7 @@ subTaskSchema.set('toJSON', {
     delete ret.createdAt;
     delete ret.updatedAt;
     delete ret.order;
-    delete ret.description;
-    
+
     return flutterModel;
   }
 });
@@ -224,7 +219,7 @@ getTaskById = async (req: Request, res: Response) => {
     .populate('subtasks', 'title isCompleted duration completedAt')
     .select('-__v');
   
-  (res as any).sendResponse({
+  sendResponse(res, {
     code: StatusCodes.OK,
     data: result,
     message: 'Task retrieved successfully',
@@ -288,7 +283,6 @@ getTaskById = async (req: Request, res: Response) => {
 1. 🔴 Transform function returns too many backend fields
 2. 🔴 Subtasks not populated in task response
 3. 🔴 Requires 2 API calls from Flutter
-4. 🟡 Description field not used by Flutter
 
 ---
 

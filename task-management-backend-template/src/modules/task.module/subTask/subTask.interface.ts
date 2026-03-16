@@ -20,18 +20,9 @@ export interface ISubTask {
   /** User who created this subtask */
   createdById: Types.ObjectId;
 
-  /** User assigned to this subtask (optional) */
-  assignedToUserId?: Types.ObjectId;
-
   // ─── SubTask Details ───────────────────────────────────────────────
   /** Title of the subtask (required) */
   title: string;
-
-  /** Detailed description (optional) */
-  description?: string;
-
-  /** Duration estimate (e.g., "30m", "1h") */
-  duration?: string;
 
   // ─── Progress & Status ─────────────────────────────────────────────
   /** Completion status (boolean for backward compatibility) */
@@ -97,7 +88,6 @@ export interface ISubTaskQueryOptions {
   populate?: Array<{ path: string; select?: string }>;
   select?: string;
   isCompleted?: boolean;
-  assignedToUserId?: string;
 }
 
 /**
@@ -106,9 +96,6 @@ export interface ISubTaskQueryOptions {
  */
 export interface ICreateSubTask {
   title: string;
-  description?: string;
-  duration?: string;
-  assignedToUserId?: string;
 }
 
 /**
@@ -117,10 +104,7 @@ export interface ICreateSubTask {
  */
 export interface IUpdateSubTask {
   title?: string;
-  description?: string;
-  duration?: string;
   isCompleted?: boolean;
-  assignedToUserId?: string;
   order?: number;
 }
 
@@ -132,6 +116,5 @@ export interface ISubTaskResponse {
   _subTaskId: string;
   title: string;
   isCompleted: boolean;
-  duration?: string;
   completedAt?: Date;
 }

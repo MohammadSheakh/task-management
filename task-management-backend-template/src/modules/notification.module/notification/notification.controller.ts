@@ -7,6 +7,7 @@ import { NotificationService } from './notification.service';
 import { TRole } from '../../../middlewares/roles';
 import ApiError from '../../../errors/ApiError';
 import { NotificationPriority, NotificationChannel, NotificationType } from './notification.constant';
+import sendResponse from '../../../shared/sendResponse';
 
 /**
  * Notification Controller
@@ -56,7 +57,7 @@ export class NotificationController extends GenericController<typeof Notificatio
 
     const result = await this.notificationService.getUserNotifications(userId, options);
 
-    (res as any).sendResponse({
+    sendResponse(res, {
       code: StatusCodes.OK,
       data: result,
       message: 'Notifications retrieved successfully',
@@ -77,7 +78,7 @@ export class NotificationController extends GenericController<typeof Notificatio
 
     const count = await this.notificationService.getUnreadCount(userId);
 
-    (res as any).sendResponse({
+    sendResponse(res, {
       code: StatusCodes.OK,
       data: { count },
       message: 'Unread count retrieved successfully',
@@ -105,7 +106,7 @@ export class NotificationController extends GenericController<typeof Notificatio
       throw new ApiError(StatusCodes.NOT_FOUND, 'Notification not found');
     }
 
-    (res as any).sendResponse({
+    sendResponse(res, {
       code: StatusCodes.OK,
       data: result,
       message: 'Notification marked as read',
@@ -126,7 +127,7 @@ export class NotificationController extends GenericController<typeof Notificatio
 
     const count = await this.notificationService.markAllAsRead(userId);
 
-    (res as any).sendResponse({
+    sendResponse(res, {
       code: StatusCodes.OK,
       data: { count },
       message: `All ${count} notifications marked as read`,
@@ -154,7 +155,7 @@ export class NotificationController extends GenericController<typeof Notificatio
       throw new ApiError(StatusCodes.NOT_FOUND, 'Notification not found');
     }
 
-    (res as any).sendResponse({
+    sendResponse(res, {
       code: StatusCodes.OK,
       data: result,
       message: 'Notification deleted successfully',
@@ -208,7 +209,7 @@ export class NotificationController extends GenericController<typeof Notificatio
       data,
     });
 
-    (res as any).sendResponse({
+    sendResponse(res, {
       code: StatusCodes.CREATED,
       data: result,
       message: `${result.length} notifications sent successfully`,
@@ -256,7 +257,7 @@ export class NotificationController extends GenericController<typeof Notificatio
       message
     );
 
-    (res as any).sendResponse({
+    sendResponse(res, {
       code: StatusCodes.CREATED,
       data: result,
       message: 'Reminder scheduled successfully',
@@ -287,7 +288,7 @@ export class NotificationController extends GenericController<typeof Notificatio
 
     const result = await this.notificationService.getLiveActivityFeed(groupId, limit);
 
-    (res as any).sendResponse({
+    sendResponse(res, {
       code: StatusCodes.OK,
       data: result,
       message: 'Live activity feed retrieved successfully',

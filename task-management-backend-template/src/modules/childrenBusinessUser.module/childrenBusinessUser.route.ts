@@ -18,7 +18,7 @@ const childrenLimiter = rateLimiter('user');       // 30 req/min
 
 const controller = new ChildrenBusinessUserController();
 
-/*-─────────────────────────────────
+/*-─────────────────────────────────✔️
 |  Business | ChildrenBusinessUser | create-child-flow.png | Create child account
 |  @desc Business user creates a child account and adds to family
 |  @auth Business user with active subscription

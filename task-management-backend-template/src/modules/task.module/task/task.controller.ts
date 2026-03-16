@@ -10,7 +10,8 @@ import ApiError from '../../../errors/ApiError';
 // import { GroupMember } from '../../group.module/groupMember/groupMember.model';
 import { SubTaskService } from '../subTask/subTask.service';
 import { logger, errorLogger } from '../../../shared/logger';
-
+import { Types } from 'mongoose';
+import sendResponse from '../../../shared/sendResponse';
 
 /**
  * Task Controller
@@ -48,7 +49,7 @@ export class TaskController extends GenericController<typeof Task, ITask> {
 
     const result = await this.taskService.createTask(taskData, userId);
 
-    (res as any).sendResponse({
+    sendResponse(res, {
       code: StatusCodes.CREATED,
       data: result,
       message: 'Task created successfully',
@@ -70,7 +71,7 @@ export class TaskController extends GenericController<typeof Task, ITask> {
     const filters = req.query;
     const result = await this.taskService.getUserTasks(userId, filters);
 
-    (res as any).sendResponse({
+    sendResponse(res, {
       code: StatusCodes.OK,
       data: result,
       message: 'Tasks retrieved successfully',
@@ -101,7 +102,7 @@ export class TaskController extends GenericController<typeof Task, ITask> {
       options
     );
 
-    (res as any).sendResponse({
+    sendResponse(res, {
       code: StatusCodes.OK,
       data: result,
       message: 'Tasks retrieved successfully with pagination',
@@ -121,7 +122,7 @@ export class TaskController extends GenericController<typeof Task, ITask> {
 
     const result = await this.taskService.getTaskStatistics(userId);
 
-    (res as any).sendResponse({
+    sendResponse(res, {
       code: StatusCodes.OK,
       data: result,
       message: 'Task statistics retrieved successfully',
@@ -142,7 +143,7 @@ export class TaskController extends GenericController<typeof Task, ITask> {
     const date = req.query.date ? new Date(req.query.date as string) : new Date();
     const result = await this.taskService.getDailyProgress(userId, date);
 
-    (res as any).sendResponse({
+    sendResponse(res, {
       code: StatusCodes.OK,
       data: result,
       message: 'Daily progress retrieved successfully',
@@ -192,7 +193,7 @@ export class TaskController extends GenericController<typeof Task, ITask> {
       }
     }
 
-    (res as any).sendResponse({
+    sendResponse(res, {
       code: StatusCodes.OK,
       data: result,
       message: 'Task status updated successfully',
@@ -214,7 +215,7 @@ export class TaskController extends GenericController<typeof Task, ITask> {
 
     const result = await this.taskService.updateSubtaskProgress(taskId, subtasks);
 
-    (res as any).sendResponse({
+    sendResponse(res, {
       code: StatusCodes.OK,
       data: result,
       message: 'Subtask progress updated successfully',
@@ -249,21 +250,23 @@ export class TaskController extends GenericController<typeof Task, ITask> {
     const select = '-__v';
     const result = await this.service.getById(taskId, populateOptions, select);
 
+    console.log("result :: ", result);
+
     if (!result) {
       throw new ApiError(StatusCodes.NOT_FOUND, 'Task not found');
     }
 
     // Verify user has access to this task
-    const hasAccess =
-      result.createdById.toString() === userId ||
-      result.ownerUserId?.toString() === userId ||
-      (result.assignedUserIds || []).some((id: any) => id.toString() === userId);
+    // const hasAccess =
+    //   result.createdById.toString() === userId ||
+    //   result.ownerUserId?.toString() === userId ||
+    //   (result.assignedUserIds || []).some((id: any) => id.toString() === userId);
 
-    if (!hasAccess) {
-      throw new ApiError(StatusCodes.FORBIDDEN, 'You do not have access to this task');
-    }
+    // if (!hasAccess) {
+    //   throw new ApiError(StatusCodes.FORBIDDEN, 'You do not have access to this task');
+    // }
 
-    (res as any).sendResponse({
+    sendResponse(res, {
       code: StatusCodes.OK,
       data: result,
       message: 'Task retrieved successfully',
@@ -281,9 +284,10 @@ export class TaskController extends GenericController<typeof Task, ITask> {
     const taskId = req.params.id;
     const { title, duration } = req.body;
 
+    // TODO : MUST : add sub task issue 
     const result = await this.subTaskService.addSubtask(taskId, { title, duration });
 
-    (res as any).sendResponse({
+    sendResponse(res, {
       code: StatusCodes.CREATED,
       data: result,
       message: 'Subtask added successfully',
@@ -300,7 +304,7 @@ export class TaskController extends GenericController<typeof Task, ITask> {
 
     const result = await this.subTaskService.getSubtasksForTask(taskId);
 
-    (res as any).sendResponse({
+    sendResponse(res, {
       code: StatusCodes.OK,
       data: result,
       message: 'Subtasks retrieved successfully',
@@ -318,7 +322,7 @@ export class TaskController extends GenericController<typeof Task, ITask> {
 
     const result = await this.subTaskService.getSubtask(taskId, subtaskId);
 
-    (res as any).sendResponse({
+    sendResponse(res, {
       code: StatusCodes.OK,
       data: result,
       message: 'Subtask retrieved successfully',
@@ -337,7 +341,7 @@ export class TaskController extends GenericController<typeof Task, ITask> {
 
     const result = await this.subTaskService.updateSubtask(taskId, subtaskId, updateData);
 
-    (res as any).sendResponse({
+    sendResponse(res, {
       code: StatusCodes.OK,
       data: result,
       message: 'Subtask updated successfully',
@@ -355,7 +359,7 @@ export class TaskController extends GenericController<typeof Task, ITask> {
 
     const result = await this.subTaskService.toggleSubtask(taskId, subtaskId);
 
-    (res as any).sendResponse({
+    sendResponse(res, {
       code: StatusCodes.OK,
       data: result,
       message: result.isCompleted
@@ -375,7 +379,7 @@ export class TaskController extends GenericController<typeof Task, ITask> {
 
     const result = await this.subTaskService.deleteSubtask(taskId, subtaskId);
 
-    (res as any).sendResponse({
+    sendResponse(res, {
       code: StatusCodes.OK,
       data: result,
       message: 'Subtask deleted successfully',
@@ -393,7 +397,7 @@ export class TaskController extends GenericController<typeof Task, ITask> {
 
     const result = await this.subTaskService.bulkUpdateSubtasks(taskId, subtasks);
 
-    (res as any).sendResponse({
+    sendResponse(res, {
       code: StatusCodes.OK,
       data: {
         subtasks: result.subtasks,
@@ -428,7 +432,7 @@ export class TaskController extends GenericController<typeof Task, ITask> {
 
     const result = await this.taskService.getDailyProgress(userId, date);
 
-    (res as any).sendResponse({
+    sendResponse(res, {
       code: StatusCodes.OK,
       data: result,
       message: 'Daily progress retrieved successfully',
@@ -473,7 +477,7 @@ export class TaskController extends GenericController<typeof Task, ITask> {
       );
     }
 
-    (res as any).sendResponse({
+    sendResponse(res, {
       code: StatusCodes.OK,
       data: result,
       message: 'Preferred time suggestion retrieved successfully',

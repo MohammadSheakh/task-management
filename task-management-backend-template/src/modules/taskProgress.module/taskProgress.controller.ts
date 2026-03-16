@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { TaskProgressService } from './taskProgress.service';
 import ApiError from '../../errors/ApiError';
+import sendResponse from '../../shared/sendResponse';
 
 /**
  * Task Progress Controller
@@ -31,7 +32,7 @@ export class TaskProgressController {
 
     const result = await this.service.getProgress(taskId, userId);
 
-    (res as any).sendResponse({
+    sendResponse(res, {
       code: StatusCodes.OK,
       data: result,
       message: 'Progress retrieved successfully',
@@ -48,7 +49,7 @@ export class TaskProgressController {
 
     const result = await this.service.getAllChildrenProgress(taskId);
 
-    (res as any).sendResponse({
+    sendResponse(res, {
       code: StatusCodes.OK,
       data: result,
       message: 'Children progress retrieved successfully',
@@ -66,7 +67,7 @@ export class TaskProgressController {
 
     const result = await this.service.getAllTasksProgress(childId, { status, taskType });
 
-    (res as any).sendResponse({
+    sendResponse(res, {
       code: StatusCodes.OK,
       data: result,
       message: 'Tasks progress retrieved successfully',
@@ -94,7 +95,7 @@ export class TaskProgressController {
 
     const result = await this.service.updateProgressStatus(taskId, userId, status, note);
 
-    (res as any).sendResponse({
+    sendResponse(res, {
       code: StatusCodes.OK,
       data: result,
       message: `Task ${status} successfully`,
@@ -116,7 +117,7 @@ export class TaskProgressController {
 
     const result = await this.service.completeSubtask(taskId, parseInt(subtaskIndex), userId);
 
-    (res as any).sendResponse({
+    sendResponse(res, {
       code: StatusCodes.OK,
       data: result,
       message: 'Subtask completed successfully',
@@ -138,7 +139,7 @@ export class TaskProgressController {
 
     const result = await this.service.createOrUpdateProgress(taskId, userId, status);
 
-    (res as any).sendResponse({
+    sendResponse(res, {
       code: StatusCodes.CREATED,
       data: result,
       message: 'Progress created successfully',
