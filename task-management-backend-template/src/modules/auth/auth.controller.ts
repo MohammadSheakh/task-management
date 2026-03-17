@@ -5,7 +5,7 @@ import sendResponse from '../../shared/sendResponse';
 import { AuthService } from './auth.service';
 import { TRole } from '../../middlewares/roles';
 //@ts-ignore
-import { Request, Response } from "express";
+import { Request, Response } from 'express';
 import { UserProfile } from '../user.module/userProfile/userProfile.model';
 import { User } from '../user.module/user/user.model';
 import { TokenService } from '../token/token.service';
@@ -33,7 +33,6 @@ const oAuthAccountService = new OAuthAccountService();
 
 // 💎✨🔍 -> V2 Found
 const register = catchAsync(async (req: Request, res: Response) => {
-
   const data: IRegisterData = req.body;
 
   if (!data.acceptTOC) {
@@ -52,7 +51,7 @@ const register = catchAsync(async (req: Request, res: Response) => {
   // req.body.profileId = userProfile._id;
 
   //---------------------------------
-  // lets create wallet for mentor but we do this in AuthService.createUser function 
+  // lets create wallet for mentor but we do this in AuthService.createUser function
   //---------------------------------
 
   const userDTO: ICreateUser = {
@@ -60,8 +59,8 @@ const register = catchAsync(async (req: Request, res: Response) => {
     email: req.body.email,
     password: req.body.password,
     role: data.role,
-    profileId: userProfile._id
-  }
+    profileId: userProfile._id,
+  };
 
   const result = await AuthService.createUser(userDTO, userProfile._id);
 
@@ -71,15 +70,12 @@ const register = catchAsync(async (req: Request, res: Response) => {
     data: result,
     success: true,
   });
-
-
 });
 
 /*-─────────────────────────────────
 |  We refactor register service in this project
 └──────────────────────────────────*/
 const registerV2 = catchAsync(async (req: Request, res: Response) => {
-
   const data: IRegisterData = req.body;
 
   if (!data.acceptTOC) {
@@ -98,7 +94,7 @@ const registerV2 = catchAsync(async (req: Request, res: Response) => {
   // req.body.profileId = userProfile._id;
 
   //---------------------------------
-  // lets create wallet for mentor but we do this in AuthService.createUser function 
+  // lets create wallet for mentor but we do this in AuthService.createUser function
   //---------------------------------
 
   const userDTO: ICreateUser = {
@@ -106,8 +102,8 @@ const registerV2 = catchAsync(async (req: Request, res: Response) => {
     email: req.body.email,
     password: req.body.password,
     role: data.role,
-    profileId: userProfile._id
-  }
+    profileId: userProfile._id,
+  };
 
   const result = await AuthService.createUserV2(userDTO, userProfile._id);
 
@@ -117,8 +113,6 @@ const registerV2 = catchAsync(async (req: Request, res: Response) => {
     data: result,
     success: true,
   });
-
-
 });
 
 // 💎✨🔍 -> V2 Found
@@ -146,6 +140,9 @@ const login = catchAsync(async (req: Request, res: Response) => {
 └──────────────────────────────────*/
 const loginV2 = catchAsync(async (req: Request, res: Response) => {
   const { email, password, fcmToken } = req.body;
+
+  console.log('email, password, fcmToken :: ', email, password, fcmToken);
+
   const result = await AuthService.loginV2(email, password, fcmToken);
 
   //set refresh token in cookie
@@ -164,9 +161,10 @@ const loginV2 = catchAsync(async (req: Request, res: Response) => {
 });
 
 // 💎✨🔍 -> V2 Found
-const googleLogin = async (idToken: string,
+const googleLogin = async (
+  idToken: string,
   fcmToken?: string,
-  deviceInfo?: { deviceType?: string, deviceName?: string }
+  deviceInfo?: { deviceType?: string; deviceName?: string },
 ) => {
   try {
     // 🔐 Verify ID token
@@ -183,7 +181,10 @@ const googleLogin = async (idToken: string,
     const { sub: providerId, email, email_verified: isEmailVerified } = payload;
 
     if (!email || !providerId) {
-      throw new ApiError(StatusCodes.BAD_REQUEST, 'Email or provider ID missing');
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        'Email or provider ID missing',
+      );
     }
 
     // 🔍 Check if Google account already exists
@@ -196,7 +197,10 @@ const googleLogin = async (idToken: string,
       // ✅ Existing Google user → log in
       const user = await User.findById(googleAccount.userId);
       if (!user || user.isDeleted) {
-        throw new ApiError(StatusCodes.UNAUTHORIZED, 'User not found or deactivated');
+        throw new ApiError(
+          StatusCodes.UNAUTHORIZED,
+          'User not found or deactivated',
+        );
       }
 
       // In googleLogin and appleLogin functions, after successful login:
@@ -254,7 +258,7 @@ const googleLogin = async (idToken: string,
         if (fcmToken) {
           // As this Marie Wagner Project is Website .. so this project have no fcmToken usecase
 
-          // For a mobile application usecase .. we need to save fcmTokens to different models .. 
+          // For a mobile application usecase .. we need to save fcmTokens to different models ..
 
           await localUser.save();
         }
@@ -270,7 +274,7 @@ const googleLogin = async (idToken: string,
         // 🛑 Don't auto-link if email isn't verified
         throw new ApiError(
           StatusCodes.CONFLICT,
-          'An account with this email exists. Please log in with your password or verify your email.'
+          'An account with this email exists. Please log in with your password or verify your email.',
         );
       }
     }
@@ -306,25 +310,31 @@ const googleLogin = async (idToken: string,
       user: userWithoutPassword,
       tokens,
     };
-
   } catch (error) {
     console.error('Google login error:', error);
-    throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, 'Something went wrong during Google login');
+    throw new ApiError(
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      'Something went wrong during Google login',
+    );
   }
 };
 
 // 💎✨🔍 -> V3 Found
-const googleLoginV2 = async (idToken: string,
+const googleLoginV2 = async (
+  idToken: string,
   role: string,
   fcmToken?: string,
-  deviceInfo?: { deviceType?: string, deviceName?: string }
+  deviceInfo?: { deviceType?: string; deviceName?: string },
 ) => {
   try {
-
-    const { provider, providerId, email, name, picture } = await oAuthAccountService.verifyGoogleToken(idToken);
+    const { provider, providerId, email, name, picture } =
+      await oAuthAccountService.verifyGoogleToken(idToken);
 
     if (!email || !providerId) {
-      throw new ApiError(StatusCodes.BAD_REQUEST, 'Email or provider ID missing');
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        'Email or provider ID missing',
+      );
     }
 
     // 🔍 Check if Google account already exists
@@ -337,7 +347,10 @@ const googleLoginV2 = async (idToken: string,
       // ✅ Existing Google user → log in
       const user = await User.findById(googleAccount.userId);
       if (!user || user.isDeleted) {
-        throw new ApiError(StatusCodes.UNAUTHORIZED, 'User not found or deactivated');
+        throw new ApiError(
+          StatusCodes.UNAUTHORIZED,
+          'User not found or deactivated',
+        );
       }
 
       // -------- for this marie wagner .. we dont need to store fcmToken
@@ -408,7 +421,7 @@ const googleLoginV2 = async (idToken: string,
         // 🛑 Don't auto-link if email isn't verified
         throw new ApiError(
           StatusCodes.CONFLICT,
-          'An account with this email exists. Please log in with your password or verify your email.'
+          'An account with this email exists. Please log in with your password or verify your email.',
         );
       }
     }
@@ -445,13 +458,14 @@ const googleLoginV2 = async (idToken: string,
       user: userWithoutPassword,
       tokens,
     };
-
   } catch (error) {
     console.error('Google login error:', error);
-    throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, 'Something went wrong during Google login');
+    throw new ApiError(
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      'Something went wrong during Google login',
+    );
   }
 };
-
 
 const googleAuthCallback = catchAsync(async (req: Request, res: Response) => {
   const { idToken, role, acceptTOC } = req.body;
@@ -486,7 +500,6 @@ const appleAuthCallback = catchAsync(async (req: Request, res: Response) => {
 //   lastActive: { $lt: moment().subtract(30, 'days').toDate() },
 //   isDeleted: false,
 // });
-
 
 /*
 export const appleLogin = async (idToken: string, fcmToken?: string) => {
@@ -677,9 +690,10 @@ const resetPassword = catchAsync(async (req: Request, res: Response) => {
 });
 
 const logout = catchAsync(async (req: Request, res: Response) => {
-  // await AuthService.logout(req.body.refreshToken);
+  const { refreshToken, fcmToken, logoutFromAllDevices } = req.body;
+  const userId = (req.user as IUser)?.userId;
 
-  // await UserDevices.deleteMany({userId : req.user.userId});
+  await AuthService.logout(refreshToken, userId, fcmToken, logoutFromAllDevices);
 
   sendResponse(res, {
     code: StatusCodes.OK,
@@ -692,10 +706,11 @@ const refreshToken = catchAsync(async (req: Request, res: Response) => {
   const tokens = await AuthService.refreshAuth(req.body.refreshToken);
   sendResponse(res, {
     code: StatusCodes.OK,
-    message: 'User logged in successfully',
+    message: 'Token refreshed successfully',
     data: {
       tokens,
     },
+    success: true,
   });
 });
 

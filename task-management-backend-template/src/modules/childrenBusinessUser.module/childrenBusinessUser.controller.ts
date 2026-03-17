@@ -350,6 +350,123 @@ export class ChildrenBusinessUserController {
       success: true,
     });
   });
+
+  /**
+   * Get children with active task counts for Team Member sidebar
+   * GET /children-business-users/team-members
+   *
+   * @description Get all children with their active task counts for Task Monitoring sidebar
+   * @auth Business user (Parent/Teacher)
+   * @figmaIndex task-monitoring-flow-01.png (Team Member section)
+   */
+  getChildrenWithActiveTaskCounts = catchAsync(async (req: Request, res: Response) => {
+    /*-─────────────────────────────────
+    |  Step 1: Get business user ID from request
+    └──────────────────────────────────*/
+    const businessUserId = (req.user as IUser).userId;
+
+    if (!businessUserId) {
+      throw new ApiError(StatusCodes.UNAUTHORIZED, 'User not authenticated');
+    }
+
+    /*-─────────────────────────────────
+    |  Step 2: Get children with task counts from service
+    └──────────────────────────────────*/
+    const result = await this.service.getChildrenWithActiveTaskCounts(businessUserId as string);
+
+    /*-─────────────────────────────────
+    |  Step 3: Send success response
+    └──────────────────────────────────*/
+    sendResponse(res, {
+      code: StatusCodes.OK,
+      data: result,
+      message: 'Team members with active task counts retrieved successfully',
+      success: true,
+    });
+  });
+
+  /**
+   * Get team members statistics for Team Members dashboard
+   * GET /children-business-users/team-members/statistics
+   *
+   * @description Get statistics for Team Members dashboard (Team Size, Total Tasks, Active Tasks, Completed Tasks)
+   * @auth Business user (Parent/Teacher)
+   * @figmaIndex team-member-flow-01.png (Top statistics cards)
+   */
+  getTeamMembersStatistics = catchAsync(async (req: Request, res: Response) => {
+    /*-─────────────────────────────────
+    |  Step 1: Get business user ID from request
+    └──────────────────────────────────*/
+    const businessUserId = (req.user as IUser).userId;
+
+    if (!businessUserId) {
+      throw new ApiError(StatusCodes.UNAUTHORIZED, 'User not authenticated');
+    }
+
+    /*-─────────────────────────────────
+    |  Step 2: Get statistics from service
+    └──────────────────────────────────*/
+    const result = await this.service.getTeamMembersStatistics(businessUserId as string);
+
+    /*-─────────────────────────────────
+    |  Step 3: Send success response
+    └──────────────────────────────────*/
+    sendResponse(res, {
+      code: StatusCodes.OK,
+      data: result,
+      message: 'Team members statistics retrieved successfully',
+      success: true,
+    });
+  });
+
+  /**
+   * Get team members list with task progress for Team Members dashboard
+   * GET /children-business-users/team-members/list
+   *
+   * @description Get paginated list of children with task progress percentage
+   * @auth Business user (Parent/Teacher)
+   * @figmaIndex team-member-flow-01.png (Team Members table)
+   * @query page - Page number (default: 1)
+   * @query limit - Items per page (default: 10)
+   * @query sortBy - Sort field (default: -addedAt)
+   */
+  getTeamMembersList = catchAsync(async (req: Request, res: Response) => {
+    /*-─────────────────────────────────
+    |  Step 1: Get business user ID from request
+    └──────────────────────────────────*/
+    const businessUserId = (req.user as IUser).userId;
+
+    if (!businessUserId) {
+      throw new ApiError(StatusCodes.UNAUTHORIZED, 'User not authenticated');
+    }
+
+    /*-─────────────────────────────────
+    |  Step 2: Extract query parameters
+    └──────────────────────────────────*/
+    const options = {
+      page: req.query.page ? parseInt(req.query.page as string) : 1,
+      limit: req.query.limit ? parseInt(req.query.limit as string) : 10,
+      sortBy: req.query.sortBy as string || '-addedAt',
+    };
+
+    /*-─────────────────────────────────
+    |  Step 3: Get team members list from service
+    └──────────────────────────────────*/
+    const result = await this.service.getTeamMembersListWithTaskProgress(
+      businessUserId as string,
+      options
+    );
+
+    /*-─────────────────────────────────
+    |  Step 4: Send success response
+    └──────────────────────────────────*/
+    sendResponse(res, {
+      code: StatusCodes.OK,
+      data: result,
+      message: 'Team members list with task progress retrieved successfully',
+      success: true,
+    });
+  });
 }
 
 export const childrenBusinessUserController = new ChildrenBusinessUserController();

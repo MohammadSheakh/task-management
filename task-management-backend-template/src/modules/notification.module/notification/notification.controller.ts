@@ -6,8 +6,13 @@ import { INotificationDocument } from './notification.interface';
 import { NotificationService } from './notification.service';
 import { TRole } from '../../../middlewares/roles';
 import ApiError from '../../../errors/ApiError';
-import { NotificationPriority, NotificationChannel, NotificationType } from './notification.constant';
+import {
+  NotificationPriority,
+  NotificationChannel,
+  NotificationType,
+} from './notification.constant';
 import sendResponse from '../../../shared/sendResponse';
+import { Types } from 'mongoose';
 
 /**
  * Notification Controller
@@ -22,7 +27,10 @@ import sendResponse from '../../../shared/sendResponse';
  * @version 1.0.0
  * @author Senior Engineering Team
  */
-export class NotificationController extends GenericController<typeof Notification, INotificationDocument> {
+export class NotificationController extends GenericController<
+  typeof Notification,
+  INotificationDocument
+> {
   notificationService: NotificationService;
 
   constructor() {
@@ -55,7 +63,10 @@ export class NotificationController extends GenericController<typeof Notificatio
       priority: req.query.priority as any,
     };
 
-    const result = await this.notificationService.getUserNotifications(userId, options);
+    const result = await this.notificationService.getUserNotifications(
+      userId,
+      options,
+    );
 
     sendResponse(res, {
       code: StatusCodes.OK,
@@ -100,7 +111,10 @@ export class NotificationController extends GenericController<typeof Notificatio
       throw new ApiError(StatusCodes.UNAUTHORIZED, 'User not authenticated');
     }
 
-    const result = await this.notificationService.markAsRead(notificationId, userId);
+    const result = await this.notificationService.markAsRead(
+      notificationId,
+      userId,
+    );
 
     if (!result) {
       throw new ApiError(StatusCodes.NOT_FOUND, 'Notification not found');
@@ -149,7 +163,10 @@ export class NotificationController extends GenericController<typeof Notificatio
       throw new ApiError(StatusCodes.UNAUTHORIZED, 'User not authenticated');
     }
 
-    const result = await this.notificationService.deleteNotification(notificationId, userId);
+    const result = await this.notificationService.deleteNotification(
+      notificationId,
+      userId,
+    );
 
     if (!result) {
       throw new ApiError(StatusCodes.NOT_FOUND, 'Notification not found');
@@ -182,7 +199,18 @@ export class NotificationController extends GenericController<typeof Notificatio
       throw new ApiError(StatusCodes.UNAUTHORIZED, 'User not authenticated');
     }
 
-    const { userIds, receiverRole, title, subTitle, type, priority, channels, linkFor, linkId, data } = req.body;
+    const {
+      userIds,
+      receiverRole,
+      title,
+      subTitle,
+      type,
+      priority,
+      channels,
+      linkFor,
+      linkId,
+      data,
+    } = req.body;
 
     if (!title) {
       throw new ApiError(StatusCodes.BAD_REQUEST, 'Title is required');
@@ -193,7 +221,10 @@ export class NotificationController extends GenericController<typeof Notificatio
     }
 
     if (!userIds && !receiverRole) {
-      throw new ApiError(StatusCodes.BAD_REQUEST, 'UserIds or receiverRole is required');
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        'UserIds or receiverRole is required',
+      );
     }
 
     const result = await this.notificationService.sendBulkNotification({
@@ -233,7 +264,12 @@ export class NotificationController extends GenericController<typeof Notificatio
       throw new ApiError(StatusCodes.UNAUTHORIZED, 'User not authenticated');
     }
 
-    const { taskId, reminderTime, reminderType = 'before_deadline', message } = req.body;
+    const {
+      taskId,
+      reminderTime,
+      reminderType = 'before_deadline',
+      message,
+    } = req.body;
 
     if (!taskId) {
       throw new ApiError(StatusCodes.BAD_REQUEST, 'Task ID is required');
@@ -246,7 +282,10 @@ export class NotificationController extends GenericController<typeof Notificatio
     const scheduledDate = new Date(reminderTime);
 
     if (scheduledDate <= new Date()) {
-      throw new ApiError(StatusCodes.BAD_REQUEST, 'Reminder time must be in the future');
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        'Reminder time must be in the future',
+      );
     }
 
     const result = await this.notificationService.createTaskReminder(
@@ -254,7 +293,7 @@ export class NotificationController extends GenericController<typeof Notificatio
       userId,
       scheduledDate,
       reminderType,
-      message
+      message,
     );
 
     sendResponse(res, {
@@ -286,7 +325,10 @@ export class NotificationController extends GenericController<typeof Notificatio
 
     const limit = parseInt(req.query.limit as string) || 10;
 
-    const result = await this.notificationService.getLiveActivityFeed(groupId, limit);
+    const result = await this.notificationService.getLiveActivityFeed(
+      groupId,
+      limit,
+    );
 
     sendResponse(res, {
       code: StatusCodes.OK,
@@ -304,7 +346,10 @@ export class NotificationController extends GenericController<typeof Notificatio
    * @desc Get live activity feed for parent dashboard - shows all children's activities
    * @query limit - Number of activities to return (default: 10)
    *----------------------------------------------*/
-  getLiveActivityFeedForParentDashboard = async (req: Request, res: Response) => {
+  getLiveActivityFeedForParentDashboard = async (
+    req: Request,
+    res: Response,
+  ) => {
     const businessUserId = req.user?.userId;
 
     if (!businessUserId) {
@@ -313,10 +358,11 @@ export class NotificationController extends GenericController<typeof Notificatio
 
     const limit = parseInt(req.query.limit as string) || 10;
 
-    const result = await this.notificationService.getLiveActivityFeedForParentDashboard(
-      new Types.ObjectId(businessUserId),
-      limit
-    );
+    const result =
+      await this.notificationService.getLiveActivityFeedForParentDashboard(
+        new Types.ObjectId(businessUserId),
+        limit,
+      );
 
     sendResponse(res, {
       code: StatusCodes.OK,

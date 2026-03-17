@@ -8,12 +8,22 @@ import { TRole } from '../../../middlewares/roles';
 import { setQueryOptions } from '../../../middlewares/setQueryOptions';
 import validateRequest from '../../../shared/validateRequest';
 import { z } from 'zod';
-import { rateLimiter, createCustomRateLimiter } from '../../../middlewares/rateLimiterRedis';
+import {
+  rateLimiter,
+  createCustomRateLimiter,
+} from '../../../middlewares/rateLimiterRedis';
 
 const router = express.Router();
 
-export const optionValidationChecking = <T extends keyof INotificationDocument | 'sortBy' | 'page' | 'limit' | 'populate'>(
-  filters: T[]
+export const optionValidationChecking = <
+  T extends
+    | keyof INotificationDocument
+    | 'sortBy'
+    | 'page'
+    | 'limit'
+    | 'populate',
+>(
+  filters: T[],
 ) => {
   return filters;
 };
@@ -33,10 +43,10 @@ const controller = new NotificationController();
  * Prevents spam - 10 requests per minute
  */
 const sendNotificationLimiter = createCustomRateLimiter(
-  60 * 1000,    // 1 minute
-  10,           // 10 requests
+  60 * 1000, // 1 minute
+  10, // 10 requests
   'Too many notification attempts, please try again later',
-  'notification-send'
+  'notification-send',
 );
 
 /**
@@ -49,20 +59,31 @@ const notificationLimiter = rateLimiter('user');
 /**
  * Bulk notification validation
  */
-const sendBulkNotificationSchema = z.object({
-  userIds: z.array(z.string()).optional(),
-  receiverRole: z.string().optional(),
-  title: z.union([z.string(), z.record(z.string())]),
-  subTitle: z.union([z.string(), z.record(z.string())]).optional(),
-  type: z.enum(['task', 'group', 'system', 'reminder', 'mention', 'assignment', 'deadline', 'custom']),
-  priority: z.enum(['low', 'normal', 'high', 'urgent']).optional(),
-  channels: z.array(z.enum(['in_app', 'email', 'push', 'sms'])).optional(),
-  linkFor: z.string().optional(),
-  linkId: z.string().optional(),
-  data: z.record(z.any()).optional(),
-}).refine(data => data.userIds || data.receiverRole, {
-  message: 'UserIds or receiverRole is required',
-});
+const sendBulkNotificationSchema = z
+  .object({
+    userIds: z.array(z.string()).optional(),
+    receiverRole: z.string().optional(),
+    title: z.union([z.string(), z.record(z.string())]),
+    subTitle: z.union([z.string(), z.record(z.string())]).optional(),
+    type: z.enum([
+      'task',
+      'group',
+      'system',
+      'reminder',
+      'mention',
+      'assignment',
+      'deadline',
+      'custom',
+    ]),
+    priority: z.enum(['low', 'normal', 'high', 'urgent']).optional(),
+    channels: z.array(z.enum(['in_app', 'email', 'push', 'sms'])).optional(),
+    linkFor: z.string().optional(),
+    linkId: z.string().optional(),
+    data: z.record(z.any()).optional(),
+  })
+  .refine(data => data.userIds || data.receiverRole, {
+    message: 'UserIds or receiverRole is required',
+  });
 
 /**
  * Schedule reminder validation
@@ -70,7 +91,9 @@ const sendBulkNotificationSchema = z.object({
 const scheduleReminderSchema = z.object({
   taskId: z.string().min(1, 'Task ID is required'),
   reminderTime: z.string().min(1, 'Reminder time is required'),
-  reminderType: z.enum(['before_deadline', 'at_deadline', 'after_deadline', 'custom']).optional(),
+  reminderType: z
+    .enum(['before_deadline', 'at_deadline', 'after_deadline', 'custom'])
+    .optional(),
   message: z.string().max(500).optional(),
 });
 
@@ -82,12 +105,21 @@ const scheduleReminderSchema = z.object({
 |  @auth All authenticated users (child, business)
 |  @rateLimit 100 requests per minute
 └──────────────────────────────────*/
-router.route('/my').get(
-  auth(TRole.commonUser),
-  notificationLimiter,
-  validateFiltersForQuery(optionValidationChecking(['status', 'type', 'priority', ...paginationOptions])),
-  controller.getMyNotifications
-);
+router
+  .route('/my')
+  .get(
+    auth(TRole.commonUser),
+    notificationLimiter,
+    validateFiltersForQuery(
+      optionValidationChecking([
+        'status',
+        'type',
+        'priority',
+        ...paginationOptions,
+      ]),
+    ),
+    controller.getMyNotifications,
+  );
 
 /*-─────────────────────────────────
 |  Child | Business | Notification | home-flow.png | Get unread notification count
@@ -95,11 +127,9 @@ router.route('/my').get(
 |  @auth All authenticated users (child, business)
 |  @rateLimit 100 requests per minute
 └──────────────────────────────────*/
-router.route('/unread-count').get(
-  auth(TRole.commonUser),
-  notificationLimiter,
-  controller.getUnreadCount
-);
+router
+  .route('/unread-count')
+  .get(auth(TRole.commonUser), notificationLimiter, controller.getUnreadCount);
 
 /*-─────────────────────────────────
 |  Child | Business | Notification | home-flow.png | Mark notification as read
@@ -107,11 +137,9 @@ router.route('/unread-count').get(
 |  @auth All authenticated users (child, business)
 |  @rateLimit 100 requests per minute
 └──────────────────────────────────*/
-router.route('/:id/read').post(
-  auth(TRole.commonUser),
-  notificationLimiter,
-  controller.markAsRead
-);
+router
+  .route('/:id/read')
+  .post(auth(TRole.commonUser), notificationLimiter, controller.markAsRead);
 
 /*-─────────────────────────────────
 |  Child | Business | Notification | home-flow.png | Mark all notifications as read
@@ -119,11 +147,9 @@ router.route('/:id/read').post(
 |  @auth All authenticated users (child, business)
 |  @rateLimit 100 requests per minute
 └──────────────────────────────────*/
-router.route('/read-all').post(
-  auth(TRole.commonUser),
-  notificationLimiter,
-  controller.markAllAsRead
-);
+router
+  .route('/read-all')
+  .post(auth(TRole.commonUser), notificationLimiter, controller.markAllAsRead);
 
 /*-─────────────────────────────────
 |  Child | Business | Notification | home-flow.png | Delete notification
@@ -131,11 +157,13 @@ router.route('/read-all').post(
 |  @auth All authenticated users (child, business)
 |  @rateLimit 100 requests per minute
 └──────────────────────────────────*/
-router.route('/:id').delete(
-  auth(TRole.commonUser),
-  notificationLimiter,
-  controller.deleteNotification
-);
+router
+  .route('/:id')
+  .delete(
+    auth(TRole.commonUser),
+    notificationLimiter,
+    controller.deleteNotification,
+  );
 
 /*-─────────────────────────────────
 |  Admin | Notification | dashboard-section-flow.png | Send bulk notification
@@ -143,12 +171,14 @@ router.route('/:id').delete(
 |  @auth Admin only
 |  @rateLimit 10 requests per minute
 └──────────────────────────────────*/
-router.route('/bulk').post(
-  auth(TRole.admin),
-  sendNotificationLimiter,
-  validateRequest(sendBulkNotificationSchema),
-  controller.sendBulkNotification
-);
+router
+  .route('/bulk')
+  .post(
+    auth(TRole.admin),
+    sendNotificationLimiter,
+    validateRequest(sendBulkNotificationSchema),
+    controller.sendBulkNotification,
+  );
 
 /*-─────────────────────────────────
 |  Child | Business | Notification | home-flow.png | Schedule reminder
@@ -156,12 +186,14 @@ router.route('/bulk').post(
 |  @auth All authenticated users (child, business)
 |  @rateLimit 10 requests per minute
 └──────────────────────────────────*/
-router.route('/schedule-reminder').post(
-  auth(TRole.commonUser),
-  sendNotificationLimiter,
-  validateRequest(scheduleReminderSchema),
-  controller.scheduleReminder
-);
+router
+  .route('/schedule-reminder')
+  .post(
+    auth(TRole.commonUser),
+    sendNotificationLimiter,
+    validateRequest(scheduleReminderSchema),
+    controller.scheduleReminder,
+  );
 
 // ────────────────────────────────────────────────────────────────────────
 // Figma-Aligned Routes: Live Activity Feed
@@ -175,18 +207,20 @@ router.route('/schedule-reminder').post(
 |  @auth Group members (child, business)
 |  @rateLimit 100 requests per minute
 └──────────────────────────────────*/
-router.route('/activity-feed/:groupId').get(
-  auth(TRole.commonUser),
-  notificationLimiter,
-  controller.getLiveActivityFeed
-);
+router
+  .route('/activity-feed/:groupId')
+  .get(
+    auth(TRole.commonUser),
+    notificationLimiter,
+    controller.getLiveActivityFeed,
+  );
 
 // ────────────────────────────────────────────────────────────────────────
 // Parent Dashboard: Live Activity Feed
 // Figma: teacher-parent-dashboard/dashboard/dashboard-flow-01.png
 // ────────────────────────────────────────────────────────────────────────
 
-/*-─────────────────────────────────
+/*-───────────────────────────────── 🆕
 |  Business (Parent/Teacher) | Notification | dashboard-flow-01.png | Get live activity feed for parent dashboard
 |  @desc Real-time feed showing all children's task activities (completions, starts, subtask completions)
 |  @desc No groupId required - automatically fetches from business user's children
@@ -194,10 +228,12 @@ router.route('/activity-feed/:groupId').get(
 |  @rateLimit 100 requests per minute
 |  @query limit - Number of activities to return (default: 10)
 └──────────────────────────────────*/
-router.route('/dashboard/activity-feed').get(
-  auth(TRole.business),
-  notificationLimiter,
-  controller.getLiveActivityFeedForParentDashboard
-);
+router
+  .route('/dashboard/activity-feed')
+  .get(
+    auth(TRole.business),
+    notificationLimiter,
+    controller.getLiveActivityFeedForParentDashboard,
+  );
 
 export const NotificationFixedRoute = router;

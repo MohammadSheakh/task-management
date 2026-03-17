@@ -4,7 +4,7 @@ import { Notification } from './notification.model';
 import { INotification, INotificationDocument, INotificationQueryOptions, IBulkNotificationPayload } from './notification.interface';
 import ApiError from '../../../errors/ApiError';
 import { redisClient } from '../../../helpers/redis/redis';
-import { NotificationStatus, NotificationPriority, NotificationChannel, NOTIFICATION_CACHE_CONFIG, QUEUE_CONFIG, ACTIVITY_TYPE, TActivityType } from './notification.constant';
+import { NotificationStatus, NotificationPriority, NotificationChannel, NotificationType, NOTIFICATION_CACHE_CONFIG, QUEUE_CONFIG, ACTIVITY_TYPE, TActivityType } from './notification.constant';
 import { errorLogger, logger } from '../../../shared/logger';
 import { notificationQueue } from '../../../helpers/bullmq/bullmq';
 import PaginationService from '../../../common/service/paginationService';
@@ -535,7 +535,7 @@ export class NotificationService extends GenericService<typeof Notification, INo
     // Get recent notifications for all activity types
     const notifications = await this.model.find({
       'data.groupId': groupObjectId.toString(),
-      type: {
+      'data.activityType': {
         $in: [
           ACTIVITY_TYPE.TASK_CREATED,
           ACTIVITY_TYPE.TASK_STARTED,
@@ -632,7 +632,8 @@ export class NotificationService extends GenericService<typeof Notification, INo
     // Get recent notifications for all children
     const notifications = await this.model.find({
       receiverId: { $in: childUserIds },
-      type: {
+      type: NotificationType.TASK,  // ✅ FIXED: Filter by valid NotificationType
+      'data.activityType': {
         $in: [
           ACTIVITY_TYPE.TASK_CREATED,
           ACTIVITY_TYPE.TASK_STARTED,
@@ -758,7 +759,7 @@ export class NotificationService extends GenericService<typeof Notification, INo
     await this.model.create({
       receiverId: new Types.ObjectId(userId),
       title: activityType.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()),
-      type: activityType,
+      type: NotificationType.TASK,  // ✅ FIXED: Use valid NotificationType instead of activityType
       priority: NotificationPriority.NORMAL,
       channels: [NotificationChannel.IN_APP],
       linkFor: 'task',
@@ -769,6 +770,7 @@ export class NotificationService extends GenericService<typeof Notification, INo
         groupId,
         taskId: taskData?.taskId,
         taskTitle: taskData?.taskTitle,
+        activityType,  // ✅ Store activity type in data field
       },
       isDeleted: false,
     });

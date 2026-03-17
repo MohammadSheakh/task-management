@@ -6,7 +6,12 @@ import { GenericService } from '../../_generic-module/generic.services';
 import ApiError from '../../../errors/ApiError';
 //@ts-ignore
 import { Types } from 'mongoose';
-import { TaskStatus, TASK_CACHE_CONFIG, TTaskStatus, DAILY_TASK_LIMIT } from './task.constant';
+import {
+  TaskStatus,
+  TASK_CACHE_CONFIG,
+  TTaskStatus,
+  DAILY_TASK_LIMIT,
+} from './task.constant';
 import { redisClient } from '../../../helpers/redis/redis';
 import { logger, errorLogger } from '../../../shared/logger';
 import { NotificationService } from '../../notification.module/notification/notification.service';
@@ -21,7 +26,7 @@ const taskProgressService = new TaskProgressService();
  * Task Service
  * Handles business logic for task operations
  * Extends GenericService for CRUD operations
- * 
+ *
  * Features:
  * - Redis caching for read operations
  * - Automatic cache invalidation on writes
@@ -36,7 +41,6 @@ export class TaskService extends GenericService<typeof Task, ITask> {
    * Cache Key Generator
    */
   private getCacheKey(type: string, id?: string, userId?: string): string {
-
     const prefix = TASK_CACHE_CONFIG.PREFIX;
 
     if (type === 'detail' && id) {
@@ -75,7 +79,11 @@ export class TaskService extends GenericService<typeof Task, ITask> {
   /** ✔️
    * Set in Cache
    */
-  private async setInCache<T>(key: string, data: T, ttl: number): Promise<void> {
+  private async setInCache<T>(
+    key: string,
+    data: T,
+    ttl: number,
+  ): Promise<void> {
     try {
       await redisClient.setEx(key, ttl, JSON.stringify(data));
       logger.debug(`Cache set: ${key} (TTL: ${ttl}s)`);
@@ -87,7 +95,10 @@ export class TaskService extends GenericService<typeof Task, ITask> {
   /** 🔁
    * Invalidate Cache
    */
-  private async invalidateCache(userId: string, taskId?: string): Promise<void> {
+  private async invalidateCache(
+    userId: string,
+    taskId?: string,
+  ): Promise<void> {
     try {
       const keysToDelete = [
         this.getCacheKey('list', undefined, userId),
@@ -100,17 +111,21 @@ export class TaskService extends GenericService<typeof Task, ITask> {
       }
 
       // Add pattern-based invalidation
-      Object.values(TASK_CACHE_CONFIG.INVALIDATION_PATTERNS).forEach(patterns => {
-        patterns.forEach(pattern => {
-          if (pattern.includes('*') && taskId) {
-            keysToDelete.push(pattern.replace('*', taskId));
-          }
-        });
-      });
+      Object.values(TASK_CACHE_CONFIG.INVALIDATION_PATTERNS).forEach(
+        patterns => {
+          patterns.forEach(pattern => {
+            if (pattern.includes('*') && taskId) {
+              keysToDelete.push(pattern.replace('*', taskId));
+            }
+          });
+        },
+      );
 
       if (keysToDelete.length > 0) {
         await redisClient.del(keysToDelete);
-        logger.info(`Invalidated ${keysToDelete.length} cache keys for user ${userId}`);
+        logger.info(
+          `Invalidated ${keysToDelete.length} cache keys for user ${userId}`,
+        );
       }
     } catch (error) {
       errorLogger.error('Redis DELETE error in TaskService:', error);
@@ -123,7 +138,10 @@ export class TaskService extends GenericService<typeof Task, ITask> {
    * @param userId - ID of the user creating the task
    * @returns Created task
    */
-  async createTask(data: Partial<ITask>, userId: Types.ObjectId): Promise<ITask> {
+  async createTask(
+    data: Partial<ITask>,
+    userId: Types.ObjectId,
+  ): Promise<ITask> {
     // Validate daily task limit for personal tasks
     if (data.taskType === 'personal' && data.startTime) {
       const startDate = new Date(data.startTime);
@@ -141,7 +159,7 @@ export class TaskService extends GenericService<typeof Task, ITask> {
       if (existingTaskCount >= DAILY_TASK_LIMIT.max) {
         throw new ApiError(
           StatusCodes.BAD_REQUEST,
-          `You can only create ${DAILY_TASK_LIMIT.max} tasks per day. You already have ${existingTaskCount} tasks scheduled for this day.`
+          `You can only create ${DAILY_TASK_LIMIT.max} tasks per day. You already have ${existingTaskCount} tasks scheduled for this day.`,
         );
       }
     }
@@ -155,7 +173,7 @@ export class TaskService extends GenericService<typeof Task, ITask> {
     if ((data as any).subtasks && Array.isArray((data as any).subtasks)) {
       data.totalSubtasks = (data as any).subtasks.length;
       data.completedSubtasks = (data as any).subtasks.filter(
-        (st: any) => st.isCompleted
+        (st: any) => st.isCompleted,
       ).length;
     }
 
@@ -165,10 +183,15 @@ export class TaskService extends GenericService<typeof Task, ITask> {
     });
 
     // ✅ NEW: Auto-create TaskProgress records for all assigned children
-    if (data.taskType === 'collaborative' && data.assignedUserIds && data.assignedUserIds.length > 0) {
-      await taskProgressService.bulkCreateForTask( //✔️
+    if (
+      data.taskType === 'collaborative' &&
+      data.assignedUserIds &&
+      data.assignedUserIds.length > 0
+    ) {
+      await taskProgressService.bulkCreateForTask(
+        //✔️
         task._id.toString(),
-        data.assignedUserIds.map(id => id.toString())
+        data.assignedUserIds.map(id => id.toString()),
       );
     }
 
@@ -177,9 +200,14 @@ export class TaskService extends GenericService<typeof Task, ITask> {
 
     // ✨ NEW: Record activity for collaborative/family tasks
     // For family-based structure, we need to find the business user (team head)
-    if (data.taskType === 'collaborative' && data.assignedUserIds && data.assignedUserIds.length > 0) {
+    if (
+      data.taskType === 'collaborative' &&
+      data.assignedUserIds &&
+      data.assignedUserIds.length > 0
+    ) {
       // Find the business user (parent) from the first assigned child
-      const { ChildrenBusinessUser } = await import('../../childrenBusinessUser.module/childrenBusinessUser.model');
+      const { ChildrenBusinessUser } =
+        await import('../../childrenBusinessUser.module/childrenBusinessUser.model');
       const firstAssignedUser = data.assignedUserIds[0];
 
       const relationship = await ChildrenBusinessUser.findOne({
@@ -193,7 +221,7 @@ export class TaskService extends GenericService<typeof Task, ITask> {
           relationship.parentBusinessUserId.toString(),
           userId.toString(),
           ACTIVITY_TYPE.TASK_CREATED,
-          { taskId: task._id.toString(), taskTitle: task.title }
+          { taskId: task._id.toString(), taskTitle: task.title },
         );
 
         // 🚀 NEW: Broadcast to family members via group activity
@@ -211,7 +239,7 @@ export class TaskService extends GenericService<typeof Task, ITask> {
               title: task.title,
             },
             timestamp: new Date(),
-          }
+          },
         );
       }
     } else {
@@ -236,10 +264,7 @@ export class TaskService extends GenericService<typeof Task, ITask> {
    * @param filters - Query filters
    * @returns Array of tasks
    */
-  async getUserTasks(
-    userId: Types.ObjectId,
-    filters: any
-  ): Promise<ITask[]> {
+  async getUserTasks(userId: Types.ObjectId, filters: any): Promise<ITask[]> {
     const query: any = {
       isDeleted: false,
       $or: [
@@ -275,7 +300,10 @@ export class TaskService extends GenericService<typeof Task, ITask> {
       }
     }
 
-    const tasks = await this.model.find(query).select('-__v').sort({ startTime: -1 });
+    const tasks = await this.model
+      .find(query)
+      .select('-__v')
+      .sort({ startTime: -1 });
 
     return tasks;
   }
@@ -290,7 +318,7 @@ export class TaskService extends GenericService<typeof Task, ITask> {
   async getUserTasksWithPagination(
     userId: Types.ObjectId,
     filters: any,
-    options: any
+    options: any,
   ) {
     const query: any = {
       isDeleted: false,
@@ -327,7 +355,7 @@ export class TaskService extends GenericService<typeof Task, ITask> {
   async updateTaskStatus(
     taskId: string,
     status: TTaskStatus,
-    userId: Types.ObjectId
+    userId: Types.ObjectId,
   ): Promise<ITask> {
     const updateData: any = { status };
 
@@ -336,11 +364,9 @@ export class TaskService extends GenericService<typeof Task, ITask> {
       updateData.completedTime = new Date();
     }
 
-    const updatedTask = await this.model.findByIdAndUpdate(
-      taskId,
-      updateData,
-      { new: true }
-    ).select('-__v');
+    const updatedTask = await this.model
+      .findByIdAndUpdate(taskId, updateData, { new: true })
+      .select('-__v');
 
     if (!updatedTask) {
       throw new ApiError(StatusCodes.NOT_FOUND, 'Task not found');
@@ -350,13 +376,18 @@ export class TaskService extends GenericService<typeof Task, ITask> {
     await this.invalidateCache(userId.toString(), taskId);
 
     // ✨ NEW: Record activity for collaborative/family tasks
-    if (updatedTask.taskType === 'collaborative' && updatedTask.assignedUserIds) {
-      const activityType = status === TaskStatus.COMPLETED
-        ? ACTIVITY_TYPE.TASK_COMPLETED
-        : ACTIVITY_TYPE.TASK_STARTED;
+    if (
+      updatedTask.taskType === 'collaborative' &&
+      updatedTask.assignedUserIds
+    ) {
+      const activityType =
+        status === TaskStatus.COMPLETED
+          ? ACTIVITY_TYPE.TASK_COMPLETED
+          : ACTIVITY_TYPE.TASK_STARTED;
 
       // Find the business user (parent) from the first assigned child
-      const { ChildrenBusinessUser } = await import('../../childrenBusinessUser.module/childrenBusinessUser.model');
+      const { ChildrenBusinessUser } =
+        await import('../../childrenBusinessUser.module/childrenBusinessUser.model');
       const firstAssignedUser = updatedTask.assignedUserIds[0];
 
       const relationship = await ChildrenBusinessUser.findOne({
@@ -370,7 +401,7 @@ export class TaskService extends GenericService<typeof Task, ITask> {
           relationship.parentBusinessUserId.toString(),
           userId.toString(),
           activityType,
-          { taskId: updatedTask._id.toString(), taskTitle: updatedTask.title }
+          { taskId: updatedTask._id.toString(), taskTitle: updatedTask.title },
         );
 
         // 🚀 NEW: Broadcast to family members via group activity
@@ -388,7 +419,7 @@ export class TaskService extends GenericService<typeof Task, ITask> {
               title: updatedTask.title,
             },
             timestamp: new Date(),
-          }
+          },
         );
       }
     }
@@ -414,10 +445,12 @@ export class TaskService extends GenericService<typeof Task, ITask> {
    */
   async updateSubtaskProgress(
     taskId: string,
-    subtaskUpdates: Array<{ isCompleted: boolean }>
+    subtaskUpdates: Array<{ isCompleted: boolean }>,
   ): Promise<ITask> {
     const totalSubtasks = subtaskUpdates.length;
-    const completedSubtasks = subtaskUpdates.filter(st => st.isCompleted).length;
+    const completedSubtasks = subtaskUpdates.filter(
+      st => st.isCompleted,
+    ).length;
 
     const updateData: any = {
       totalSubtasks,
@@ -430,11 +463,9 @@ export class TaskService extends GenericService<typeof Task, ITask> {
       updateData.completedTime = new Date();
     }
 
-    const updatedTask = await this.model.findByIdAndUpdate(
-      taskId,
-      updateData,
-      { new: true }
-    ).select('-__v');
+    const updatedTask = await this.model
+      .findByIdAndUpdate(taskId, updateData, { new: true })
+      .select('-__v');
 
     if (!updatedTask) {
       throw new ApiError(StatusCodes.NOT_FOUND, 'Task not found');
@@ -449,7 +480,11 @@ export class TaskService extends GenericService<typeof Task, ITask> {
    * @returns Task statistics
    */
   async getTaskStatistics(userId: Types.ObjectId) {
-    const cacheKey = this.getCacheKey('statistics', undefined, userId.toString());
+    const cacheKey = this.getCacheKey(
+      'statistics',
+      undefined,
+      userId.toString(),
+    );
 
     // Try cache first
     const cached = await this.getFromCache(cacheKey);
@@ -460,10 +495,7 @@ export class TaskService extends GenericService<typeof Task, ITask> {
     const stats = await this.model.aggregate([
       {
         $match: {
-          $or: [
-            { ownerUserId: userId },
-            { assignedUserIds: userId },
-          ],
+          $or: [{ ownerUserId: userId }, { assignedUserIds: userId }],
           isDeleted: false,
         },
       },
@@ -487,7 +519,10 @@ export class TaskService extends GenericService<typeof Task, ITask> {
       result.total += stat.count;
     });
 
-    console.log("task.service -> '/statistics' -> fn: getTaskStatistics =>", stats);
+    console.log(
+      "task.service -> '/statistics' -> fn: getTaskStatistics =>",
+      stats,
+    );
 
     // Cache the result
     await this.setInCache(cacheKey, result, TASK_CACHE_CONFIG.STATISTICS);
@@ -506,7 +541,11 @@ export class TaskService extends GenericService<typeof Task, ITask> {
   async getDailyProgress(userId: Types.ObjectId, date?: Date) {
     const targetDate = date || new Date();
     const dateKey = targetDate.toISOString().split('T')[0];
-    const cacheKey = this.getCacheKey('daily-progress', dateKey, userId.toString());
+    const cacheKey = this.getCacheKey(
+      'daily-progress',
+      dateKey,
+      userId.toString(),
+    );
 
     // Try cache first
     const cached = await this.getFromCache(cacheKey);
@@ -521,19 +560,26 @@ export class TaskService extends GenericService<typeof Task, ITask> {
     endOfDay.setHours(23, 59, 59, 999);
 
     // Get all tasks for the user on this date
-    const tasks = await this.model.find({
-      ownerUserId: userId,
-      startTime: {
-        $gte: startOfDay,
-        $lte: endOfDay,
-      },
-      isDeleted: false,
-    }).sort({ startTime: 1 }).lean();
+    const tasks = await this.model
+      .find({
+        ownerUserId: userId,
+        startTime: {
+          $gte: startOfDay,
+          $lte: endOfDay,
+        },
+        isDeleted: false,
+      })
+      .sort({ startTime: 1 })
+      .lean();
 
     // Calculate statistics
     const total = tasks.length;
-    const completed = tasks.filter((t: any) => t.status === TaskStatus.COMPLETED).length;
-    const inProgress = tasks.filter((t: any) => t.status === TaskStatus.IN_PROGRESS).length;
+    const completed = tasks.filter(
+      (t: any) => t.status === TaskStatus.COMPLETED,
+    ).length;
+    const inProgress = tasks.filter(
+      (t: any) => t.status === TaskStatus.IN_PROGRESS,
+    ).length;
     const pending = tasks.filter(t => t.status === TaskStatus.PENDING).length;
 
     // Build task list with subtask info
@@ -543,13 +589,21 @@ export class TaskService extends GenericService<typeof Task, ITask> {
       status: task.status,
       startTime: task.startTime,
       taskType: task.taskType,
-      subtasks: task.totalSubtasks > 0 ? {
-        total: task.totalSubtasks || 0,
-        completed: task.completedSubtasks || 0,
-      } : undefined,
-      progressPercentage: task.totalSubtasks && task.totalSubtasks > 0
-        ? Math.round(((task.completedSubtasks || 0) / task.totalSubtasks) * 100)
-        : (task.status === TaskStatus.COMPLETED ? 100 : 0),
+      subtasks:
+        task.totalSubtasks > 0
+          ? {
+              total: task.totalSubtasks || 0,
+              completed: task.completedSubtasks || 0,
+            }
+          : undefined,
+      progressPercentage:
+        task.totalSubtasks && task.totalSubtasks > 0
+          ? Math.round(
+              ((task.completedSubtasks || 0) / task.totalSubtasks) * 100,
+            )
+          : task.status === TaskStatus.COMPLETED
+            ? 100
+            : 0,
     }));
 
     const result = {
@@ -558,9 +612,7 @@ export class TaskService extends GenericService<typeof Task, ITask> {
       completed,
       pending,
       inProgress,
-      progressPercentage: total > 0
-        ? Math.round((completed / total) * 100)
-        : 0,
+      progressPercentage: total > 0 ? Math.round((completed / total) * 100) : 0,
       tasks: taskList,
     };
 
@@ -574,15 +626,17 @@ export class TaskService extends GenericService<typeof Task, ITask> {
   // Automatic Preferred Time Calculation
   // ────────────────────────────────────────────────────────────────────────
 
-  /** 
+  /**
    * Calculate and update user's preferred time based on task history
    * Analyzes last 10 completed tasks to find pattern
    * Updates user.preferredTime automatically
-   * 
+   *
    * @param userId - User ID to calculate preferred time for
    * @returns Calculated preferred time in HH:mm format, or null if insufficient data
    */
-  async calculateAndUpdatePreferredTime(userId: Types.ObjectId): Promise<string | null> {
+  async calculateAndUpdatePreferredTime(
+    userId: Types.ObjectId,
+  ): Promise<string | null> {
     try {
       // Get user's last 10 completed tasks
       const tasks = await Task.find({
@@ -591,14 +645,16 @@ export class TaskService extends GenericService<typeof Task, ITask> {
         startTime: { $exists: true, $ne: null },
         isDeleted: false,
       })
-        .sort({ startTime: -1 })  // Most recent first
+        .sort({ startTime: -1 }) // Most recent first
         .limit(10)
         .select('startTime')
         .lean();
 
       // Need at least 5 tasks to establish a pattern
       if (tasks.length < 5) {
-        logger.info(`Insufficient data for preferred time calculation (user: ${userId}, tasks: ${tasks.length})`);
+        logger.info(
+          `Insufficient data for preferred time calculation (user: ${userId}, tasks: ${tasks.length})`,
+        );
         return null;
       }
 
@@ -609,8 +665,13 @@ export class TaskService extends GenericService<typeof Task, ITask> {
       });
 
       // Calculate average start time
-      const totalMinutes = startTimesInMinutes.reduce((sum, minutes) => sum + minutes, 0);
-      const averageMinutes = Math.round(totalMinutes / startTimesInMinutes.length);
+      const totalMinutes = startTimesInMinutes.reduce(
+        (sum, minutes) => sum + minutes,
+        0,
+      );
+      const averageMinutes = Math.round(
+        totalMinutes / startTimesInMinutes.length,
+      );
 
       // Convert back to HH:mm format
       const hours = Math.floor(averageMinutes / 60);
@@ -624,13 +685,14 @@ export class TaskService extends GenericService<typeof Task, ITask> {
       await User.findByIdAndUpdate(
         userId,
         { preferredTime },
-        { runValidators: true }
+        { runValidators: true },
       );
 
-      logger.info(`✅ Preferred time updated for user ${userId}: ${preferredTime} (based on ${tasks.length} tasks)`);
+      logger.info(
+        `✅ Preferred time updated for user ${userId}: ${preferredTime} (based on ${tasks.length} tasks)`,
+      );
 
       return preferredTime;
-
     } catch (error) {
       errorLogger.error('❌ Error calculating preferred time:', error);
       return null;
@@ -641,7 +703,7 @@ export class TaskService extends GenericService<typeof Task, ITask> {
   // Parent Dashboard: Get All Children's Tasks
   // ────────────────────────────────────────────────────────────────────────
 
-  /**
+  /** ✔️ 🔁
    * Get all children's tasks for parent dashboard
    * Figma: teacher-parent-dashboard/dashboard/dashboard-flow-01.png
    *
@@ -665,10 +727,11 @@ export class TaskService extends GenericService<typeof Task, ITask> {
   async getChildrenTasksForDashboard(
     businessUserId: Types.ObjectId,
     filters: any,
-    options: any
+    options: any,
   ) {
     const cacheKey = `${TASK_CACHE_CONFIG.PREFIX}:dashboard:children-tasks:${businessUserId.toString()}:${filters.status || 'all'}:${filters.taskType || 'children'}:page:${options.page || 1}`;
 
+    /*----------------------- -----------------------*/
     // Try cache first
     const cached = await this.getFromCache(cacheKey);
     if (cached) {
@@ -676,34 +739,43 @@ export class TaskService extends GenericService<typeof Task, ITask> {
     }
 
     // Get all active children for this business user
-    const { ChildrenBusinessUser } = await import('../../childrenBusinessUser.module/childrenBusinessUser.model');
+    const { ChildrenBusinessUser } =
+      await import('../../childrenBusinessUser.module/childrenBusinessUser.model');
 
     const childrenRelations = await ChildrenBusinessUser.find({
       parentBusinessUserId: businessUserId,
       status: 'active',
       isDeleted: false,
-    }).select('childUserId').lean();
-
-    console.log("childrenRelations :: ", childrenRelations )
+    })
+      .select('childUserId')
+      .lean();
 
     const childUserIds = childrenRelations.map((rel: any) => rel.childUserId);
 
-    console.log("childUserIds :: ", childUserIds )
-
+    // ────────────────────────────────────────────────────────────────────────
     // Build query based on taskType filter
-    const taskType = filters.taskType || 'children';
+    // IMPORTANT: 'children' is NOT a real taskType in the database
+    // It's a UI filter concept that means "show all children's tasks"
+    // Real taskTypes in DB: 'personal', 'singleAssignment', 'collaborative'
+    // ────────────────────────────────────────────────────────────────────────
+    const taskTypeFilter = filters.taskType || 'children';
 
     let query: any = {
       isDeleted: false,
     };
 
-    if (taskType === 'personal') {
-      // Parent's personal tasks only
+    if (taskTypeFilter === 'personal') {
+      // Parent's personal tasks only (tasks where parent is the owner)
       query.ownerUserId = businessUserId;
       query.taskType = 'personal';
     } else {
-      // Children's tasks (assigned to any child)
+      // 'children' filter: Show all tasks assigned to any of the parent's children
+      // This includes:
+      // - singleAssignment tasks assigned to one child
+      // - collaborative tasks assigned to multiple children
       query.assignedUserIds = { $in: childUserIds };
+      // Don't filter by taskType here - we want ALL children's tasks
+      // The taskType field in DB can be 'singleAssignment' or 'collaborative'
     }
 
     // Apply status filter
@@ -737,57 +809,108 @@ export class TaskService extends GenericService<typeof Task, ITask> {
       ],
     });
 
-    console.log("getChildrenTasksForDashboard -> result :: ", result)
+    console.log(
+      'getChildrenTasksForDashboard -> result :🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪: ',
+      result,
+    );
 
     // Transform response to include child-focused information
-    const tasks = result?.docs?.map((task: any) => {
-      const assignedChild = task.assignedUserIds?.[0];
-      return {
-        _id: task._id,
-        title: task.title,
-        description: task.description,
-        status: task.status,
-        priority: task.priority,
-        taskType: task.taskType,
-        scheduledTime: task.scheduledTime,
-        startTime: task.startTime,
-        dueDate: task.dueDate,
-        totalSubtasks: task.totalSubtasks || 0,
-        completedSubtasks: task.completedSubtasks || 0,
-        completionPercentage: task.totalSubtasks > 0
-          ? Math.round((task.completedSubtasks / task.totalSubtasks) * 100)
-          : task.status === 'completed' ? 100 : 0,
-        subtasks: task.subtasks?.map((st: any, idx: number) => ({
-          _id: st._id,
-          title: st.title,
-          isCompleted: st.isCompleted,
-          order: st.order || idx + 1,
-        })) || [],
-        assignedTo: assignedChild ? {
-          _id: assignedChild._id,
-          name: assignedChild.name,
-          email: assignedChild.email,
-          profileImage: assignedChild.profileImage,
-        } : null,
-        createdById: task.createdById,
-        ownerUserId: task.ownerUserId,
-        assignedUserIds: task.assignedUserIds,
-      };
-    });
+    // FIX: result.docs contains the actual tasks array
+    const tasks =
+      result?.results?.map((task: any) => {
+        // Get assigned users (could be 0, 1, or multiple children)
+        const assignedUsers = task.assignedUserIds || [];
+
+        console.log('task :🧪::: ', task);
+
+        return {
+          _id: task._id,
+          title: task.title,
+          description: task.description,
+          status: task.status,
+          priority: task.priority,
+          taskType: task.taskType,
+          scheduledTime: task.scheduledTime,
+          startTime: task.startTime,
+          dueDate: task.dueDate,
+          totalSubtasks: task.totalSubtasks || 0,
+          completedSubtasks: task.completedSubtasks || 0,
+          completionPercentage:
+            task.totalSubtasks > 0
+              ? Math.round((task.completedSubtasks / task.totalSubtasks) * 100)
+              : task.status === 'completed'
+                ? 100
+                : 0,
+          subtasks:
+            task.subtasks?.map((st: any, idx: number) => ({
+              _id: st._id,
+              title: st.title,
+              isCompleted: st.isCompleted,
+              order: st.order || idx + 1,
+            })) || [],
+
+          // ──────────────────────────────────────────────────────────────
+          // Child/Children Information (who the task is assigned to)
+          // Supports: 0 (personal), 1 (single), or multiple (collaborative)
+          // ──────────────────────────────────────────────────────────────
+          assignedTo:
+            assignedUsers.length > 0
+              ? assignedUsers.map((child: any) => ({
+                  _id: child._id,
+                  name: child.name,
+                  email: child.email,
+                  profileImage:
+                    child.profileImage?.imageUrl || '/uploads/users/user.png',
+                }))
+              : null,
+
+          // ──────────────────────────────────────────────────────────────
+          // Creator Information (who created this task)
+          // Usually the parent/teacher who assigned the task
+          // ──────────────────────────────────────────────────────────────
+          createdBy: task.createdById
+            ? {
+                _id: task.createdById._id,
+                name: task.createdById.name,
+                email: task.createdById.email,
+                profileImage:
+                  task.createdById.profileImage?.imageUrl ||
+                  '/uploads/users/user.png',
+              }
+            : null,
+
+          // ──────────────────────────────────────────────────────────────
+          // Owner Information (for personal tasks only)
+          // Personal tasks are owned by the user, not assigned to others
+          // ──────────────────────────────────────────────────────────────
+          owner: task.ownerUserId
+            ? {
+                _id: task.ownerUserId._id,
+                name: task.ownerUserId.name,
+                email: task.ownerUserId.email,
+                profileImage:
+                  task.ownerUserId.profileImage?.imageUrl ||
+                  '/uploads/users/user.png',
+              }
+            : null,
+        };
+      }) || [];
 
     const response = {
       tasks,
       pagination: {
-        page: result.page,
-        limit: result.limit,
-        total: result.total,
-        totalPages: result.totalPages,
+        page: result.page || 1,
+        limit: result.limit || 10,
+        total: result.total || 0,
+        totalPages: result.totalPages || 0,
       },
       filters: {
         status: filters.status || 'all',
         taskType: filters.taskType || 'children',
       },
     };
+
+    // console.log('getChildrenTasksForDashboard response :: ', response);
 
     // Cache the result (2 minutes for task lists)
     await this.setInCache(cacheKey, response, 120);
@@ -809,7 +932,7 @@ export class TaskService extends GenericService<typeof Task, ITask> {
    */
   async getPreferredTimeSuggestion(
     userId: Types.ObjectId,
-    assignedUserIds?: Types.ObjectId[]
+    assignedUserIds?: Types.ObjectId[],
   ): Promise<{
     suggestedTime: string;
     suggestedTime12Hour: string;
@@ -834,10 +957,14 @@ export class TaskService extends GenericService<typeof Task, ITask> {
       }
 
       // Get target user's preferred time
-      const targetUser = await User.findById(targetUserId).select('preferredTime name role').lean();
+      const targetUser = await User.findById(targetUserId)
+        .select('preferredTime name role')
+        .lean();
 
       if (!targetUser) {
-        logger.warn(`User not found for preferred time suggestion: ${targetUserId}`);
+        logger.warn(
+          `User not found for preferred time suggestion: ${targetUserId}`,
+        );
         return null;
       }
 
@@ -851,9 +978,10 @@ export class TaskService extends GenericService<typeof Task, ITask> {
           suggestedTime12Hour: '09:00 AM',
           basedOn: 'default',
           confidence: 'low',
-          explanation: targetUserId.toString() === userId.toString()
-            ? 'You haven\'t set a preferred time yet. We suggest 9:00 AM as a default.'
-            : `${userName} hasn't set a preferred time yet. We suggest 9:00 AM as a default.`,
+          explanation:
+            targetUserId.toString() === userId.toString()
+              ? "You haven't set a preferred time yet. We suggest 9:00 AM as a default."
+              : `${userName} hasn't set a preferred time yet. We suggest 9:00 AM as a default.`,
           alternativeTimes: ['09:00', '10:00', '14:00'],
         };
       }
@@ -877,9 +1005,10 @@ export class TaskService extends GenericService<typeof Task, ITask> {
         `${String(altHour2).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`,
       ];
 
-      const explanation = targetUserId.toString() === userId.toString()
-        ? `Based on your task history, you usually start tasks at ${suggestedTime12Hour}.`
-        : `${userName} usually starts tasks at ${suggestedTime12Hour}, based on their task history.`;
+      const explanation =
+        targetUserId.toString() === userId.toString()
+          ? `Based on your task history, you usually start tasks at ${suggestedTime12Hour}.`
+          : `${userName} usually starts tasks at ${suggestedTime12Hour}, based on their task history.`;
 
       return {
         suggestedTime: targetUser.preferredTime,
@@ -889,11 +1018,9 @@ export class TaskService extends GenericService<typeof Task, ITask> {
         explanation,
         alternativeTimes,
       };
-
     } catch (error) {
       errorLogger.error('❌ Error getting preferred time suggestion:', error);
       return null;
     }
   }
-
 }

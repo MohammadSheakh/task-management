@@ -128,4 +128,49 @@ router.get(
   controller.getSecondaryUser
 );
 
+/*-───────────────────────────────── ✔️ NEW
+|  Business | ChildrenBusinessUser | task-monitoring-flow-01.png | Get team members with active task counts
+|  @desc Get all children with their active task counts for Team Member sidebar
+|  @auth Business user (parent/teacher)
+|  @rateLimit 100 requests per minute
+|  @response Array of children with activeTaskCount field
+└──────────────────────────────────*/
+router.get(
+  '/team-members',
+  auth(TRole.business),
+  childrenLimiter,
+  controller.getChildrenWithActiveTaskCounts
+);
+
+/*-───────────────────────────────── ✔️ NEW
+|  Business | ChildrenBusinessUser | team-member-flow-01.png | Get team members statistics
+|  @desc Get statistics for Team Members dashboard (Team Size, Total Tasks, Active Tasks, Completed Tasks)
+|  @auth Business user (parent/teacher)
+|  @rateLimit 100 requests per minute
+|  @response { teamSize, totalTasks, activeTasks, completedTasks }
+└──────────────────────────────────*/
+router.get(
+  '/team-members/statistics',
+  auth(TRole.business),
+  childrenLimiter,
+  controller.getTeamMembersStatistics
+);
+
+/*-───────────────────────────────── ✔️ NEW
+|  Business | ChildrenBusinessUser | team-member-flow-01.png | Get team members list with task progress
+|  @desc Get paginated list of children with task progress percentage
+|  @auth Business user (parent/teacher)
+|  @rateLimit 100 requests per minute
+|  @query page - Page number (default: 1)
+|  @query limit - Items per page (default: 10)
+|  @query sortBy - Sort field (default: -addedAt)
+|  @response Paginated list with taskProgress (totalTasks, completedTasks, progressPercentage)
+└──────────────────────────────────*/
+router.get(
+  '/team-members/list',
+  auth(TRole.business),
+  childrenLimiter,
+  controller.getTeamMembersList
+);
+
 export const ChildrenBusinessUserRoute = router;

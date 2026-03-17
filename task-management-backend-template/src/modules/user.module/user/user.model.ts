@@ -20,7 +20,8 @@ const profileImageSchema = new Schema<TProfileImage>({
 // User Schema Definition
 const userSchema = new Schema<IUser, UserModal>(
   {
-    profileId: { //🔗 acceptTOC
+    profileId: {
+      //🔗 acceptTOC
       type: Types.ObjectId,
       ref: 'UserProfile',
       required: true,
@@ -33,7 +34,7 @@ const userSchema = new Schema<IUser, UserModal>(
     email: {
       type: String,
       required: [true, 'Email is required'],
-      unique: true,
+      // unique: true,
       lowercase: true,
       match: [
         /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/,
@@ -49,7 +50,7 @@ const userSchema = new Schema<IUser, UserModal>(
       required: [true, 'Role is required'],
     },
 
-    // nullable for social login .. 
+    // nullable for social login ..
     password: {
       type: String,
       required: [false, 'Password is not required'],
@@ -66,7 +67,8 @@ const userSchema = new Schema<IUser, UserModal>(
       type: Boolean,
       default: false,
     },
-    phoneNumber : { // TODO : add proper validation
+    phoneNumber: {
+      // TODO : add proper validation
       type: String,
     },
 
@@ -75,19 +77,19 @@ const userSchema = new Schema<IUser, UserModal>(
     └──────────────────────────────────*/
     subscriptionType: {
       type: String,
-      enum: TSubscription 
-      ,
+      enum: TSubscription,
       required: [
         false,
         `TSubscription is required it can be ${Object.values(
-          TSubscription
+          TSubscription,
         ).join(', ')}`,
       ],
-      default: TSubscription.none, 
+      default: TSubscription.none,
     },
 
     // 🆓 FREE TRIAL TRACKING
-    hasUsedFreeTrial: { //✅ TRIAL_USED (prevent multiple trials)
+    hasUsedFreeTrial: {
+      //✅ TRIAL_USED (prevent multiple trials)
       type: Boolean,
       default: false,
     },
@@ -97,7 +99,7 @@ const userSchema = new Schema<IUser, UserModal>(
     └──────────────────────────────────*/
     authProvider: {
       type: String,
-      enum: [ TAuthProvider.local, TAuthProvider.google, TAuthProvider.apple],
+      enum: [TAuthProvider.local, TAuthProvider.google, TAuthProvider.apple],
       default: TAuthProvider.local,
     },
 
@@ -110,20 +112,19 @@ const userSchema = new Schema<IUser, UserModal>(
       type: Number,
       default: 0,
     },
-    lockUntil: { type: Date }, // 🔴 not sure 
+    lockUntil: { type: Date }, // 🔴 not sure
 
-    
     //---------------------------------
     // Wallet Related Info ... This Project have no wallet feature
     //---------------------------------
     // walletId : {
     //   type: Types.ObjectId,
     //   ref: 'Wallet',
-    //   required: false, // user and admin dont need any wallet .. only provider need wallet 
+    //   required: false, // user and admin dont need any wallet .. only provider need wallet
     //   default: null,
     // },
 
-    accountCreatorId : {
+    accountCreatorId: {
       type: Types.ObjectId,
       ref: 'User',
       required: false, // user and admin dont need any wallet .. only provider need wallet
@@ -137,7 +138,7 @@ const userSchema = new Schema<IUser, UserModal>(
     └──────────────────────────────────*/
     preferredTime: {
       type: String,
-      default: "07:00",
+      default: '07:00',
       match: [
         /^([01]\d|2[0-3]):([0-5]\d)$/,
         'Preferred time must be in HH:mm format (24-hour)',
@@ -151,7 +152,7 @@ const userSchema = new Schema<IUser, UserModal>(
     deletedAt: {
       type: Date,
       default: null,
-    }
+    },
   },
   {
     timestamps: true,
@@ -179,11 +180,10 @@ userSchema.statics.isMatchPassword = async function (
   return await bcryptjs.compare(password, hashPassword);
 };
 
-// FIX : ts issue 
+// FIX : ts issue
 // Middleware to hash password before saving
 userSchema.pre('save', async function (next) {
-
-  // INFO : while running seeder .. comment this out 
+  // INFO : while running seeder .. comment this out
   // if (this.isModified('password')) {
   //   this.password = await bcryptjs.hash(
   //     this.password,
@@ -193,14 +193,13 @@ userSchema.pre('save', async function (next) {
   next();
 });
 
-
 // Use transform to rename _id to _projectId
 userSchema.set('toJSON', {
   transform: function (doc, ret, options) {
-    ret._userId = ret._id;  // Rename _id to _projectId
-    delete ret._id;  // Remove the original _id field
+    ret._userId = ret._id; // Rename _id to _projectId
+    delete ret._id; // Remove the original _id field
     return ret;
-  }
+  },
 });
 
 // ────────────────────────────────────────────────────────────────────────
@@ -208,19 +207,19 @@ userSchema.set('toJSON', {
 // ────────────────────────────────────────────────────────────────────────
 
 // Single field indexes
-userSchema.index({ email: 1 }, { unique: true });  // Already exists from schema
+// userSchema.index({ email: 1 }, { unique: true });  // Already exists from schema
 userSchema.index({ role: 1 });
 userSchema.index({ phoneNumber: 1 });
 userSchema.index({ isEmailVerified: 1 });
 userSchema.index({ isDeleted: 1 });
 
 // Compound indexes for common query patterns
-userSchema.index({ role: 1, isDeleted: 1 });  // Admin queries for active users by role
-userSchema.index({ email: 1, isDeleted: 1 });  // Login with soft delete check
-userSchema.index({ role: 1, isEmailVerified: 1, isDeleted: 1 });  // Filter by role, verification, and deletion
-userSchema.index({ phoneNumber: 1, isDeleted: 1 });  // Phone lookup with soft delete
-userSchema.index({ createdAt: -1, isDeleted: 1 });  // Recent users query
-userSchema.index({ updatedAt: -1, isDeleted: 1 });  // Recently updated users
+userSchema.index({ role: 1, isDeleted: 1 }); // Admin queries for active users by role
+userSchema.index({ email: 1, isDeleted: 1 }); // Login with soft delete check
+userSchema.index({ role: 1, isEmailVerified: 1, isDeleted: 1 }); // Filter by role, verification, and deletion
+userSchema.index({ phoneNumber: 1, isDeleted: 1 }); // Phone lookup with soft delete
+userSchema.index({ createdAt: -1, isDeleted: 1 }); // Recent users query
+userSchema.index({ updatedAt: -1, isDeleted: 1 }); // Recently updated users
 
 // Index for wallet queries
 userSchema.index({ walletId: 1, isDeleted: 1 });

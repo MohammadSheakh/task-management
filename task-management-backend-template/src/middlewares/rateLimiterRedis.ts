@@ -24,8 +24,8 @@ export type TRateLimitType = 'user' | 'admin' | 'auth' | 'api' | 'strict';
  */
 export const RATE_LIMIT_PRESETS = {
   user: {
-    windowMs: 60 * 1000,       // 1 minute
-    max: 30,                    // 30 requests per minute
+    windowMs: 60 * 1000, // 1 minute
+    max: 30, // 30 requests per minute
     message: {
       success: false,
       message: 'Too many requests, please slow down',
@@ -33,8 +33,8 @@ export const RATE_LIMIT_PRESETS = {
   },
 
   admin: {
-    windowMs: 60 * 1000,       // 1 minute
-    max: 100,                   // 100 requests per minute
+    windowMs: 60 * 1000, // 1 minute
+    max: 100, // 100 requests per minute
     message: {
       success: false,
       message: 'Too many requests from admin',
@@ -42,8 +42,8 @@ export const RATE_LIMIT_PRESETS = {
   },
 
   auth: {
-    windowMs: 15 * 60 * 1000,  // 15 minutes
-    max: 5,                     // 5 attempts per 15 minutes
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 5001, // 5 attempts per 15 minutes
     message: {
       success: false,
       message: 'Too many authentication attempts, please try again later',
@@ -51,8 +51,8 @@ export const RATE_LIMIT_PRESETS = {
   },
 
   api: {
-    windowMs: 60 * 1000,       // 1 minute
-    max: 60,                    // 60 requests per minute
+    windowMs: 60 * 1000, // 1 minute
+    max: 60, // 60 requests per minute
     message: {
       success: false,
       message: 'Too many API requests, please slow down',
@@ -60,8 +60,8 @@ export const RATE_LIMIT_PRESETS = {
   },
 
   strict: {
-    windowMs: 60 * 60 * 1000,  // 1 hour
-    max: 3,                     // 3 requests per hour
+    windowMs: 60 * 60 * 1000, // 1 hour
+    max: 3, // 3 requests per hour
     message: {
       success: false,
       message: 'Too many sensitive operations, please try again later',
@@ -80,13 +80,22 @@ interface RateLimitResult {
 }
 
 /**
+ * utility function to format time
+ */
+function formatTime(seconds: number): string {
+  const minute = Math.floor(seconds / 60);
+  const second = seconds % 60;
+  return `${minute}m ${second}s`;
+}
+
+/**
  * Check rate limit using Redis
  * Implements sliding window algorithm
  */
 async function checkRateLimit(
   key: string,
   windowMs: number,
-  max: number
+  max: number,
 ): Promise<RateLimitResult> {
   try {
     const now = Date.now();
@@ -111,14 +120,19 @@ async function checkRateLimit(
     const results = await pipeline.exec();
 
     // Get the count (last result)
-    const count = results?.[3] as number || 0;
+    const count = (results?.[3] as number) || 0;
     const remaining = Math.max(0, max - count);
     const reset = Math.ceil((now + windowMs) / 1000);
+
+    const nowSec = Math.floor(now / 1000);
+
+    const remainingTimeSec = Math.max(0, reset - nowSec);
+    const remainingTimeFormatted = formatTime(remainingTimeSec);
 
     return {
       success: count <= max,
       remaining,
-      reset,
+      reset: remainingTimeFormatted,
       total: max,
     };
   } catch (error) {
@@ -141,7 +155,7 @@ async function checkRateLimit(
  * @returns Rate limit middleware function
  */
 export function rateLimiter(
-  type: TRateLimitType = 'user'
+  type: TRateLimitType = 'user',
 ): (req: Request, res: Response, next: NextFunction) => Promise<void> {
   const preset = RATE_LIMIT_PRESETS[type];
 
@@ -163,6 +177,8 @@ export function rateLimiter(
 
       // Check rate limit
       const result = await checkRateLimit(key, preset.windowMs, preset.max);
+
+      console.log('result :: ', result);
 
       // Set rate limit headers
       res.set('X-RateLimit-Limit', String(result.total));
@@ -204,7 +220,7 @@ export function createCustomRateLimiter(
   windowMs: number,
   max: number,
   message?: string,
-  keyPrefix: string = 'custom'
+  keyPrefix: string = 'custom',
 ): (req: Request, res: Response, next: NextFunction) => Promise<void> {
   const errorMessage = message || 'Too many requests, please try again later';
 
@@ -261,7 +277,7 @@ export function createCustomRateLimiter(
  */
 export async function getRateLimitStatus(
   type: TRateLimitType,
-  userId?: string
+  userId?: string,
 ): Promise<RateLimitResult | null> {
   try {
     if (!userId) {

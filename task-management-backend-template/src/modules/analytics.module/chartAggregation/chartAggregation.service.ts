@@ -1,12 +1,12 @@
 /**
  * Chart-Specific Aggregation Endpoints for Analytics Module
  * These endpoints provide data specifically formatted for Figma dashboard charts
- * 
+ *
  * Figma Reference:
  * - main-admin-dashboard/dashboard-section-flow.png
  * - teacher-parent-dashboard/dashboard/dashboard-flow-01.png
  * - teacher-parent-dashboard/task-monitoring/
- * 
+ *
  * @version 1.0.0
  * @date: 12-03-26
  */
@@ -76,14 +76,18 @@ export class ChartAggregationService {
   private async getFromCache<T>(key: string): Promise<T | null> {
     try {
       const cached = await redisClient.get(key);
-      return cached ? JSON.parse(cached) as T : null;
+      return cached ? (JSON.parse(cached) as T) : null;
     } catch (error) {
       errorLogger.error('Redis GET error in ChartAggregation:', error);
       return null;
     }
   }
 
-  private async setInCache<T>(key: string, data: T, ttl: number = 300): Promise<void> {
+  private async setInCache<T>(
+    key: string,
+    data: T,
+    ttl: number = 300,
+  ): Promise<void> {
     try {
       await redisClient.setEx(key, ttl, JSON.stringify(data));
     } catch (error) {
@@ -102,7 +106,7 @@ export class ChartAggregationService {
    */
   async getUserGrowthChart(days: number = 30): Promise<IChartSeries> {
     const cacheKey = this.getCacheKey(`user-growth-${days}`);
-    
+
     const cached = await this.getFromCache<IChartSeries>(cacheKey);
     if (cached) return cached;
 
@@ -136,11 +140,13 @@ export class ChartAggregationService {
       userGrowth.map((g: any) => [
         format(new Date(g._id.year, g._id.month - 1, g._id.day), 'yyyy-MM-dd'),
         g.newUsers,
-      ])
+      ]),
     );
 
     const labels = allDays.map(day => format(day, 'MMM dd'));
-    const data = allDays.map(day => growthMap.get(format(day, 'yyyy-MM-dd')) || 0);
+    const data = allDays.map(
+      day => growthMap.get(format(day, 'yyyy-MM-dd')) || 0,
+    );
 
     const result: IChartSeries = {
       labels,
@@ -163,7 +169,7 @@ export class ChartAggregationService {
    */
   async getTaskStatusDistribution(): Promise<ITaskStatusChart> {
     const cacheKey = this.getCacheKey('task-status-dist');
-    
+
     const cached = await this.getFromCache<ITaskStatusChart>(cacheKey);
     if (cached) return cached;
 
@@ -177,7 +183,10 @@ export class ChartAggregationService {
       },
     ]);
 
-    const total = distribution.reduce((sum: number, d: any) => sum + d.count, 0);
+    const total = distribution.reduce(
+      (sum: number, d: any) => sum + d.count,
+      0,
+    );
 
     const result: ITaskStatusChart = {
       total,
@@ -198,7 +207,7 @@ export class ChartAggregationService {
    */
   async getMonthlyIncomeChart(months: number = 12): Promise<IChartSeries> {
     const cacheKey = this.getCacheKey(`monthly-income-${months}`);
-    
+
     const cached = await this.getFromCache<IChartSeries>(cacheKey);
     if (cached) return cached;
 
@@ -209,7 +218,7 @@ export class ChartAggregationService {
     // Placeholder - implement based on actual payment collection
     const labels = [];
     const data = [];
-    
+
     for (let i = months - 1; i >= 0; i--) {
       const date = subMonths(endDate, i);
       labels.push(format(date, 'MMM yyyy'));
@@ -237,7 +246,7 @@ export class ChartAggregationService {
    */
   async getUserRatioChart(): Promise<ITaskStatusChart> {
     const cacheKey = this.getCacheKey('user-ratio');
-    
+
     const cached = await this.getFromCache<ITaskStatusChart>(cacheKey);
     if (cached) return cached;
 
@@ -245,7 +254,14 @@ export class ChartAggregationService {
       {
         $match: {
           isDeleted: false,
-          subscriptionType: { $in: ['individual', 'business_starter', 'business_level1', 'business_level2'] },
+          subscriptionType: {
+            $in: [
+              'individual',
+              'business_starter',
+              'business_level1',
+              'business_level2',
+            ],
+          },
         },
       },
       {
@@ -256,10 +272,14 @@ export class ChartAggregationService {
       },
     ]);
 
-    const total = distribution.reduce((sum: number, d: any) => sum + d.count, 0);
+    const total = distribution.reduce(
+      (sum: number, d: any) => sum + d.count,
+      0,
+    );
 
     // Group business subscriptions
-    const individualCount = distribution.find((d: any) => d._id === 'individual')?.count || 0;
+    const individualCount =
+      distribution.find((d: any) => d._id === 'individual')?.count || 0;
     const businessCount = distribution
       .filter((d: any) => d._id?.includes('business'))
       .reduce((sum: number, d: any) => sum + d.count, 0);
@@ -295,10 +315,12 @@ export class ChartAggregationService {
    */
   async getFamilyTaskActivityChart(
     businessUserId: string,
-    days: number = 7
+    days: number = 7,
   ): Promise<IChartSeries> {
-    const cacheKey = this.getCacheKey(`family-activity-${businessUserId}-${days}`);
-    
+    const cacheKey = this.getCacheKey(
+      `family-activity-${businessUserId}-${days}`,
+    );
+
     const cached = await this.getFromCache<IChartSeries>(cacheKey);
     if (cached) return cached;
 
@@ -342,11 +364,13 @@ export class ChartAggregationService {
       taskCompletions.map((t: any) => [
         format(new Date(t._id.year, t._id.month - 1, t._id.day), 'yyyy-MM-dd'),
         t.completed,
-      ])
+      ]),
     );
 
     const labels = allDays.map(day => format(day, 'MMM dd'));
-    const data = allDays.map(day => completionMap.get(format(day, 'yyyy-MM-dd')) || 0);
+    const data = allDays.map(
+      day => completionMap.get(format(day, 'yyyy-MM-dd')) || 0,
+    );
 
     const result: IChartSeries = {
       labels,
@@ -366,7 +390,7 @@ export class ChartAggregationService {
   /**
    * Child Progress Comparison (Radar/Bar Chart)
    * Compare all children's task completion rates
-   * 
+   *
    * Updated: 16-03-26 - Now returns full task statistics for Team Overview cards
    * Figma: teacher-parent-dashboard/dashboard/dashboard-flow-01.png
    */
@@ -385,7 +409,7 @@ export class ChartAggregationService {
 
     // Get task statistics for each child
     const childrenWithStats = await Promise.all(
-      children.map(async (child) => {
+      children.map(async child => {
         const childId = child.childUserId;
         const childUser = child.childUserId as any;
 
@@ -407,11 +431,13 @@ export class ChartAggregationService {
 
         const total = stats.reduce((sum: number, s: any) => sum + s.count, 0);
         const pending = stats.find((s: any) => s._id === 'pending')?.count || 0;
-        const inProgress = stats.find((s: any) => s._id === 'inProgress')?.count || 0;
-        const completed = stats.find((s: any) => s._id === 'completed')?.count || 0;
+        const inProgress =
+          stats.find((s: any) => s._id === 'inProgress')?.count || 0;
+        const completed =
+          stats.find((s: any) => s._id === 'completed')?.count || 0;
 
         return {
-          childId: childId.toString(),
+          // childId: childId, //.toString()
           childName: childUser.name || 'Child',
           profileImage: childUser.profileImage || null,
           email: childUser.email || null,
@@ -420,9 +446,10 @@ export class ChartAggregationService {
           pendingTasks: pending,
           inProgressTasks: inProgress,
           completedTasks: completed,
-          completionRate: total > 0 ? Math.round((completed / total) * 100 * 10) / 10 : 0
+          completionRate:
+            total > 0 ? Math.round((completed / total) * 100 * 10) / 10 : 0,
         };
-      })
+      }),
     );
 
     // Sort by completion rate (highest first)
@@ -444,7 +471,7 @@ export class ChartAggregationService {
     const result = {
       chart: chartData,
       children: childrenWithStats,
-      totalMembers: childrenWithStats.length
+      totalMembers: childrenWithStats.length,
     };
 
     await this.setInCache(cacheKey, result, 300);
@@ -456,7 +483,7 @@ export class ChartAggregationService {
    */
   async getTaskStatusByChild(businessUserId: string): Promise<any> {
     const cacheKey = this.getCacheKey(`status-by-child-${businessUserId}`);
-    
+
     const cached = await this.getFromCache(cacheKey);
     if (cached) return cached;
 
@@ -468,7 +495,9 @@ export class ChartAggregationService {
     }).populate('childUserId', 'name');
 
     const childIds = children.map(c => c.childUserId);
-    const childNames = children.map(c => (c.childUserId as any).name || 'Child');
+    const childNames = children.map(
+      c => (c.childUserId as any).name || 'Child',
+    );
 
     // Get status distribution for each child
     const statusData = await Task.aggregate([
@@ -495,7 +524,9 @@ export class ChartAggregationService {
       label: status,
       data: childIds.map((childId, childIndex) => {
         const found = statusData.find(
-          (s: any) => s._id.owner.toString() === childId.toString() && s._id.status === status
+          (s: any) =>
+            s._id.owner.toString() === childId.toString() &&
+            s._id.status === status,
         );
         return found ? found.count : 0;
       }),
@@ -522,10 +553,10 @@ export class ChartAggregationService {
    */
   async getTaskCompletionTrend(
     userId: string,
-    days: number = 30
+    days: number = 30,
   ): Promise<IChartSeries> {
     const cacheKey = this.getCacheKey(`completion-trend-${userId}-${days}`);
-    
+
     const cached = await this.getFromCache<IChartSeries>(cacheKey);
     if (cached) return cached;
 
@@ -559,7 +590,7 @@ export class ChartAggregationService {
       completions.map((c: any) => [
         format(new Date(c._id.year, c._id.month - 1, c._id.day), 'yyyy-MM-dd'),
         c.completed,
-      ])
+      ]),
     );
 
     // Calculate cumulative total
@@ -591,7 +622,10 @@ export class ChartAggregationService {
    * Activity Heatmap (Calendar Heatmap)
    * Shows task activity by day and hour
    */
-  async getActivityHeatmap(userId: string, days: number = 30): Promise<IActivityHeatmap> {
+  async getActivityHeatmap(
+    userId: string,
+    days: number = 30,
+  ): Promise<IActivityHeatmap> {
     const cacheKey = this.getCacheKey(`heatmap-${userId}-${days}`);
 
     const cached = await this.getFromCache<IActivityHeatmap>(cacheKey);
@@ -642,7 +676,7 @@ export class ChartAggregationService {
    */
   async getCollaborativeTaskProgress(taskId: string): Promise<any> {
     const cacheKey = this.getCacheKey(`collab-progress-${taskId}`);
-    
+
     const cached = await this.getFromCache(cacheKey);
     if (cached) return cached;
 

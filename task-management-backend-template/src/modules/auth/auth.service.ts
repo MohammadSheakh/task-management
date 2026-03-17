@@ -18,6 +18,8 @@ import { OAuth2Client } from 'google-auth-library';
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 //@ts-ignore
 import appleSignin from 'apple-signin-auth';
+//@ts-ignore
+import jwt, { Secret } from 'jsonwebtoken';
 
 //@ts-ignore
 import EventEmitter from 'events';
@@ -310,6 +312,8 @@ const loginV2 = async (email: string,
   deviceInfo?: { deviceType?: string, deviceName?: string }
 ) => {
   const user:IUser = await User.findOne({ email }).select('+password');
+
+  console.log(user)
   if (!user) {
     throw new ApiError(StatusCodes.UNAUTHORIZED, 'Invalid credentials');
   }
@@ -489,9 +493,187 @@ const changePassword = async (
   const { password, ...userWithoutPassword } = user.toObject();
   return userWithoutPassword;
 };
-const logout = async (refreshToken: string) => {};
+/**
+ * Logout user
+ * - Blacklist the refresh token
+ * - Remove user session from Redis cache
+ * - Optionally clear all user devices (for "logout from all devices")
+ */
+const logout = async (
+  refreshToken: string,
+  userId?: string,
+  fcmToken?: string,
+  logoutFromAllDevices: boolean = false
+) => {
+  try {
+    // Step 1: Verify the refresh token and add to blacklist
+    if (refreshToken) {
+      const decoded = jwt.verify(
+        refreshToken,
+        config.jwt.refreshSecret as Secret
+      ) as jwt.JwtPayload;
 
-const refreshAuth = async (refreshToken: string) => {};
+      // Blacklist the refresh token in Redis
+      const blacklistKey = `blacklist:${refreshToken}`;
+      const tokenExpiry = decoded.exp ? decoded.exp - Math.floor(Date.now() / 1000) : AUTH_SESSION_CONFIG.TOKEN_BLACKLIST_TTL;
+      
+      await redisClient.setEx(
+        blacklistKey,
+        Math.min(tokenExpiry, AUTH_SESSION_CONFIG.TOKEN_BLACKLIST_TTL),
+        'blacklisted'
+      );
+
+      logger.info(`Token blacklisted for user ${decoded.userId}`);
+    }
+
+    // Step 2: Remove user session from Redis cache
+    if (userId) {
+      // Remove session cache for this user
+      const sessionPattern = fcmToken 
+        ? `session:${userId}:${fcmToken}`
+        : `session:${userId}:*`;
+      
+      const keys = await redisClient.keys(sessionPattern);
+      if (keys.length > 0) {
+        await redisClient.del(keys);
+        logger.info(`Session cache cleared for user ${userId}`);
+      }
+    }
+
+    // Step 3: Optionally logout from all devices
+    if (logoutFromAllDevices && userId) {
+      await UserDevices.deleteMany({ userId: new mongoose.Types.ObjectId(userId) });
+      logger.info(`All devices logged out for user ${userId}`);
+    } else if (fcmToken && userId) {
+      // Remove only the current device
+      await UserDevices.deleteOne({ 
+        userId: new mongoose.Types.ObjectId(userId),
+        fcmToken 
+      });
+      logger.info(`Device logged out for user ${userId}`);
+    }
+
+    return { success: true };
+  } catch (error) {
+    errorLogger.error('Logout error:', error);
+    // Don't throw - logout should succeed even if blacklist fails
+    return { success: true };
+  }
+};
+
+/**
+ * Refresh access token using refresh token
+ * - Verify refresh token
+ * - Check if token is blacklisted
+ * - Generate new access and refresh token pair
+ * - Blacklist old refresh token (token rotation)
+ */
+const refreshAuth = async (refreshToken: string) => {
+  try {
+    if (!refreshToken) {
+      throw new ApiError(StatusCodes.UNAUTHORIZED, 'Refresh token is required');
+    }
+
+    // Step 1: Check if token is blacklisted in Redis
+    const blacklistKey = `blacklist:${refreshToken}`;
+    const isBlacklisted = await redisClient.get(blacklistKey);
+    
+    if (isBlacklisted) {
+      throw new ApiError(
+        StatusCodes.UNAUTHORIZED, 
+        'Refresh token has been revoked. Please login again.'
+      );
+    }
+
+    // Step 2: Verify the refresh token
+    const decoded = jwt.verify(
+      refreshToken,
+      config.jwt.refreshSecret as Secret
+    ) as jwt.JwtPayload & { userId: string; email: string; role: string };
+
+    // Step 3: Check if user exists and is active
+    const user = await User.findById(decoded.userId);
+    
+    if (!user) {
+      throw new ApiError(StatusCodes.UNAUTHORIZED, 'User not found');
+    }
+
+    if (user.isDeleted) {
+      throw new ApiError(StatusCodes.UNAUTHORIZED, 'User account is deleted');
+    }
+
+    // Step 4: Verify token type in database
+    const tokenDoc = await Token.findOne({
+      token: refreshToken,
+      user: user._id,
+      type: TokenType.REFRESH,
+    });
+
+    if (!tokenDoc) {
+      throw new ApiError(
+        StatusCodes.UNAUTHORIZED, 
+        'Invalid refresh token. Please login again.'
+      );
+    }
+
+    if (tokenDoc.expiresAt < new Date()) {
+      throw new ApiError(
+        StatusCodes.UNAUTHORIZED, 
+        'Refresh token has expired. Please login again.'
+      );
+    }
+
+    // Step 5: Generate new access and refresh token pair (token rotation)
+    const tokens = await TokenService.accessAndRefreshToken(user);
+
+    // Step 6: Blacklist old refresh token (prevent reuse)
+    const oldTokenExpiry = tokenDoc.expiresAt.getTime() - Date.now();
+    const oldTokenTTL = Math.max(0, Math.floor(oldTokenExpiry / 1000));
+    
+    if (oldTokenTTL > 0) {
+      await redisClient.setEx(
+        blacklistKey,
+        Math.min(oldTokenTTL, AUTH_SESSION_CONFIG.TOKEN_BLACKLIST_TTL),
+        'blacklisted'
+      );
+    }
+
+    // Step 7: Delete old refresh token from database
+    await Token.deleteOne({ token: refreshToken });
+
+    logger.info(`Token refreshed for user ${user._id}`);
+
+    return {
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+    };
+  } catch (error) {
+    errorLogger.error('Refresh token error:', error);
+    
+    if (error instanceof ApiError) {
+      throw error;
+    }
+    
+    if ((error as any).name === 'TokenExpiredError') {
+      throw new ApiError(
+        StatusCodes.UNAUTHORIZED, 
+        'Refresh token has expired. Please login again.'
+      );
+    }
+    
+    if ((error as any).name === 'JsonWebTokenError') {
+      throw new ApiError(
+        StatusCodes.UNAUTHORIZED, 
+        'Invalid refresh token. Please login again.'
+      );
+    }
+    
+    throw new ApiError(
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      'Failed to refresh token'
+    );
+  }
+};
 
 
 // -- we need to move these to OAuth modules
@@ -613,19 +795,17 @@ const appleLogin = async ({ idToken, role, acceptTOC }: IGoogleLoginPayload) => 
   // ⚠️ Apple only sends email on FIRST login — after that it's null
   // So you MUST store it in OAuthAccount on first login
 
-  // ... rest is identical to googleLogin, just swap TAuthProvider.apple
+  if (!email) throw new ApiError(StatusCodes.BAD_REQUEST, 'Email not provided by Apple');
 
-  if (!email) throw new ApiError(StatusCodes.BAD_REQUEST, 'Email not provided by Google');
-
-  // Step 2: Check if OAuth account already exists
+  // Step 2: Check if OAuth account already exists (using Apple provider)
   let oAuthAccount = await OAuthAccount.findOne({
-    authProvider: TAuthProvider.google,
+    authProvider: TAuthProvider.apple,  // ✅ FIXED: Was TAuthProvider.google
     providerId,
     isDeleted: false,
   });
 
   if (oAuthAccount) {
-    // ─── Returning OAuth user ───
+    // ─── Returning Apple OAuth user ───
     const user = await User.findById(oAuthAccount.userId);
     if (!user || user.isDeleted) {
       throw new ApiError(StatusCodes.UNAUTHORIZED, 'Account not found or deleted');
@@ -645,16 +825,16 @@ const appleLogin = async ({ idToken, role, acceptTOC }: IGoogleLoginPayload) => 
   let user = await User.findOne({ email, isDeleted: false });
 
   if (user) {
-    // ─── Existing local user — LINK OAuth account ───
+    // ─── Existing local user — LINK Apple OAuth account ───
     if (!user.isEmailVerified) {
-      // Auto-verify since Google confirmed the email
+      // Auto-verify since Apple confirmed the email
       await User.findByIdAndUpdate(user._id, { isEmailVerified: true });
       user.isEmailVerified = true;
     }
 
     await OAuthAccount.create({
       userId: user._id,
-      authProvider: TAuthProvider.google,
+      authProvider: TAuthProvider.apple,  // ✅ FIXED: Was TAuthProvider.google
       providerId,
       email,
       accessToken: idToken, // encrypt this!
@@ -665,9 +845,9 @@ const appleLogin = async ({ idToken, role, acceptTOC }: IGoogleLoginPayload) => 
     return { user, ...tokens, isLinked: true };
   }
 
-  // Step 4: Brand new user — register via Google
+  // Step 4: Brand new user — register via Apple
   if (!role) {
-    throw new ApiError(StatusCodes.BAD_REQUEST, 'Role is required for new Google signup');
+    throw new ApiError(StatusCodes.BAD_REQUEST, 'Role is required for new Apple signup');
   }
   if (!acceptTOC) {
     throw new ApiError(StatusCodes.BAD_REQUEST, 'You must accept Terms and Conditions');
@@ -678,13 +858,12 @@ const appleLogin = async ({ idToken, role, acceptTOC }: IGoogleLoginPayload) => 
 
   // Create user (no password needed)
   const newUser = await User.create({
-    name: name || email.split('@')[0],
+    name: email.split('@')[0], // Apple doesn't provide name in token, use email prefix
     email,
     role,
     profileId: userProfile._id,
-    isEmailVerified: true, // Google already verified
-    authProvider: TAuthProvider.google,
-    profileImage: picture ? { imageUrl: picture } : undefined,
+    isEmailVerified: true, // Apple already verified
+    authProvider: TAuthProvider.apple,  // ✅ FIXED: Was TAuthProvider.google
   });
 
   // Link profile back
@@ -696,7 +875,7 @@ const appleLogin = async ({ idToken, role, acceptTOC }: IGoogleLoginPayload) => 
   // Create OAuth account
   await OAuthAccount.create({
     userId: newUser._id,
-    authProvider: TAuthProvider.google,
+    authProvider: TAuthProvider.apple,  // ✅ FIXED: Was TAuthProvider.google
     providerId,
     email,
     accessToken: idToken, // encrypt this!

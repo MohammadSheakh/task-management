@@ -260,7 +260,7 @@
 					"response": []
 				},
 				{
-					"name": "Create Task",
+					"name": "01 - Create Personal Task",
 					"request": {
 						"auth": {
 							"type": "bearer",
@@ -281,14 +281,108 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"title\": \"New Task\",\n  \"description\": \"Task description\",\n  \"taskType\": \"personal\",\n  \"priority\": \"medium\",\n  \"startTime\": \"2026-03-16T10:00:00.000Z\",\n  \"scheduledTime\": \"10:00 AM\",\n  \"dueDate\": \"2026-03-17T23:59:59.000Z\"\n}"
+							"raw": "{\n  \"title\": \"My Personal Task\",\n  \"description\": \"Task for myself only\",\n  \"taskType\": \"personal\",\n  \"priority\": \"medium\",\n  \"startTime\": \"2026-03-17T10:00:00.000Z\",\n  \"scheduledTime\": \"10:00 AM\",\n  \"dueDate\": \"2026-03-17T23:59:59.000Z\"\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/v1/tasks",
 							"host": ["{{baseUrl}}"],
 							"path": ["v1", "tasks"]
 						},
-						"description": "Create a new task\n\n**Task Types**:\n- personal: For yourself only\n- singleAssignment: Assign to one person\n- collaborative: Assign to multiple people\n\n**Permission Required**:\n- Business users: Always allowed\n- Child users: Must be Secondary User\n\n**Rate Limit**: 30 requests/hour\n**Daily Limit**: Max 5 personal tasks per day"
+						"description": "Create a personal task for yourself only\n\n**Figma**: personal-task.png\n\n**Validation**:\n- Cannot have assignedUserIds\n- Max 5 personal tasks per day\n- Auto-sets ownerUserId to current user\n\n**Permission Required**:\n- Business users: Always allowed\n- Child users: Must be Secondary User\n\n**Rate Limit**: 30 requests/hour\n**Daily Limit**: Max 5 personal tasks per day"
+					},
+					"response": []
+				},
+				{
+					"name": "02 - Create Single Assignment Task",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"taskId\", jsonData.data._id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Math Homework\",\n  \"description\": \"Complete chapter 5 exercises\",\n  \"taskType\": \"singleAssignment\",\n  \"priority\": \"high\",\n  \"startTime\": \"2026-03-17T14:00:00.000Z\",\n  \"scheduledTime\": \"2:00 PM\",\n  \"assignedUserIds\": [\":childUserId\"],\n  \"dueDate\": \"2026-03-18T23:59:59.000Z\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/v1/tasks",
+							"host": ["{{baseUrl}}"],
+							"path": ["v1", "tasks"]
+						},
+						"description": "Create a task assigned to exactly ONE person\n\n**Figma**: single-assignment.png\n\n**Validation**:\n- Must have exactly 1 user in assignedUserIds\n- No daily limit\n- Use :childUserId or replace with actual user ID\n\n**Permission Required**:\n- Business users: Always allowed\n- Child users: Must be Secondary User\n\n**Rate Limit**: 30 requests/hour"
+					},
+					"response": []
+				},
+				{
+					"name": "03 - Create Collaborative Task",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"taskId\", jsonData.data._id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Family Room Cleanup\",\n  \"description\": \"Clean the living room together\",\n  \"taskType\": \"collaborative\",\n  \"priority\": \"medium\",\n  \"startTime\": \"2026-03-17T16:00:00.000Z\",\n  \"scheduledTime\": \"4:00 PM\",\n  \"assignedUserIds\": [\n    \":childUserId1\",\n    \":childUserId2\",\n    \":childUserId3\"\n  ],\n  \"dueDate\": \"2026-03-17T18:00:00.000Z\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/v1/tasks",
+							"host": ["{{baseUrl}}"],
+							"path": ["v1", "tasks"]
+						},
+						"description": "Create a task assigned to MULTIPLE people (family/group task)\n\n**Figma**: collaborative-task.png\n\n**Validation**:\n- Must have 2 or more users in assignedUserIds\n- No daily limit\n- Replace :childUserId1, :childUserId2, etc. with actual user IDs\n- Get user IDs from: GET /v1/children-business-users/my-children\n\n**Permission Required**:\n- Business users: Always allowed\n- Child users: Must be Secondary User\n\n**Rate Limit**: 30 requests/hour\n\n**Real-Time**: All assigned users receive Socket.IO notification"
 					},
 					"response": []
 				},

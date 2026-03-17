@@ -14,6 +14,7 @@ import { TaskAnalyticsRoutes } from './taskAnalytics/taskAnalytics.route';
 import { GroupAnalyticsRoutes } from './groupAnalytics/groupAnalytics.route';
 import { AdminAnalyticsRoutes } from './adminAnalytics/adminAnalytics.route';
 import { ChartAggregationRoutes } from './chartAggregation/chartAggregation.route';
+import { TaskMonitoringRoutes } from './taskMonitoring/taskMonitoring.route';
 
 const router = express.Router();
 
@@ -25,5 +26,8 @@ router.use(AdminAnalyticsRoutes);
 
 // Chart-specific aggregation endpoints (NEW - for Figma dashboard charts)
 router.use('/charts', ChartAggregationRoutes);
+
+// Task Monitoring dashboard endpoints (NEW - for task-monitoring-flow-01.png)
+router.use('/task-monitoring', TaskMonitoringRoutes);
 
 export const AnalyticsRoutes = router;

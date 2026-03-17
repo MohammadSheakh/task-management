@@ -111,12 +111,10 @@ router.post(
   AuthController.verifyEmail,
 );
 
-// ------ we remove all device for this user .. actually we remove all FCM tokens for this user -----
-// this endpoint has some serious issue 
-// TODO : NEED TO ADD ANOTHER API WITHOUT TOKEN ... 
-// NEED TO STORE DEVICE ID .. 
-router.get('/logout',
-  //  auth(TRole.common),
+// ------ Logout endpoint - supports both authenticated and unauthenticated logout -----
+// Can logout with token (authenticated) or without token (just blacklist refresh token)
+router.post('/logout',
+  auth(TRole.common),  // Optional - can logout without being authenticated
   AuthController.logout);
 
 router.post('/refresh-auth', AuthController.refreshToken);
