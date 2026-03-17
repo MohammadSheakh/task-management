@@ -75,35 +75,6 @@ const taskSchema = new Schema<ITask>(
       default: 0,
     },
 
-    // ─── Subtasks (Embedded) ───────────────────────────────────────────
-    /**
-     * Subtasks list
-     * Matches Flutter model: SubTask { title, isCompleted }
-     */
-    subtasks: [
-      {
-        title: {
-          type: String,
-          required: [true, 'Subtask title is required'],
-          trim: true,
-          maxlength: [200, 'Subtask title cannot exceed 200 characters'],
-        },
-        isCompleted: {
-          type: Boolean,
-          required: [true, 'isCompleted is required'],
-          default: false,
-        },
-        completedAt: {
-          type: Date,
-        },
-        order: {
-          type: Number,
-          required: [true, 'Order is required'],
-          default: 0,
-        },
-      },
-    ],
-
     // ─── Timestamps ────────────────────────────────────────────────────
     startTime: {
       type: Date,
@@ -142,23 +113,6 @@ taskSchema.index({ dueDate: 1, isDeleted: 1 });
 // Text search index for task search functionality
 taskSchema.index({ title: 'text', description: 'text', tags: 'text' });
 
-// ─── Pre-save Hook ───────────────────────────────────────────────────
-/**
- * Auto-update totalSubtasks and completedSubtasks before saving
- */
-taskSchema.pre('save', function (next) {
-  const task = this as any;
-
-  if (task.subtasks && task.subtasks.length > 0) {
-    task.totalSubtasks = task.subtasks.length;
-    task.completedSubtasks = task.subtasks.filter((s: any) => s.isCompleted).length;
-  } else {
-    task.totalSubtasks = 0;
-    task.completedSubtasks = 0;
-  }
-
-  next();
-});
 
 // ─── Plugins ─────────────────────────────────────────────────────────
 taskSchema.plugin(paginate);
@@ -183,20 +137,20 @@ taskSchema.virtual('isOverdue').get(function () {
   return new Date() > task.dueDate;
 });
 
-/** -------- we dont need this .. 
- * Virtual populate for subtasks
+/**
+ * ⭐ NEW: Virtual populate for subtasks (SEPARATE COLLECTION)
  * Automatically includes subtasks when getting task details
- * Matches Flutter expectation of embedded subtasks
+ * Uses MongoDB virtual populate to join SubTask collection
  */
-// taskSchema.virtual('subtasks', {
-//   ref: 'SubTask',
-//   localField: '_id',
-//   foreignField: 'taskId',
-//   options: { 
-//     sort: { order: 1 },
-//     limit: 100 // Prevent too many subtasks
-//   }
-// });
+taskSchema.virtual('subtasks', {
+  ref: 'SubTask',
+  localField: '_id',
+  foreignField: 'taskId',
+  options: {
+    sort: { order: 1 },
+    limit: 100 // Prevent too many subtasks
+  }
+});
 
 /**
  * Virtual: time alias for scheduledTime

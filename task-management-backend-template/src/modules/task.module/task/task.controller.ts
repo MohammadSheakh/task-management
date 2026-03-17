@@ -225,7 +225,8 @@ export class TaskController extends GenericController<typeof Task, ITask> {
 
   /**
    * Get a single task by ID with ownership validation
-   * Includes populated subtasks for Flutter
+   * Includes subtasks with progress information
+   * Figma: home-flow.png (Task Details screen)
    */
   getTaskById = async (req: Request, res: Response) => {
     const taskId = req.params.id;
@@ -236,15 +237,11 @@ export class TaskController extends GenericController<typeof Task, ITask> {
     }
 
     // Use the generic getById with proper population
+    // Note: subtasks are EMBEDDED, not a separate collection
     const populateOptions = [
       { path: 'createdById', select: 'name email profileImage' },
       { path: 'ownerUserId', select: 'name email profileImage' },
       { path: 'assignedUserIds', select: 'name email profileImage' },
-      {
-        path: 'subtasks',
-        select: 'title isCompleted duration completedAt',
-        options: { sort: { order: 1 } }
-      },
     ];
 
     const select = '-__v';
@@ -257,18 +254,46 @@ export class TaskController extends GenericController<typeof Task, ITask> {
     }
 
     // Verify user has access to this task
-    // const hasAccess =
-    //   result.createdById.toString() === userId ||
-    //   result.ownerUserId?.toString() === userId ||
-    //   (result.assignedUserIds || []).some((id: any) => id.toString() === userId);
+    const hasAccess =
+      result.createdById?._id?.toString() === userId ||
+      result.ownerUserId?.toString() === userId ||
+      (result.assignedUserIds || []).some((id: any) => id.toString() === userId);
 
-    // if (!hasAccess) {
-    //   throw new ApiError(StatusCodes.FORBIDDEN, 'You do not have access to this task');
-    // }
+    if (!hasAccess) {
+      throw new ApiError(StatusCodes.FORBIDDEN, 'You do not have access to this task');
+    }
+
+    // Format subtasks with progress information
+    const formattedSubtasks = (result.subtasks || []).map((subtask: any, index: number) => ({
+      _id: subtask._id,
+      title: subtask.title,
+      isCompleted: subtask.isCompleted || false,
+      order: subtask.order || (index + 1),
+      duration: subtask.duration || null,
+      completedAt: subtask.completedAt || null,
+    }));
+
+    // Calculate subtask progress
+    const totalSubtasks = formattedSubtasks.length;
+    const completedSubtasks = formattedSubtasks.filter((st: any) => st.isCompleted).length;
+    const subtaskProgressPercentage = totalSubtasks > 0
+      ? Math.round((completedSubtasks / totalSubtasks) * 100)
+      : 0;
+
+    // Build response with subtask progress
+    const responseData = {
+      ...result.toObject(),
+      subtasks: formattedSubtasks,
+      subtaskProgress: {
+        total: totalSubtasks,
+        completed: completedSubtasks,
+        percentage: subtaskProgressPercentage,
+      },
+    };
 
     sendResponse(res, {
       code: StatusCodes.OK,
-      data: result,
+      data: responseData,
       message: 'Task retrieved successfully',
       success: true,
     });

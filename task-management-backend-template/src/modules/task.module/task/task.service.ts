@@ -537,7 +537,18 @@ export class TaskService extends GenericService<typeof Task, ITask> {
    * @param userId - User ID
    * @param date - Date to check (default: today)
    * @returns Daily progress info with task details
+   *
+   * @description
+   * Returns progress for ALL tasks related to the user:
+   * - Self-created tasks (ownerUserId = userId)
+   * - Assigned tasks (assignedUserIds includes userId)
    */
+
+  /*┌──────────────────────────┐
+    │ Daily Progress           │ 
+    │ ██████████░░░░  40%      │
+    └──────────────────────────┘*/
+
   async getDailyProgress(userId: Types.ObjectId, date?: Date) {
     const targetDate = date || new Date();
     const dateKey = targetDate.toISOString().split('T')[0];
@@ -548,10 +559,10 @@ export class TaskService extends GenericService<typeof Task, ITask> {
     );
 
     // Try cache first
-    const cached = await this.getFromCache(cacheKey);
-    if (cached) {
-      return cached;
-    }
+    // const cached = await this.getFromCache(cacheKey);
+    // if (cached) {
+    //   return cached;
+    // }
 
     const startOfDay = new Date(targetDate);
     startOfDay.setHours(0, 0, 0, 0);
@@ -559,10 +570,12 @@ export class TaskService extends GenericService<typeof Task, ITask> {
     const endOfDay = new Date(targetDate);
     endOfDay.setHours(23, 59, 59, 999);
 
-    // Get all tasks for the user on this date
+    // Get ALL tasks for the user on this date:
+    // 1. Self-created tasks (ownerUserId = userId)
+    // 2. Assigned tasks (assignedUserIds includes userId)
     const tasks = await this.model
       .find({
-        ownerUserId: userId,
+        $or: [{ ownerUserId: userId }, { assignedUserIds: userId }],
         startTime: {
           $gte: startOfDay,
           $lte: endOfDay,
@@ -589,6 +602,7 @@ export class TaskService extends GenericService<typeof Task, ITask> {
       status: task.status,
       startTime: task.startTime,
       taskType: task.taskType,
+      assignedBy: task.createdById, // Who assigned/created this task
       subtasks:
         task.totalSubtasks > 0
           ? {

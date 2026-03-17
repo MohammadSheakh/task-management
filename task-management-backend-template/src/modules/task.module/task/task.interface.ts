@@ -3,7 +3,10 @@ import { PaginateOptions, PaginateResult } from '../../../types/paginate';
 import { TaskStatus, TaskType, TaskPriority } from './task.constant';
 
 /**
- * SubTask Interface (Embedded)
+ * SubTask Interface (SEPARATE COLLECTION)
+ * Subtasks are now stored in a separate SubTask collection
+ * and virtually populated when retrieving tasks
+ * 
  * Matches Flutter model:
  * ```dart
  * class SubTask {
@@ -63,7 +66,10 @@ export interface ITask {
   /** Number of completed subtasks */
   completedSubtasks?: number;
 
-  /** Subtasks list (embedded) */
+  /** 
+   * Subtasks list (VIRTUALLY POPULATED from SubTask collection)
+   * Not stored in Task document - populated via MongoDB virtual populate
+   */
   subtasks?: ISubTask[];
 
   // ─── Timestamps ────────────────────────────────────────────────────
