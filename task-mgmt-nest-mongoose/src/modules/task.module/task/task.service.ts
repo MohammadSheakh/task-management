@@ -6,12 +6,14 @@ import { Redis } from 'ioredis';
 import { GenericService } from '../../../common/generic/generic.service';
 import { Task, TaskDocument, TaskStatus } from './task.schema';
 import { REDIS_CLIENT } from '../../../helpers/redis/redis.module';
+import { SubTaskService } from '../subTask/subTask.service';
 
 /**
  * Task Service
- * 
+ *
  * Manages task operations
  * Extends GenericService for CRUD operations
+ * Delegates subtask operations to SubTaskService (separate collection)
  */
 @Injectable()
 export class TaskService extends GenericService<typeof Task, TaskDocument> {
@@ -21,6 +23,7 @@ export class TaskService extends GenericService<typeof Task, TaskDocument> {
   constructor(
     @InjectModel(Task.name) taskModel: Model<TaskDocument>,
     @Inject(REDIS_CLIENT) private redisClient: Redis,
+    private subTaskService: SubTaskService,
   ) {
     super(taskModel);
   }
@@ -74,7 +77,7 @@ export class TaskService extends GenericService<typeof Task, TaskDocument> {
       isDeleted: false,
     };
 
-    const tasks = await this.findAll(filters);
+    const tasks = await this.findAll(filters, [], { populate: 'subtasks' });
 
     const total = tasks.length;
     const completed = tasks.filter(t => t.status === TaskStatus.COMPLETED).length;
@@ -94,7 +97,7 @@ export class TaskService extends GenericService<typeof Task, TaskDocument> {
         status: t.status,
         startTime: t.startTime,
         taskType: t.taskType,
-        subtasks: t.subtasks?.map(s => ({
+        subtasks: (t.subtasks || []).map(s => ({
           title: s.title,
           isCompleted: s.isCompleted,
         })),
@@ -154,65 +157,45 @@ export class TaskService extends GenericService<typeof Task, TaskDocument> {
 
   /**
    * Add subtask to task
+   * Delegates to SubTaskService (separate collection)
    */
   async addSubtask(
     taskId: string,
     title: string,
     order: number,
-  ): Promise<TaskDocument | null> {
-    const task = await this.findById(taskId);
-
-    if (!task) {
-      throw new NotFoundException('Task not found');
-    }
-
-    if (!task.subtasks) {
-      task.subtasks = [];
-    }
-
-    task.subtasks.push({ title, isCompleted: false, order });
-
-    const result = await this.updateById(taskId, {
-      subtasks: task.subtasks,
-    } as any);
-
-    // Invalidate cache
-    if (result) {
-      await this.invalidateCache(taskId);
-    }
-
-    return result;
+    userId: string,
+  ): Promise<any> {
+    // Delegate to SubTaskService - subtasks are now in separate collection
+    return await this.subTaskService.createSubTask(
+      { taskId, title, order },
+      userId,
+    );
   }
 
   /**
    * Update subtask status
+   * Delegates to SubTaskService (separate collection)
    */
   async updateSubtaskStatus(
     taskId: string,
     subtaskIndex: number,
     isCompleted: boolean,
-  ): Promise<TaskDocument | null> {
-    const task = await this.findById(taskId);
+    userId: string,
+  ): Promise<any> {
+    // Get subtask by taskId and index
+    const subtasks = await this.subTaskService.getSubTasksByTaskId(taskId);
+    const subtask = subtasks[subtaskIndex];
 
-    if (!task || !task.subtasks || subtaskIndex >= task.subtasks.length) {
+    if (!subtask) {
       throw new NotFoundException('Subtask not found');
     }
 
-    task.subtasks[subtaskIndex].isCompleted = isCompleted;
-    if (isCompleted) {
-      task.subtasks[subtaskIndex].completedAt = new Date();
-    }
-
-    const result = await this.updateById(taskId, {
-      subtasks: task.subtasks,
-    } as any);
-
-    // Invalidate cache
-    if (result) {
-      await this.invalidateCache(taskId);
-    }
-
-    return result;
+    // Delegate to SubTaskService
+    return await this.subTaskService.toggleSubTaskStatus(
+      subtask._id.toString(),
+      isCompleted,
+      userId,
+    );
   }
 
   /**
